@@ -73,7 +73,7 @@ void Reader::read_meta_event(bool &end)
 			break;			
 	}
 }
-
+/*
 void Reader::generate_map()
 {
   int it;
@@ -90,6 +90,7 @@ void Reader::generate_map()
     it++;
   }
 }
+*/
 
 Reader::Reader (string &fn)
 {
