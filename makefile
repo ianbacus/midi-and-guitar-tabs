@@ -8,4 +8,4 @@ $(EXE): tabber.h $(SOURCES)
 parser: parser.cpp
 	g++ $(CFLAGS) -std=c++11 parser.cpp main.cpp -o parser
 clean:
-	rm -rf *o $(EXE) praser
+	rm -rf *o $(EXE) parser
