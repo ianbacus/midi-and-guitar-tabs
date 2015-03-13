@@ -1,6 +1,7 @@
 #ifndef __READER__
 #define __READER__
 #include <fstream>
+#include <stdio>
 #include <iomanip>
 #include <iostream>
 #include <istream>
