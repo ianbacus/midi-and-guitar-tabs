@@ -12,9 +12,9 @@ class Visitor
 {
 
   public:
-    void visitNote();
-    void visitBar();
-    void visitChunk();
+    virtual void visitNote()=0;
+    virtual void visitBar()=0;
+    virtual void visitChunk()=0;
     
     
 };
