@@ -1,3 +1,5 @@
+#include "tabber.h"
+
 class Note : public Base 
 {
 	public:
