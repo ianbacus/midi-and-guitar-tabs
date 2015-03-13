@@ -8,9 +8,9 @@ class RotateVisitor : public Visitor
 {
 
   public:
-    visitNote();
-    visitBar();
-    visitChunk();
+    virtual void visitNote();
+    virtual void visitBar();
+    virtual void visitChunk();
 
 };
 
