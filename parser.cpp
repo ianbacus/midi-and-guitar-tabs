@@ -300,12 +300,14 @@ void read_chunk(Reader &ro)
 	
 	ro.read_bytes_to_char(4,type);
 	cout << type << endl;
-	if(type.compare(mthd) == 0)
+//	if(type.compare(mthd) == 0)
+	if(type == "MThd")
 	{
 	cout << "reading header chunk" << endl;
 		ro.read_header_chunk();
 	}
-	else if(type.compare(mtrk) == 0)
+//	else if(type.compare(mtrk) == 0)
+	else if(type == "MTrk")
 	{
 	cout << "reading track chunk" << endl;
 		ro.read_track_chunk();
@@ -317,13 +319,3 @@ void read_chunk(Reader &ro)
 
 }
 
-void read_file(Reader &ro)
-{
-	unsigned int track_cnt = 0;
-	read_chunk(ro);
-	while(track_cnt < 2) //ro.get_tracks())
-	{
-		read_chunk(ro);
-		track_cnt++;
-	}
-}
