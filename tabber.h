@@ -5,8 +5,8 @@
 //
 //
 
-#ifndef __tabber__
-#define __tabber__
+#ifndef __BASE__
+#define __BASE__
 
 #include <iostream>
 #include <map>
@@ -14,7 +14,6 @@
 #include <algorithm>
 #include <iterator>
 using namespace std;
-#endif /* defined(____tabgenerator__) */
 
 class Base
 {
@@ -46,4 +45,5 @@ class Base
 #include "chunk.h"
 
 
+#endif
 
