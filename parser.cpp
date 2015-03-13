@@ -92,7 +92,7 @@ void Reader::generate_map()
 }
 */
 
-Reader::Reader (string &fn)
+Reader::Reader (string fn)
 {
   index = 0;
   header = 0;
