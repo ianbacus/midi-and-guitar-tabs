@@ -22,10 +22,11 @@ class Base
 		Base();
 		~Base();
 		//This structure is a bit unwieldy. Referencing the pair pointers inside the vector takes several
-		// layers of indirection.
-		// - Accessing vector: map[pitch]
-		// - Accessing the pair: dereference the pair* returned by (map[pitch].find(pair_identifier)), find is called on a vector
-		// - Accessing individual elements of the pair: same as above. with a a dereference to first and second instead of the entire pair
+		// layers of indirection. Map's find function preserves constness, but it returns iterators which add even more indirection
+		// - Accessing vector:     (*map.find(pitch))                      returns a vector< pair<int, int> *>
+		// - Accessing the pair:   (*map.find(pitch)[vec_index] 	   returns a pair<int,int>*
+		// - Accessing the fret:   (*map.find(pitch)[vec_index]->first 	   returns an int
+		// - Accessing the string: (*map.find(pitch)[vec_index]->second    returns an int
 		std::map <int, vector< pair<int,int> * >  > pitch_to_frets_map;
 		int tuning[6];
 		int tab_matrix [6][20];
