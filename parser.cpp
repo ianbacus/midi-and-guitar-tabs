@@ -93,19 +93,20 @@ void Reader::generate_map()
 
 Reader::Reader (string &fn)
 {
-    int index = 0;
-  	header = 0;
-  	format=0;
-  	tracks=0;
-  	time_div=0;
-  	time_sig=0; tempo=0;
+    int index = 0,
+  	header = 0,
+  	format=0,
+  	tracks=0,
+  	time_div=0,
+  	time_sig=0, 
+  	tempo=0,
 	filename = fn;
  // generate_map();
   
     ifstream temp(fn, ios::binary );
     bin.swap(temp);
     
-  if (!bin) //call destructor?
+  if (!bin)
   {
     cout << "Could not open \"" << filename << "\".\n";
     
