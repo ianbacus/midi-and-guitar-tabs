@@ -10,14 +10,17 @@ using namespace std;
 class Reader {
 
 private:
-	int index;
-	unsigned int format, tracks, time_div, time_sig, tempo;
+	//unsigned int index;
+	int index, header,format, tracks, time_div, time_sig, tempo;
 	ifstream bin;
 	
+
 public:
 
 	Reader(ifstream &b);
 	~Reader() = default;
+	generate_map();
+	
 	void read_header_chunk();
 	void read_track_chunk();
 	void read_varlen();
