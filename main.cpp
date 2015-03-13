@@ -45,7 +45,10 @@ void read_file(Reader &ro)
 int main()
 {
   string fn ("canon.mid");
-  Reader robj(fn);
-  read_file(robj);
+ // Reader robj(fn);
+  //read_file(robj);
+  
+   int tracks = midifile.getTrackCount();
+   midifile.read(fn)
   return 0;
 }
