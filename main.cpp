@@ -1,10 +1,10 @@
-#include "reader.h"
+
 #include "Options.h"
 #include "MidiFile.h"
 
 
 using namespace std;
-
+/*
 void read_chunk(Reader &ro)
 {
   
@@ -43,7 +43,7 @@ void read_file(Reader &ro)
 		read_chunk(ro);
 		track_cnt++;
 	}
-}
+}*/
 
 int main()
 {
