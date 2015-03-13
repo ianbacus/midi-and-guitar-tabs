@@ -1,5 +1,6 @@
 #include "tabber.h"
 
+//The iterators point to pointers, so they must be dereferenced twice essentially
 
 void Chunk::rotate()
 {
@@ -12,14 +13,15 @@ void Chunk::rotate()
 		while(alt_ix != root_ix)
 		{
 			alt_ix++;
-			if(alt_ix == Chunk_Notes.end()) alt_ix = Chunk_Notes.begin();
+			if(alt_ix == Chunk_Notes.end() ) //iterate circularly
+				alt_ix = Chunk_Notes.begin();
 			
 			//for each possible fingering of this note, compare it to the root
-			if(root_ix->compare(alt_ix))
+			if((*root_ix)->compare(alt_ix))
 			{
 				for(int note_ix=0; note_ix < root_ix->get_pitch_to_frets_entry_size(); note_ix++)
 				{
-					alt_ix->increment_note_index();
+					(*alt_ix)->increment_note_index();
 				}
 			}
 		}
@@ -35,7 +37,7 @@ bool Chunk::compare_chunks(Chunk* chunk2)
 	{
 		for(auto ity=chunk2_vector->begin();ity!=chunk2_vector->end();ity++)
 		{
-			itx->compare(ity);
+			(*itx)->compare(ity);
 		}
 	}
 
