@@ -15,7 +15,7 @@ class Chunk : public Base
 		void rotate();
 		vector<Note*> * get_chunk_notes_vector() {return &Chunk_Notes;}
 		
-		virtual void reconfigure(Base*);
+		virtual void reconfigure(); //removed parameter Base*
 		virtual bool compare_chunks(Chunk*);
 	
 	
