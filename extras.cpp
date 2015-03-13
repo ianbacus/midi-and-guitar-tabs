@@ -5,7 +5,145 @@
 //
 // Borrowed from Craig Sapp
 
-int MidiFile::read(const char* filename) {
+#include <string.h>
+#include <iostream>
+#include <iomanip>
+#include <fstream>
+#include <sstream>
+
+int Reader::readMidiEvent(ostream& out, int& trackbytes, 
+      int& command) {
+   // read and print Variable Length Value for delta ticks
+   int vlv = getVLV(infile, trackbytes);
+   out << "v" << dec << vlv << "\t";
+  
+   char byte1, byte2;
+   uchar ch;
+   bin.read((char*)&ch, 1);
+   trackbytes++;
+   if (ch < 0x80) {
+      // running status: command byte is previous one in data stream
+      out << "   ";
+   } else {
+      // midi command byte
+      out << hex << (int)ch;
+      command = ch;
+      infile.read((char*)&ch, 1);
+      trackbytes++;
+   }
+   byte1 = ch;
+   int count;
+   int i;
+   int metatype = 0;
+if (command == 0) {
+exit(1);
+}
+   switch (command & 0xf0) {
+      case 0x80:    // note-off: 2 bytes
+         out << " '" << dec << (int)byte1;
+         bin.read((char*)&ch, 1);
+         trackbytes++;
+         byte2 = ch;
+         out << " '" << dec << (int)byte2;
+         break;
+      case 0x90:    // note-on: 2 bytes
+         out << " '" << dec << (int)byte1;
+         bin.read((char*)&ch, 1);
+         trackbytes++;
+         byte2 = ch;
+         out << " '" << dec << (int)byte2;
+         break;
+      case 0xA0:    // aftertouch: 2 bytes
+         out << " '" << dec << (int)byte1;
+         bin.read((char*)&ch, 1);
+         trackbytes++;
+         byte2 = ch;
+         out << " '" << dec << (int)byte2;
+         break;
+      case 0xB0:    // continuous controller: 2 bytes
+         out << " '" << dec << (int)byte1;
+         bin.read((char*)&ch, 1);
+         trackbytes++;
+         byte2 = ch;
+         out << " '" << dec << (int)byte2;
+         break;
+      case 0xE0:    // pitch-bend: 2 bytes
+         out << " '" << dec << (int)byte1;
+         bin.read((char*)&ch, 1);
+         trackbytes++;
+         byte2 = ch;
+         out << " '" << dec << (int)byte2;
+         break;
+      case 0xC0:    // patch change: 1 bytes
+         out << " '" << dec << (int)byte1;
+         break;
+      case 0xD0:    // channel pressure: 1 bytes
+         out << " '" << dec << (int)byte1;
+         break;
+      case 0xF0:    // various system bytes: variable bytes
+         switch (command) {
+            case 0xf0:
+               break;
+            case 0xf1:
+               break;
+            case 0xf2:
+               break;
+            case 0xf3:
+               break;
+            case 0xf4:
+               break;
+            case 0xf5:
+               break;
+            case 0xf6:
+               break;
+            case 0xf7:
+               break;
+            case 0xf8:
+               break;
+            case 0xf9:
+               break;
+            case 0xfa:
+               break;
+            case 0xfb:
+               break;
+            case 0xfc:
+               break;
+            case 0xfd:
+               break;
+            case 0xfe:
+               cerr << "Error command no yet handled" << endl;
+               exit(1);
+               break;
+            case 0xff:  // meta message
+               metatype = ch;
+               out << " " << hex << metatype;
+               bin.read((char*)&ch, 1);
+               trackbytes++;
+               count = ch;
+               out << " '" << dec << count;
+               for (i=0; i<count; i++) {
+                  bin.read((char*)&ch, 1);
+                  trackbytes++;
+                  out << " " << hex << (int)ch;
+               }
+               if (metatype == 0x2f) {
+                  return 0;
+               }
+               break;
+               
+         }
+         break;
+   }
+
+   return 1;
+}
+//////////////////////////////
+//
+// MidiFile::read -- Parse a Standard MIDI File and store its contents
+//      in the object.
+//
+
+int Reader::read(const char* filename) {
    rwstatus = 1;
    timemapvalid = 0;
    if (filename != NULL) {
@@ -72,7 +210,6 @@ int MidiFile::read(istream& input) {
    }
 
    const char* filename = getFilename();
-
    int    character;
    // uchar  buffer[123456] = {0};
    ulong  longdata;
