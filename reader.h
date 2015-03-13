@@ -16,15 +16,19 @@ private:
 	
 public:
 
+	Reader(ifstream &b);
+	~Reader() = default;
 	void read_header_chunk();
 	void read_track_chunk();
 	void read_varlen();
 	void read_bytes_to_char(ifstream &bin,int range);
 	void read_bytes_to_int(ifstream &bin, int range,unsigned int &ret);
 	void discard_bytes(int range);
-	void read_midi_event(unsigned int event);
 	
-	Reader(ifstream &b);
+	void read_midi_event(unsigned int event);
+	void read_sys_event();
+	void read_meta_event(bool &end);
+	
 };
 
 
