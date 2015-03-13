@@ -4,7 +4,7 @@
 //      in the object.
 //
 // Borrowed from Craig Sapp
-
+#include "Reader.h"
 #include <string.h>
 #include <iostream>
 #include <iomanip>
