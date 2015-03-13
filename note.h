@@ -14,7 +14,7 @@ class Note : public Base
 		int get_string() const;
 		void increment_note_index();
 		//int get_current_note_index const {return current_note_index;}
-		
+		int get_pitch() const {return pitch;}
 		virtual bool compare(Note*) const;
 	
 //		void set_fret_string();
