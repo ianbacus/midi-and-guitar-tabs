@@ -1,5 +1,9 @@
 #include "reader.h"
-#include "midievent.h"
+#include "MidiEvent.h"
+
+#include "MidiEventList.h"
+#include "MidiFile.h"
+#include "MidiMessage.h"
 
 using namespace std;
 
