@@ -1,3 +1,7 @@
+#ifndef __BAR__
+#define __BAR__
+#include "tabber.h"
+#include "Chunk.h"
 
 class Bar
 //linked list implementation might make most sense here
@@ -11,3 +15,5 @@ class Bar
 		
 		void reconfigure(Base*);
 };
+
+#endif
