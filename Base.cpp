@@ -20,7 +20,7 @@ void Base::grid_init()
 
 int Base::get_string(int pitch,int index) const
 {
-	eturn (pitch_to_frets_map.find(pitch)->second)[index]->first;
+	return (pitch_to_frets_map.find(pitch)->second)[index]->first;
 	
 }
 
