@@ -3,10 +3,10 @@
 void read_file(Reader &ro)
 {
 	unsigned int track_cnt = 0;
-	read_chunk(ro);
+	ro.read_chunk();
 	while(track_cnt < 2) //ro.get_tracks())
 	{
-		read_chunk(ro);
+		read_chunk();
 		track_cnt++;
 	}
 }
