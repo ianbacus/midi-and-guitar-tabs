@@ -21,7 +21,8 @@ void Chunk::rotate()
 			//for each possible fingering of this note, compare it to the root
 			if((*root_ix)->compare(*alt_ix))
 			{
-				for(int note_ix=0; note_ix < (*root_ix)->get_pitch_to_frets_entry_size(); note_ix++)
+				int pitch = (*root_ix)->get_pitch();
+				for(int note_ix=0; note_ix < (*root_ix)->get_pitch_to_frets_entry_size(pitch); note_ix++)
 				{
 					(*alt_ix)->increment_note_index();
 				}
