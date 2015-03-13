@@ -45,7 +45,7 @@ class Base
 		
 		//int set_tuning(string);
 		
-		virtual void reconfigure(Base*);
+		virtual void reconfigure(); //removed parameter Base*
 		//virtual bool compare(Base*);
 		
 };
