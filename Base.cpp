@@ -28,7 +28,7 @@ int Base::get_fret(int pitch, int index) const
 	return (*pitch_to_frets_map.find(pitch))[index]->second;
 }
 
-size_t Base::get_pitch_to_frets_entry_size(int pitch) const
+int Base::get_pitch_to_frets_entry_size(int pitch) const
 {
 	return (pitch_to_frets_map.find(pitch)).size();
 }
