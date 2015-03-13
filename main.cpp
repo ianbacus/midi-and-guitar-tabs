@@ -1,5 +1,6 @@
 #include "reader.h"
 
+using namespace std;
 
 void read_chunk(Reader &ro)
 {
