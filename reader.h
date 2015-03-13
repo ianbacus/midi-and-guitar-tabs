@@ -19,7 +19,7 @@ public:
 
 	Reader(ifstream &b);
 	~Reader() = default;
-	generate_map();
+//	generate_map();
 	
 	void read_header_chunk();
 	void read_track_chunk();
