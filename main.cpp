@@ -53,6 +53,6 @@ int main()
   
 MidiFile midifile;
    int tracks = midifile.getTrackCount();
-   midifile.read(fn)
+   midifile.read(fn);
   return 0;
 }
