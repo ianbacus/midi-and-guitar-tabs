@@ -60,6 +60,7 @@ void Reader::read_sys_event()
 	
 }
 
+
 void Reader::read_meta_event(bool &end)
 //Meta-event contains a type, a variable or single byte length, and data.
 {
