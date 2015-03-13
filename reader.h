@@ -21,7 +21,7 @@ public:
 	~Reader() = default;
 //	generate_map();
 	
-	void read_chunk();
+	void read_chunk() {}
 	
 	
 	void read_header_chunk();
