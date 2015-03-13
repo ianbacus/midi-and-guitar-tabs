@@ -5,7 +5,7 @@ all: $(EXE)
 
 $(EXE): tabber.h $(SOURCES)
 	gcc $(CFLAGS) -std=c++11 $(SOURCES) -o $(EXE)
-parser: parser.c
+parser: parser.cpp
 	gcc $(CFLAGS) -std=c++11 parser.cpp main.cpp -o parser
 clean:
 	rm -rf *o $(EXE)
