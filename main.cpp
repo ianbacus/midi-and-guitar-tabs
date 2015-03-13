@@ -1,8 +1,12 @@
 #include "reader.h"
+
+#ifdef nodef
 #include "MidiEvent.h"
 #include "MidiEventList.h"
 #include "MidiFile.h"
 #include "MidiMessage.h"
+#endif
+
 
 using namespace std;
 
