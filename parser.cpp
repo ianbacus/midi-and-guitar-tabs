@@ -7,6 +7,30 @@
 #include <map>
 using namespace std;
 
+Reader::Reader (string fn)
+{
+  index = 0;
+  header = 0;
+  format=0;
+  tracks=0;
+  time_div=0;
+  time_sig=0; 
+  tempo=0;
+  	
+  string filename = fn;
+ // generate_map();
+  
+    ifstream temp(fn, ios::binary );
+    bin.swap(temp);
+    
+  if (!bin)
+  {
+    cout << "Could not open \"" << filename << "\".\n";
+    
+  }
+
+}
+
 void Reader::read_midi_event(unsigned int event)
 //Reads either 1 or 2 bytes, depending on subtype of midi event.
 //Event type is passed in and split into event and channel information.
@@ -96,29 +120,6 @@ void Reader::generate_map()
 }
 */
 
-Reader::Reader (string fn)
-{
-  index = 0;
-  header = 0;
-  format=0;
-  tracks=0;
-  time_div=0;
-  time_sig=0; 
-  tempo=0;
-  	
-  string filename = fn;
- // generate_map();
-  
-    ifstream temp(fn, ios::binary );
-    bin.swap(temp);
-    
-  if (!bin)
-  {
-    cout << "Could not open \"" << filename << "\".\n";
-    
-  }
-
-}
 
 unsigned int Reader::read_varlen()
 {
@@ -294,32 +295,3 @@ void Reader::read_header_chunk()
 	cout << "***************\n";
 
 }
-
-void read_chunk(Reader &ro)
-{
-  
-	string type;
-	string mtrk = "MTrk";
-	string mthd = "MThd";
-	
-	ro.read_bytes_to_char(4,type);
-	cout << type << endl;
-//	if(type.compare(mthd) == 0)
-	if(type == "MThd")
-	{
-	cout << "reading header chunk" << endl;
-		ro.read_header_chunk();
-	}
-//	else if(type.compare(mtrk) == 0)
-	else if(type == "MTrk")
-	{
-	cout << "reading track chunk" << endl;
-		ro.read_track_chunk();
-	}
-	else
-	{
-	  cout << "fuckup" << endl;
-	}
-
-}
-
