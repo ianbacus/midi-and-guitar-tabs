@@ -10,8 +10,8 @@ using namespace std;
 class Reader {
 
 private:
-	//unsigned int index;
-	int index, header,format, tracks, time_div, time_sig, tempo;
+	int index;
+	unsignec int index, header,format, tracks, time_div, time_sig, tempo;
 	ifstream bin;
 	
 
