@@ -38,6 +38,15 @@ public:
 	void read_track_chunk();
 	void read_header_chunk();
 	
+	
+	//EXTRAS
+	
+	
+	int readMidiEvent(ostream& out, int& trackbytes, int& command);
+	int read(const char* filename);
+	int read(const string& filename);
+	int read(istream& input) {
+
 };
 
 #endif
