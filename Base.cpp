@@ -29,6 +29,10 @@ int Base::get_fret(int pitch, int index) const
 }
 
 int Base::get_pitch_to_frets_entry_size(int pitch) const
+//should be renamed "get_pitch_to_frets_vector_size". Takes pitch as an input, searches the base map.
+//returns the size of a vector of tab matrix coordinates associated with a pitch. Equivalently, returns the number
+// of frettable locations for a note.
 {
-	return (*(pitch_to_frets_map.find(pitch))).size();
+	vector<pair<int,int> * > vec = (*pitch_to_frets_map.find(pitch));
+	return vec.size();
 }
