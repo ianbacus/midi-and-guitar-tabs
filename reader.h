@@ -17,7 +17,7 @@ private:
 
 public:
 
-	Reader(ifstream &b);
+	Reader(string );
 	~Reader() = default;
 //	generate_map();
 	
