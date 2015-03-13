@@ -41,57 +41,9 @@ class Base
 		
 };
 
-
-class Note : public Base 
-{
-	public:
-		Note(int);
-		int pitch;
-		int current_note_index;
-		
-
-		int get_fret() const;
-		int get_string() const;
-		void increment_note_index();
-		//int get_current_note_index const {return current_note_index;}
-		
-		virtual bool compare(Note*) const;
-	
-//		void set_fret_string();
-	
-
-};
-
-
-//implement as doubly linked list
-class Chunk : public Base 
-{
-	public:
-		int delta;
-		vector<Note*> Chunk_Notes;
-	
-		void add_Note(Note*); //this should automatically enforce good fingering with the tuning matrix
-		void rotate();
-		vector<Note*> * get_chunk_notes_vector() {return &Chunk_Notes;}
-		
-		virtual void reconfigure(Base*);
-		virtual bool compare_chunks(Chunk*);
-	
-	
-};
-
-class Bar
-//linked list implementation might make most sense here
-{
-	public:
-		vector<Chunk*> Bar_Chunks; //Chunks are children of Bar	
-
-		void add_Chunk(Chunk*);
-		//operator [] for accessing Chunks
-		
-		
-		void reconfigure(Base*);
-};
+#include "note.h"
+#include "bar.h"
+#include "chunk.h"
 
 
 
