@@ -20,20 +20,13 @@ void Base::grid_init()
 
 int Base::get_string(int pitch,int index) const
 {
-	vector< pair<int,int> *> vec = get_vector(pitch);
-	//(*pitch_to_frets_map.find(pitch));
-//	return vec->first;
-	//return (*pitch_to_frets_map.find(pitch) )[index]->first;
-	return vec[index]->first;
+	eturn (pitch_to_frets_map.find(pitch)->second)[index]->first;
+	
 }
 
 int Base::get_fret(int pitch, int index) const
 {
-	vector< pair<int,int> *> vec = get_vector(pitch);
-
-//	return vec->second;
-	//return (*pitch_to_frets_map.find(pitch))[index]->second;
-	return vec[index]->second;
+	return (pitch_to_frets_map.find(pitch)->second)[index]->second;
 }
 
 int Base::get_pitch_to_frets_entry_size(int pitch) const
@@ -41,6 +34,6 @@ int Base::get_pitch_to_frets_entry_size(int pitch) const
 //returns the size of a vector of tab matrix coordinates associated with a pitch. Equivalently, returns the number
 // of frettable locations for a note.
 {
-//	vector<pair<int,int> * > vec = (*pitch_to_frets_map.find(pitch));
-//	return vec->size();
+	return (pitch_to_frets_map.find(pitch)->second).size();
+
 }
