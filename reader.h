@@ -21,7 +21,9 @@ public:
 	~Reader() = default;
 //	generate_map();
 	
-	void read_chunk(Reader);
+	void read_chunk();
+	
+	
 	void read_header_chunk();
 	void read_track_chunk();
 	unsigned int read_varlen();
