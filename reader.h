@@ -1,4 +1,5 @@
-
+#ifndef __READER__
+#define __READER__
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -38,4 +39,5 @@ public:
 	
 };
 
+#endif
 
