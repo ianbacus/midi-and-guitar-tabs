@@ -5,7 +5,9 @@
 void Chunk::rotate()
 {
 
-	//for each note in a chunk, hold a root string
+	//for each note in a chunk, hold a root "string"
+	
+	//iterate through each note of the chunk.
 	for(auto root_ix=Chunk_Notes.begin(); root_ix<Chunk_Notes.end(); root_ix++)
 	{	
 		//iterate through other notes, circular
@@ -19,7 +21,7 @@ void Chunk::rotate()
 			//for each possible fingering of this note, compare it to the root
 			if((*root_ix)->compare(*alt_ix))
 			{
-				for(int note_ix=0; note_ix < root_ix->get_pitch_to_frets_entry_size(); note_ix++)
+				for(int note_ix=0; note_ix < (*root_ix)->get_pitch_to_frets_entry_size(); note_ix++)
 				{
 					(*alt_ix)->increment_note_index();
 				}
