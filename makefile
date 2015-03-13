@@ -11,6 +11,6 @@ $(EXE): tabber.h $(SOURCES)
 parser: parser.cpp
 	g++ $(CFLAGS) -std=c++11 parser.cpp main.cpp -o parser
 test:
-	$(CC) $(CFLAGS) $(INC_PATH) $(OBJECT_FILES) $(LIB_PATH) -o $(TARGET)
+	$(CC) $(CFLAGS) $(INC_PATH) $(OBJECT_FILES) $(LIB_PATH) -o test
 clean:
-	rm -rf *o $(EXE) parser
+	rm -rf *o $(EXE) parser test
