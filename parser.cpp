@@ -1,10 +1,5 @@
 #include "reader.h"
-#include <fstream>
-#include <iomanip>
-#include <iostream>
-#include <string>
-#include <vector>
-#include <map>
+
 using namespace std;
 
 Reader::Reader (string fn)
@@ -37,7 +32,7 @@ void Reader::read_midi_event(unsigned int event)
 {
 	unsigned int p1,p2,channel,type;
 	type = (event >> 4);
-	channel = event&0x0F;
+	channel = event & 0x0F;
 	read_bytes_to_int(1,p1);
 	cout << hex << p1;
 	if(type == 0x9 or type == 0xA)
