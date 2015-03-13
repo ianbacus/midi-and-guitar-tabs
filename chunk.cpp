@@ -1,0 +1,42 @@
+#include "tabber.h"
+
+
+void Chunk::rotate()
+{
+
+	//for each note in a chunk, hold a root string
+	for(auto root_ix=Chunk_Notes.begin(); root_ix<Chunk_Notes.end(); root_ix++)
+	{	
+		//iterate through other notes, circular
+		auto alt_ix = root_ix+1;
+		while(alt_ix != root_ix)
+		{
+			alt_ix++;
+			if(alt_ix == Chunk_Notes.end()) alt_ix = Chunk_Notes.begin();
+			
+			//for each possible fingering of this note, compare it to the root
+			if(root_ix->compare(alt_ix))
+			{
+				for(int note_ix=0; note_ix < root_ix->get_pitch_to_frets_entry_size(); note_ix++)
+				{
+					alt_ix->increment_note_index();
+				}
+			}
+		}
+	}
+	//creates a different 
+}
+
+bool Chunk::compare_chunks(Chunk* chunk2)
+{
+//only passed other chunks, polymorphism here used lazily
+	vector<Note*> * chunk2_vector = chunk2->get_chunk_notes_vector();
+	for(auto itx=Chunk_Notes.begin();itx!=Chunk_Notes.end();itx++)
+	{
+		for(auto ity=chunk2_vector->begin();ity!=chunk2_vector->end();ity++)
+		{
+			itx->compare(ity);
+		}
+	}
+
+}
