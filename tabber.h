@@ -18,7 +18,7 @@
 #include <algorithm>
 #include <iterator>
 using namespace std;
-typedef coordinate_set vector<pair<int,int> * >;
+typedef vector<pair<int,int> * > coordinate_set;
 
 class Base
 {
