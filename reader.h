@@ -22,6 +22,7 @@ public:
 	void read_bytes_to_char(ifstream &bin,int range);
 	void read_bytes_to_int(ifstream &bin, int range,unsigned int &ret);
 	void discard_bytes(int range);
+	void read_midi_event(unsigned int event);
 	
 	Reader(ifstream &b);
 };
