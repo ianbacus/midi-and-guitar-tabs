@@ -1,3 +1,9 @@
+#ifndef __CHUNK__
+#define __CHUNK__
+#include "Note.h"
+#include "Tabber.h"
+
+
 //implement as doubly linked list
 class Chunk : public Base 
 {
@@ -14,3 +20,6 @@ class Chunk : public Base
 	
 	
 };
+
+
+#endif
