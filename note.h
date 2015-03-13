@@ -1,6 +1,6 @@
 #ifndef __NOTE__
 #define __NOTE__
-#include "tabber.h"
+#include "base.h"
 
 class Note : public Base 
 {
@@ -15,6 +15,9 @@ class Note : public Base
 		void increment_note_index();
 		//int get_current_note_index const {return current_note_index;}
 		int get_pitch() const {return pitch;}
+		
+		
+		virtual void accept(Visitor* v) {v.visitNote(this);}
 		virtual bool compare(Note*) const;
 		virtual void reconfigure();
 	
