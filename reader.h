@@ -45,7 +45,7 @@ public:
 	int readMidiEvent(ostream& out, int& trackbytes, int& command);
 	int read(const char* filename);
 	int read(const string& filename);
-	int read(istream& input)
+	int read(istream& input);
 
 };
 
