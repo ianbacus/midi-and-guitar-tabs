@@ -1,5 +1,5 @@
 #include "reader.h"
-
+#include "libmidifile.h"
 #ifdef nodef
 #include "MidiEvent.h"
 #include "MidiEventList.h"
