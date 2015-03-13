@@ -5,8 +5,12 @@
 //
 //
 
+
+
+
 #ifndef __BASE__
 #define __BASE__
+
 
 #include <iostream>
 #include <map>
@@ -14,6 +18,7 @@
 #include <algorithm>
 #include <iterator>
 using namespace std;
+typedef coordinate_set vector<pair<int,int> * >;
 
 class Base
 {
@@ -34,7 +39,7 @@ class Base
 		//accessors
 		
 		//retrieve string and fret information from the fret map with modulo addressing (circular vector)
-		virtual vector<pair<int,int> * > >* get_vector(int i) const {return pitch_to_frets_map.find(i);};
+		virtual vector<pair<int,int> * > * get_vector(int i) const {return pitch_to_frets_map.find(i);};
 		int get_string(int,int) const; 
 		int get_fret(int,int) const;
 		int get_pitch_to_frets_entry_size(int pitch) const;
