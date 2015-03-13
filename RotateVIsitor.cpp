@@ -48,23 +48,19 @@ void Chunk::rotate()
 void RotateVisitor::visitChunk(Chunk* c) 
 {
 
-  //hold a root note to check if fingerable
-  
+  //hold a "locus" note in the chunk and compares it against all other notes. If no configuration works, tries next note as locus
   for(int i=0; i < c->get_children_vector_size()-1; i++)
   {
-    tabstrings_reset(); //mark all strings as open
+    tabstrings_reset(); //mark all strings as open except the current locus
     tabstrings_close(c->get_child(i)->get_string());
+    
     for(int j=0; j < c->get_children_vector_size()-1; j++)
-    {
-      //Loop over all of the non-i elements for comparison purposes
-      if(j != i){
-        if(tabstrings_close(c->get_child(j))) //if there is no intersection of strings
+    {if(j != i){ //Loop over all of the non-i elements for comparison purposes. If they are valid, don't visit
+        if(tabstrings_close(c->get_child(j)) && c->get_child(i)->compare(c->get_child(j))) 
         {
-          c->get_child(i)->accept(this);
+        	c->get_child(i)->accept(this);
         }
-      }
-        
-    }  
+    }}  
   }
   
 }
