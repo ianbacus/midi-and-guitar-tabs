@@ -54,14 +54,14 @@ void Reader::read_meta_event(bool &end)
 			discard_bytes(len);
 			break;
 		case 0x2F:
-			end = 1;
+			end = true;
 			discard_bytes(1);
 			cout << "**********" << endl;
 			break;
 		default:
 			if(type <= 0x07 && type >= 0x01)
 			{
-				string str;
+				string str ="";
 				len = read_varlen();
 				read_bytes_to_char(len, str);
 				cout << "string: " << str << endl;
@@ -71,6 +71,10 @@ void Reader::read_meta_event(bool &end)
 				read_bytes_to_int(-1,data);
 			}
 			break;			
+	}
+	if(end)
+	{
+		cout <<"this is the end.";
 	}
 }
 /*
@@ -125,7 +129,7 @@ unsigned int Reader::read_varlen()
     index++;
     b = (unsigned char)byte;
     if ( b & 0x80 ) //if MSB is 1... (MSB of 1 means that the following \
-    byte will be a continuation, not a separate piece of data)
+    //byte will be a continuation, not a separate piece of data)
     {
        b &= 0x7F; // strip MSB
        do
