@@ -10,6 +10,7 @@
 #include <iomanip>
 #include <fstream>
 #include <sstream>
+using namespace std;
 
 int Reader::readMidiEvent(ostream& out, int& trackbytes, 
       int& command) {
@@ -167,7 +168,7 @@ int Reader::read(const char* filename) {
 //
 
 
-int MidiFile::read(const string& filename) {
+int Reader::read(const string& filename) {
    timemapvalid = 0;
    setFilename(filename);
    rwstatus = 1;
@@ -188,7 +189,7 @@ int MidiFile::read(const string& filename) {
 // istream version of read().
 //
 
-int MidiFile::read(istream& input) {
+int Reader::read(istream& input) {
    rwstatus = 1;
    if (input.peek() != 'M') {
       // If the first byte in the input stream is not 'M', then presume that
