@@ -20,18 +20,20 @@ void Base::grid_init()
 
 int Base::get_string(int pitch,int index) const
 {
-	pair<int,int> vec = (*pitch_to_frets_map.find(pitch));
-	return vec->first;
+	vector< pair<int,int> *> vec = get_vector(i);
+	//(*pitch_to_frets_map.find(pitch));
+//	return vec->first;
 	//return (*pitch_to_frets_map.find(pitch) )[index]->first;
-//	return vec[index]->first;
+	return vec[index]->first;
 }
 
 int Base::get_fret(int pitch, int index) const
 {
-	pair<int,int> vec = (*pitch_to_frets_map.find(pitch));
-	return vec->second;
+	vector< pair<int,int> *> vec = get_vector(i);
+
+//	return vec->second;
 	//return (*pitch_to_frets_map.find(pitch))[index]->second;
-	//return vec[index]->second;
+	return vec[index]->second;
 }
 
 int Base::get_pitch_to_frets_entry_size(int pitch) const
