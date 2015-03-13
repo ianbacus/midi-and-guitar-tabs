@@ -34,8 +34,7 @@ class Base
 		//accessors
 		
 		//retrieve string and fret information from the fret map with modulo addressing (circular vector)
-		vector< pair<int,int> * >  > get_vector(int i) {//return pitch_to_frets_map[i];
-		return pitch_to_frets_map.find(i);}
+		vector< pair<int,int> * >  > get_vector(int i) {return pitch_to_frets_map.find(i);}
 		int get_string(int,int) const; 
 		int get_fret(int,int) const;
 		int get_pitch_to_frets_entry_size(int pitch) const;
