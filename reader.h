@@ -24,7 +24,7 @@ public:
 	void read_header_chunk();
 	void read_track_chunk();
 	unsigned int read_varlen();
-	void read_bytes_to_char(int range);
+	void read_bytes_to_char(int range,str);
 	void read_bytes_to_int(int range,unsigned int &ret);
 	void discard_bytes(int range);
 	
