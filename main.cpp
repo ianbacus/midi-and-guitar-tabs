@@ -1,4 +1,5 @@
 #include "reader.h"
+#include "midievent.h"
 
 using namespace std;
 
