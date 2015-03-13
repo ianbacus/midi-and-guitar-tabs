@@ -1,11 +1,6 @@
 #include "reader.h"
-#include "libmidifile.h"
-#ifdef nodef
-#include "MidiEvent.h"
-#include "MidiEventList.h"
+#include "Options.h"
 #include "MidiFile.h"
-#include "MidiMessage.h"
-#endif
 
 
 using namespace std;
