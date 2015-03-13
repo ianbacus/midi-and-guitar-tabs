@@ -36,7 +36,6 @@ void read_chunk(Reader &ro)
 
 void read_file(Reader &ro)
 {
-	Midifile midifile;
 	unsigned int track_cnt = 0;
 	read_chunk(ro);
 	while(track_cnt < 2) //ro.get_tracks())
@@ -52,6 +51,7 @@ int main()
  // Reader robj(fn);
   //read_file(robj);
   
+MidiFile midifile;
    int tracks = midifile.getTrackCount();
    midifile.read(fn)
   return 0;
