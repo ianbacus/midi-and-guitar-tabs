@@ -1,3 +1,5 @@
+#ifndef __NOTE__
+#define __NOTE__
 #include "tabber.h"
 
 class Note : public Base 
@@ -19,3 +21,5 @@ class Note : public Base
 	
 
 };
+
+#endif
