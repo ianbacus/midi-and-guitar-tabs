@@ -30,5 +30,5 @@ int Base::get_fret(int pitch, int index) const
 
 size_t Base::get_pitch_to_frets_entry_size(int pitch) const
 {
-	return (pitch_to_frets_map.find(pitch))->size();
+	return (pitch_to_frets_map.find(pitch)).size();
 }
