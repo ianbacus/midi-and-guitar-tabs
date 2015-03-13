@@ -9,7 +9,7 @@ void Bar::reconfigure(Base*)
 	//iterative solution for now
 	for (auto Chunk_it = Bar_Chunks.begin() ; Chunk_it != Bar_Chunks.end()-2; ++Chunk_it)
 	{
-		if(!((*Chunk_it)->compare(*(Chunk_it+1) )) ) //return false for bad comparison
+		if(!((*Chunk_it)->compare_chunks(*(Chunk_it+1) )) ) //return false for bad comparison
 		{
 //			rotate();
 		}
