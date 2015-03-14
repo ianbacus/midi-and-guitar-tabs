@@ -50,7 +50,7 @@ void add_to_tree(int delta_start, int pitch)
 // convertMidiFileToText --
 //
 
-void convertMidiFileToText(MidiFile& midifile) {
+queue<Bar*> convertMidiFileToText(MidiFile& midifile) {
    int delta_counter,last;
    queue<Bar*> score;
    score.push(new Bar());
@@ -128,7 +128,7 @@ cout << "actually there are " << midifile.getNumEvents(0) << " events, but I tru
          setTempo(midifile, i, tempo);
       }
    }
-
+return score;
 }
 
 
