@@ -26,6 +26,7 @@ int Base::get_string(int pitch,int index) const
 
 int Base::get_fret(int pitch, int index) const
 {
+	cout << "called base:: get fret" << endl;
 	return (pitch_to_frets_map.find(pitch)->second)[index]->second;
 }
 
