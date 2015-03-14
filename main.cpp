@@ -141,8 +141,11 @@ void test()
 	}
 }
 
-int main()
-{
-
-  return 0;
+int main(int argc, char* argv[]) {
+	
+   checkOptions(options, argc, argv);
+   MidiFile midifile(options.getArg(1));
+   convertMidiFileToText(midifile);
+   return 0;
+   
 }
