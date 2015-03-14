@@ -4,7 +4,7 @@
 #include <iostream>
 
 using namespace std;
-struct note {
+struct Note {
       double tick;
       double duration;
       int    pitch;
@@ -112,7 +112,7 @@ int main()
   string fn ("canon.mid");
  // Reader robj(fn);
   //read_file(robj);
-  vector<Note> &piece;
+  vector<Note> piece;
 MidiFile midifile;
    int tracks = midifile.getTrackCount();
    midifile.read(fn);
