@@ -4,9 +4,11 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <stack>
 class Note;
 class Bar;
 class Chunk;
+using namespace std;
 
 class Visitor
 {
