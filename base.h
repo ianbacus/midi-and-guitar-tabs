@@ -24,6 +24,11 @@ class Visitor;
 
 class Base
 {
+	private:
+		std::map <int, vector< pair<int,int> * >  > pitch_to_frets_map;
+		int tuning[6];
+		int tab_matrix [6][20];
+			
 	public:
 		void grid_init();
 		Base() {grid_init();}
@@ -34,10 +39,7 @@ class Base
 		// - Accessing the pair:   (*map.find(pitch)[vec_index] 	   returns a pair<int,int>*
 		// - Accessing the fret:   (*map.find(pitch)[vec_index]->first 	   returns an int
 		// - Accessing the string: (*map.find(pitch)[vec_index]->second    returns an int
-		std::map <int, vector< pair<int,int> * >  > pitch_to_frets_map;
-		int tuning[6];
-		int tab_matrix [6][20];
-		
+
 		//accessors
 		
 		//retrieve string and fret information from the fret map with modulo addressing (circular vector)
