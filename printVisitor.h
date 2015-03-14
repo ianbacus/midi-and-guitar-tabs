@@ -5,6 +5,7 @@ class printVisitor : public Visitor
 {
   private:
     string string_buffer[7];
+    int string_print_index;
   public:
   
     virtual void visitNote(Note*);
