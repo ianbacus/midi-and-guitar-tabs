@@ -3,6 +3,7 @@
 void Base::grid_init()
 {
     int value;
+    cout << "called Grid Init" << endl;
     for(int string_ind = 0;string_ind<6;string_ind++)
     {
         for(int fret_ind = 0; fret_ind<20; fret_ind++)
