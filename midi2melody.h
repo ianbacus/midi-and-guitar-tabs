@@ -1,6 +1,6 @@
 #ifndef __MIDI2MELODY__
 #define __MIDI2MELODY__
-#include "Reader.h"
+#include "Base.h"
 #include "MidiFile.h"
 #include "Options.h"
 #include <ctype.h>
