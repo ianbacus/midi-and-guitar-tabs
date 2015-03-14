@@ -58,6 +58,8 @@ void read_file(Reader &ro)
 
 void convertToMelody(MidiFile& midifile, vector<Note>& melody) {
    int track = 0;
+   midifile.joinTracks();
+   
    midifile.absoluteTicks();
    if (track < 0 || track >= midifile.getNumTracks()) {
       cout << "Invalid track: " << track << " Maximum track is: "
