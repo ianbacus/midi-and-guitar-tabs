@@ -56,6 +56,7 @@ void read_file(Reader &ro)
 //
 
 void convertToMelody(MidiFile& midifile, vector<Note>& melody) {
+   track = 0;
    midifile.absoluteTicks();
    if (track < 0 || track >= midifile.getNumTracks()) {
       cout << "Invalid track: " << track << " Maximum track is: "
@@ -111,16 +112,17 @@ int main()
   string fn ("canon.mid");
  // Reader robj(fn);
   //read_file(robj);
-  
+  vector<Note> &piece;
 MidiFile midifile;
    int tracks = midifile.getTrackCount();
    midifile.read(fn);
-   int track = 0;
+   //int track = 0;
    cout << tracks << " tracks." << endl;
    while(track < tracks)
    {
    	cout << "Track " << track << " has " << midifile.getNumEvents(track) << " events." << endl;
    	track++;
    }
+   convertToMelody(midifile,piece)
   return 0;
 }
