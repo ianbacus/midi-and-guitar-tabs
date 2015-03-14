@@ -1,7 +1,7 @@
 #ifndef __CHUNK__
 #define __CHUNK__
 #include "Note.h"
-#include "Tabber.h"
+#include "base.h"
 
 
 //implement as doubly linked list
