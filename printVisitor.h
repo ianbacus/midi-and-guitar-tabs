@@ -13,6 +13,13 @@ class PrintVisitor : public Visitor
     virtual void visitNote(Note*);
     virtual void visitBar(Bar*);
     virtual void visitChunk(Chunk*);
+    void print_out()
+    {
+      for(int i=0; i<7; i++)
+      {
+        cout << string_buffer[i];
+      }
+    }
 };
 
 #endif
