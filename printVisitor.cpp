@@ -7,18 +7,18 @@ void printVisitor::visitBar(Bar* b)
   {
     if(string_print_index==0)
     {
-      string_buffer += " ";
+      string_buffer[string_print_index] += " ";
     }
     else
     {
-      string_buffer += "|";
+      string_buffer[string_print_index] += "|";
     }
     for(int j=0; j<b->get_children_size(); j++)
     {
       b->get_child(j)->accept(this);
     }
     //TODO: add logic to this to make the number of continuous bar prints variable by the client
-    string_buffer += "\n";
+    string_buffer[string_print_index] += "\n";
   }
 }
 
@@ -39,5 +39,5 @@ void printVisitor::visitChunk(Chunk* c)
 
 void printVisitor::visitNote(Note* n)
 {
-  string_buffer += n->get_fret();
+  string_buffer[string_print_index] += n->get_fret();
 }
