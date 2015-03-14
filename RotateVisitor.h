@@ -8,7 +8,7 @@ class RotateVisitor : public Visitor
 {
 
   private:
-    Stack<Note*> _comparison_stack;
+    stack<Note*> _comparison_stack;
     int strings_occupied[6];
   public:
   
