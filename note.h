@@ -18,7 +18,7 @@ class Note : public Base
 		int get_pitch() const {return pitch;}
 		
 		
-		virtual void accept(Visitor* v) {v.visitNote(this);}
+		virtual void accept(Visitor* v) {v->visitNote(this);}
 		virtual bool compare(Note*) const;
 //		virtual void reconfigure();
 	
