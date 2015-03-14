@@ -15,9 +15,9 @@ class RotateVisitor : public Visitor
     void pop_stack() {_comparison_stack.pop();}
     void push_stack(Note* n) {_comparison_stack.push_back(n);}
     bool compare_with_stack(Note*);
-    virtual void visitNote();
-    virtual void visitBar();
-    virtual void visitChunk();
+    virtual void visitNote(Note*);
+    virtual void visitBar(Bar*);
+    virtual void visitChunk(Chunk*);
 
 };
 
