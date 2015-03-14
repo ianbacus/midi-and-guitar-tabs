@@ -95,7 +95,7 @@ cout << "actually there are " << midifile.getNumEvents(0) << " events, but I tru
                
                int delta_start = ontimes[key];
                int pitch = key;
-               cout << "extracted note: " << key << " d" << delta_start;
+               cout << "extracted note: " << key << " d" << delta_start << endl;
                ///////////////////////////////////////////////////////////////
                if(delta_start == 0)
                {
