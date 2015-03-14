@@ -19,7 +19,7 @@ class Note : public Base
 		
 		virtual void accept(Visitor* v) {v.visitNote(this);}
 		virtual bool compare(Note*) const;
-		virtual void reconfigure();
+//		virtual void reconfigure();
 	
 //		void set_fret_string();
 	
