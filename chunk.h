@@ -11,7 +11,7 @@ class Chunk : public Base
 		int delta;
 		vector<Note*> _chunk_notes;
 	
-		void add_note(Note*); //this should automatically enforce good fingering with the tuning matrix
+		void add_note(Note* n) {_chunk_notes.push_back(n);} //this should automatically enforce good fingering with the tuning matrix
 		void rotate();
 		
 		Note* get_note_at(int i) {return _chunk_notes[i];}
