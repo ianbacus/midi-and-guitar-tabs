@@ -13,27 +13,27 @@ Note::Note(int pitch_init)
 int Note::get_string() const
 {
 	//return pitch_to_frets_map[pitch][current_note_index]->second;
-	return this->Base::get_string(pitch,current_note_index);
+	return Base::get_string(pitch,current_note_index);
 }
 
 int Note::get_fret() const
 {
 	//return pitch_to_frets_map[pitch][current_note_index]->first;
-		return this->Base::get_fret(pitch,current_note_index);
+	return Base::get_fret(pitch,current_note_index);
 }
 
 void Note::increment_note_index()
 {
 	//does polymorphism apply to calls of "this?" go through base pointer, or through this pointer..
-	current_note_index += (current_note_index+1)%(this->get_children_size());
+	current_note_index += (current_note_index+1)%(get_children_size());
 }
 bool Note::compare(Note* note) const
 {
-	if(note->get_string() == this->get_string()) return false;
+	if(note->get_string() == get_string()) return false;
 	else
 	{
-		if(note->get_fret() == 0 || this->get_fret() == 0) return true;
-		if( abs(note->get_fret() - this->get_fret()) > ACCEPTABLE) return false;
+		if(note->get_fret() == 0 || get_fret() == 0) return true;
+		if( abs(note->get_fret() - get_fret()) > ACCEPTABLE) return false;
 		else return true;
 	}
 }
