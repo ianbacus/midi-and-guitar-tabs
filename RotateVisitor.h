@@ -8,8 +8,12 @@ class RotateVisitor : public Visitor
 {
 
   private:
-    Stack<Note*> comparison_stack;
+    Stack<Note*> _comparison_stack;
+    int strings_occupied[6];
   public:
+  
+    void pop_stack() {_comparison_stack.pop();}
+    void push_stack(Note* n) {_comparison_stack.push_back(n);}
     virtual void visitNote();
     virtual void visitBar();
     virtual void visitChunk();
