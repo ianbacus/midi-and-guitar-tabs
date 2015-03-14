@@ -146,7 +146,7 @@ void test()
 	   convertToMelody(midifile,piece);
 	   for(auto n : piece)
 	   {
-	   	n.print_data();
+	   //	n.print_data();
 	   }
 	}
 }
