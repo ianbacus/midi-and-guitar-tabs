@@ -17,7 +17,7 @@ class Bar : public Base
 		virtual void reconfigure();
 		
 		virtual void accept(Visitor*v) {v->visitBar(this);}
-		virtual int get_children_size() {return _bar_chunks.size();}
+		virtual int get_children_size() const {return _bar_chunks.size();}
 };
 
 #endif
