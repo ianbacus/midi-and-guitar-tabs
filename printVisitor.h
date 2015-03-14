@@ -17,7 +17,7 @@ class PrintVisitor : public Visitor
     {
       for(int i=0; i<7; i++)
       {
-        cout << string_buffer[i];
+        cout << string_buffer[i] << endl;
       }
     }
 };
