@@ -48,6 +48,7 @@ class Base
 		//int set_tuning(string);
 		
 		virtual void accept(Visitor*)=0;
+		virtual int get_children_size()=0;
 //		virtual void reconfigure()=0; //removed parameter Base*
 		//virtual bool compare(Base*);
 		
