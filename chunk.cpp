@@ -1,7 +1,7 @@
 #include "tabber.h"
 
 //The iterators point to pointers, so they must be dereferenced twice essentially
-
+/*
 void Chunk::rotate()
 {
 
@@ -31,6 +31,11 @@ void Chunk::rotate()
 	}
 	//creates a different 
 }
+*/
+///////////////////
+// Compare function used by visitor. Shouldn't move anything around...
+// just inspect the notes separation? This function might be unneeded/unwanted here
+
 
 bool Chunk::compare_chunks(Chunk* chunk2)
 {
