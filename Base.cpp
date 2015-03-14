@@ -9,8 +9,7 @@ void Base::grid_init()
     tuning[3] = 43; //G
     tuning[4] = 47; //B
     tuning[5] = 52; //E
-    cout << "called Grid Init" << endl;
-    for(int string_ind = 0;string_ind<6;string_ind++)
+     for(int string_ind = 0;string_ind<6;string_ind++)
     {
         for(int fret_ind = 0; fret_ind<20; fret_ind++)
         {
@@ -33,9 +32,8 @@ int Base::get_string(int pitch,int index) const
 
 int Base::get_fret(int pitch, int index) const
 {
-	cout << "called base:: get fret";
-	const vector<pair<int,int>* > pairy = (pitch_to_frets_map.find(pitch)->second);
-	cout << pairy[index]->second << endl;
+	//const vector<pair<int,int>* > pairy = (pitch_to_frets_map.find(pitch)->second);
+	//cout << pairy[index]->second << endl;
 	return (pitch_to_frets_map.find(pitch)->second)[index]->second;
 }
 
