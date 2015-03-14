@@ -1,6 +1,6 @@
 #include "printvisitor.h"
 
-void printVisitor::visitBar(Bar* b)
+void PrintVisitor::visitBar(Bar* b)
 {
 
   for(string_print_index=1; string_print_index<6; string_print_index++)
@@ -23,7 +23,7 @@ void printVisitor::visitBar(Bar* b)
 }
 
 
-void printVisitor::visitChunk(Chunk* c)
+void PrintVisitor::visitChunk(Chunk* c)
 {
   //TODO: logic for separating based on tick/notevalue
   for(int j=0; j<c->get_children_size(); j++)
@@ -37,7 +37,7 @@ void printVisitor::visitChunk(Chunk* c)
   
 }
 
-void printVisitor::visitNote(Note* n)
+void PrintVisitor::visitNote(Note* n)
 {
   string_buffer[string_print_index] += n->get_fret();
 }
