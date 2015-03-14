@@ -109,6 +109,7 @@ noteoff:
 
 int main()
 {
+	int track=0;
   string fn ("canon.mid");
  // Reader robj(fn);
   //read_file(robj);
