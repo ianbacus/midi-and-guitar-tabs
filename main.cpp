@@ -109,35 +109,40 @@ noteoff:
       }
    }
 }
-
-int main()
+void test()
 {
-	
+		
   MidiFile midifile;
   vector<Note> piece;
   int tracks;
   string filename;
-while(1)
-{
-  int track=0;
- // Reader robj(fn);
-  //read_file(robj);
-  filename = "";
-  cin >> filename;
-   midifile = MidiFile(filename);
-   tracks = midifile.getTrackCount();
-   //int track = 0;
-   cout << tracks << " tracks." << endl;
-   while(track < tracks)
-   {
-   	cout << "Track " << track << " has " << midifile.getNumEvents(track) << " events." << endl;
-   	track++;
-   }
-   convertToMelody(midifile,piece);
-   for(auto n : piece)
-   {
-   	n.print_data();
-   }
+
+	while(1)
+	{
+	  int track=0;
+	 // Reader robj(fn);
+	  //read_file(robj);
+	   filename = "";
+	   cin >> filename;
+	   midifile = MidiFile(filename);
+	   tracks = midifile.getTrackCount();
+	   //int track = 0;
+	   cout << tracks << " tracks." << endl;
+	   while(track < tracks)
+	   {
+	   	cout << "Track " << track << " has " << midifile.getNumEvents(track) << " events." << endl;
+	   	track++;
+	   }
+	   convertToMelody(midifile,piece);
+	   for(auto n : piece)
+	   {
+	   	n.print_data();
+	   }
 	}
+}
+
+int main()
+{
+
   return 0;
 }
