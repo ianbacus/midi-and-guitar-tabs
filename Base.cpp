@@ -36,7 +36,7 @@ int Base::get_fret(int pitch, int index) const
 {
 	//const vector<pair<int,int>* > pairy = (pitch_to_frets_map.find(pitch)->second);
 	//cout << pairy[index]->second << endl;
-	cout << pitch " is on fret " << (pitch_to_frets_map.find(pitch)->second)[index]->second;
+	cout << pitch << " is on fret " << (pitch_to_frets_map.find(pitch)->second)[index]->second;
 	return (pitch_to_frets_map.find(pitch)->second)[index]->second;
 }
 
