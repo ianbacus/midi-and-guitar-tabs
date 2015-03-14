@@ -27,7 +27,7 @@ int Base::get_string(int pitch,int index) const
 int Base::get_fret(int pitch, int index) const
 {
 	cout << "called base:: get fret";
-	vector<pair<int,int> > pairy = (pitch_to_frets_map.find(pitch)->second);
+	const vector<pair<int,int> > pairy = (pitch_to_frets_map.find(pitch)->second);
 	cout << pairy[index]->second << endl;
 	return (pitch_to_frets_map.find(pitch)->second)[index]->second;
 }
