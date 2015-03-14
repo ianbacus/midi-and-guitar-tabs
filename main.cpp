@@ -1,6 +1,7 @@
 #include "Reader.h"
 #include "MidiFile.h"
 #include "Options.h"
+#include "midi2melody.h"
 #include <ctype.h>
 #include <string.h>
 #include <stdio.h>
