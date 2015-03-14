@@ -1,6 +1,7 @@
 EXE = a
-SOURCES = base.cpp bar.cpp chunk.cpp note.cpp
-OBJECTS = main.o base.o bar.o chunk.o note.o
+SOURCES = base.cpp bar.cpp chunk.cpp note.cpp rotatevisitor.cpp printvisitor.cpp
+OBJECTS := (SOURCES:%.cpp=%.o)
+DEPS := (SOURCES:%.cpp=%.h)
 
 INC_PATH = -I midifile/include/
 LIB_PATH = -L midifile/lib/ -l midifile
