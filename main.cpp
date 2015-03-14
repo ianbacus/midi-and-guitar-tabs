@@ -121,7 +121,7 @@ while(1)
  // Reader robj(fn);
   //read_file(robj);
   
-   midifile = Midifile(cin);
+   midifile = MidiFile(cin);
    tracks = midifile.getTrackCount();
    //int track = 0;
    cout << tracks << " tracks." << endl;
