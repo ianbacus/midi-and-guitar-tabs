@@ -2,7 +2,7 @@
 #define __ROTATEVISITOR__
 
 #include "visitor.h"
-
+#include "base.h"
 
 class RotateVisitor : public Visitor
 {
