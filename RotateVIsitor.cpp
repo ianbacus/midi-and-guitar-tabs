@@ -109,12 +109,13 @@ bool RotateVisitor::compare_with_stack(Note* n)
 	cout << "comparing..." << endl;
 	stack<Note*> stack_copy = _comparison_stack;
 	cout << "copied stack." << endl;
-	Note* current;
+	
 	while(!stack_copy.empty())
 	{
 		cout << "EMPTYING STACK COPY" << endl;
-	  current = stack_copy.top();
+	  Note* current = stack_copy.top();
 	  //check if the string is available
+	  cout << "COPIED TOP ITEM" << endl;
 
 	  	//continue;
 	  if(n->get_string() == current->get_string()){
