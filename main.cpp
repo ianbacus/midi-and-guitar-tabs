@@ -160,12 +160,12 @@ Options options;
 	
    checkOptions(options, argc, argv);
    MidiFile midifile(options.getArg(1));
-   queue<Bar*> score= convertMidiFileToText(midifile);
+   vector<Bar*> score= convertMidiFileToText(midifile);
    RotateVisitor* thefixer = new RotateVisitor();
    PrintVisitor* theprinter = new PrintVisitor();
    
-   score.front()->accept(thefixer);
-   score.front()->accept(theprinter);
+   score[0]->accept(thefixer);
+   score[0]->accept(theprinter);
    theprinter->print_out();
    return 0;
 
