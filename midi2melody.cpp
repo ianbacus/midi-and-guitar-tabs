@@ -21,7 +21,27 @@ void      usage                 (const char* command);
 //////////////////////////////////////////////////////////////////////////
 
 
-
+void add_to_tree(int delta_start, int pitch)
+{
+   int delta_counter,last;
+   queue<Bar*> score;
+   score.push(new Bar());
+   score.back().add_child(new Chunk());
+   
+   if(delta_start == 0)
+   {
+      //this note must be added to the current chunk
+      last = score.back()->get_child()->get_children_size() - 1;
+      score.back()->get_child(last)->add_child(new Note(pitch));
+   }
+   else
+   {
+      //a new chunk must be created, and the new note must be added to it
+      score.back()->add_child(new Chunk());
+      last =  score.back()->get_child()->get_children_size() - 1;
+      score.back()->get_child(last)->add_child(new Note(pitch));
+   }
+}
 //////////////////////////////////////////////////////////////////////////
 
 
@@ -31,6 +51,12 @@ void      usage                 (const char* command);
 //
 
 void convertMidiFileToText(MidiFile& midifile) {
+   int delta_counter,last;
+   queue<Bar*> score;
+   score.push(new Bar());
+   score.back().add_child(new Chunk());
+   
+  
    midifile.deltaTicks();
    midifile.joinTracks();
 
@@ -66,9 +92,29 @@ cout << "actually there are " << midifile.getNumEvents(0) << " events, but I tru
          key = midifile[0][i][1];
          offtime = midifile[0][i].tick * 60.0 /
                midifile.getTicksPerQuarterNote() / tempo;
+               
+               int delta_start = ontimes[key];
+               int pitch = key;
+               ///////////////////////////////////////////////////////////////
+               if(delta_start == 0)
+               {
+                  //this note must be added to the current chunk
+                  last = score.back()->get_child()->get_children_size() - 1;
+                  score.back()->get_child(last)->add_child(new Note(pitch));
+               }
+               else
+               {
+                  //a new chunk must be created, and the new note must be added to it
+                  score.back()->add_child(new Chunk());
+                  last =  score.back()->get_child()->get_children_size() - 1;
+                  score.back()->get_child(last)->add_child(new Note(pitch));
+               }
+               ///////////////////////////////////////////////////////////////
+               /*
          cout << "note\t" << ontimes[key]
               << "\t" << offtime - ontimes[key]
               << "\t" << key << "\t" << endl;
+              */
          onvelocities[key] = -1;
          ontimes[key] = -1.0;
       }
