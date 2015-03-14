@@ -106,19 +106,17 @@ void RotateVisitor::visitChunk(Chunk* c)
 
 bool RotateVisitor::compare_with_stack(Note* n)
 {
-	cout << "comparing..." << endl;
 	stack<Note*> stack_copy = _comparison_stack;
-	cout << "copied stack." << endl;
-	
+
 	while(!stack_copy.empty())
 	{
-		cout << "EMPTYING STACK COPY" << endl;
 	  Note* current = stack_copy.top();
 	  //check if the string is available
-	  cout << "COPIED TOP ITEM" << endl;
-	  cout << "NOTE FRET:" << n->get_fret() << endl;
-	cout << "FRET:" << current->get_fret() << endl;
-	cout << "STRING:" << current->get_string() << endl;
+//	  cout << "COPIED TOP ITEM" << endl;
+	  cout << "candidate fret:" << n->get_fret();
+	cout <<  " candidate string:" << n->get_string() << endl;
+	cout << "stack fret:" << current->get_fret();
+	cout << " stack string:" << current->get_string() << endl;
 	  	//continue;
 	  if(n->get_string() == current->get_string()){
 	  	cout << "OVERLAP" << endl;
