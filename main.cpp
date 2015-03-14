@@ -55,9 +55,10 @@ MidiFile midifile;
    int tracks = midifile.getTrackCount();
    midifile.read(fn);
    int track = 0;
+   cout << tracks << " tracks." << endl;
    while(track < tracks)
    {
-   	midifile.getNumEvents(track);
+   	cout << "Track " << track << " has " midifile.getNumEvents(track) " events." << endl;
    	track++;
    }
   return 0;
