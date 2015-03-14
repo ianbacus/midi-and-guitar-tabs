@@ -4,9 +4,10 @@
 #include <string>
 #include <vector>
 #include <map>
-#include "Note.h"
-#include "Bar.h"
-#include "Chunk.h"
+class Note;
+class Bar;
+class Chunk;
+
 class Visitor
 {
 
