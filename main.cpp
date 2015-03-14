@@ -8,6 +8,7 @@ struct Note {
       double tick;
       double duration;
       int    pitch;
+      void print_data() {cout << pitch " for " << duration << ". Tick=" << tick << endl;}
 };
 
 /*
@@ -125,5 +126,9 @@ MidiFile midifile;
    	track++;
    }
    convertToMelody(midifile,piece);
+   for(auto n : piece)
+   {
+   	n.print_data();
+   }
   return 0;
 }
