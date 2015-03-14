@@ -3,6 +3,14 @@
 #include "MidiFile.h"
 #include <iostream>
 
+typedef unsigned char uchar;
+
+// user interface variables
+Options options;
+int     debugQ = 0;             // use with --debug option
+int     maxcount = 100000;
+double  tempo = 60.0;
+
 using namespace std;
 struct Note {
       double tick;
