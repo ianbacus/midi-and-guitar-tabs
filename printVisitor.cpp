@@ -25,6 +25,7 @@ void printVisitor::visitBar(Bar* b)
 
 void printVisitor::visitChunk(Chunk* c)
 {
+  //TODO: logic for separating based on tick/notevalue
   for(int j=0; j<c->get_children_size(); j++)
   {
     Note* current_note = get_note_at(j);
