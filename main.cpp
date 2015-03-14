@@ -1,6 +1,11 @@
 #include "Reader.h"
-#include "Options.h"
 #include "MidiFile.h"
+#include "Options.h"
+#include <ctype.h>
+#include <string.h>
+#include <stdio.h>
+#include <iostream>
+#include <vector>
 #include <iostream>
 
 typedef unsigned char uchar;
