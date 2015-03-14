@@ -25,7 +25,7 @@ int Note::get_fret() const
 void Note::increment_note_index()
 {
 	//does polymorphism apply to calls of "this?" go through base pointer, or through this pointer..
-	current_note_index += (current_note_index+1)%(this->get_pitch_to_frets_entry_size(pitch));
+	current_note_index += (current_note_index+1)%(this->get_entry_size(pitch));
 }
 bool Note::compare(Note* note) const
 {
