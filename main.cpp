@@ -165,8 +165,8 @@ Options options;
    PrintVisitor* theprinter = new PrintVisitor();
    
    score[0]->accept(thefixer);
-   score[0]->accept(theprinter);
-   theprinter->print_out();
+   //score[0]->accept(theprinter);
+   //theprinter->print_out();
    return 0;
 
 	
