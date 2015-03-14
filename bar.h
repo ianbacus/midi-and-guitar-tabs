@@ -16,7 +16,7 @@ class Bar : public Base
 		//operator [] for accessing Chunks
 		virtual void reconfigure();
 		
-		virtual void accept(Visitor*v) {v.visitBar(this);}
+		virtual void accept(Visitor*v) {v->visitBar(this);}
 };
 
 #endif
