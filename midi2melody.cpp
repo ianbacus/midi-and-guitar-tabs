@@ -20,7 +20,7 @@ void      usage                 (const char* command);
 */
 //////////////////////////////////////////////////////////////////////////
 
-
+/*
 void add_to_tree(int delta_start, int pitch)
 {
    int delta_counter,last;
@@ -41,7 +41,7 @@ void add_to_tree(int delta_start, int pitch)
       last =  score.back()->get_child()->get_children_size() - 1;
       score.back()->get_child(last)->add_child(new Note(pitch));
    }
-}
+}*/
 //////////////////////////////////////////////////////////////////////////
 
 
@@ -54,7 +54,7 @@ void convertMidiFileToText(MidiFile& midifile) {
    int delta_counter,last;
    queue<Bar*> score;
    score.push(new Bar());
-   score.back().add_child(new Chunk());
+   score.back()->add_chunk(new Chunk());
    
   
    midifile.deltaTicks();
@@ -99,15 +99,18 @@ cout << "actually there are " << midifile.getNumEvents(0) << " events, but I tru
                if(delta_start == 0)
                {
                   //this note must be added to the current chunk
-                  last = score.back()->get_child()->get_children_size() - 1;
-                  score.back()->get_child(last)->add_child(new Note(pitch));
+                  //score.back() returns the last bar
+                  //score.back()->get_children_size() returns the number of chunks, used to index the last chunk
+                  //since the member vectors are inaccessible, using the "back()" function on the vector is not viable
+                  last = score.back()->get_children_size() - 1;
+                  score.back()->get_child(last)->add_note(new Note(pitch));
                }
                else
                {
                   //a new chunk must be created, and the new note must be added to it
                   score.back()->add_child(new Chunk());
                   last =  score.back()->get_child()->get_children_size() - 1;
-                  score.back()->get_child(last)->add_child(new Note(pitch));
+                  score.back()->get_child(last)->add_note(new Note(pitch));
                }
                ///////////////////////////////////////////////////////////////
                /*
