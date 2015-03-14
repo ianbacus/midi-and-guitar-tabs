@@ -31,7 +31,7 @@ void      usage                 (const char* command);
 //
 
 void convertMidiFileToText(MidiFile& midifile) {
-   midifile.absoluteTicks();
+   midifile.deltaTicks();
    midifile.joinTracks();
 
    vector<double> ontimes(128);
@@ -68,7 +68,7 @@ cout << "actually there are " << midifile.getNumEvents(0) << " events, but I tru
                midifile.getTicksPerQuarterNote() / tempo;
          cout << "note\t" << ontimes[key]
               << "\t" << offtime - ontimes[key]
-              << "\t" << key << "\t" << onvelocities[key] << endl;
+              << "\t" << key << "\t" << endl;
          onvelocities[key] = -1;
          ontimes[key] = -1.0;
       }
