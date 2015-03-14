@@ -117,14 +117,22 @@ bool RotateVisitor::compare_with_stack(Note* n)
 	  //check if the string is available
 
 	  	//continue;
-	  if(n->get_string() == current->get_string())
+	  if(n->get_string() == current->get_string()){
+	  	cout << "OVERLAP" << endl;
 	  	return false;
-	  else if(n->get_fret() == 0 || current->get_fret() == 0)
+	  }
+	  else if(n->get_fret() == 0 || current->get_fret() == 0) {
+	  	cout << "FRETTED ZERO, NONOVERLAPPING" << endl;
 	  	stack_copy.pop();
-	  else if(abs((n->get_fret() - current->get_fret())) > MAX)
+	  }
+	  else if(abs((n->get_fret() - current->get_fret())) > 10) {
+	  	cout << "SPACED " << MAX << " ITEMS AWAY" << endl;
 	  	return false;
-	  else
+	  }
+	  else{
+	  	cout << "ELSE: VALID" << endl;
 	  	stack_copy.pop();
+	  }
 	  
 	}
 	//if the candidate does not violate string overlap or fret over-extension, it is accepted
