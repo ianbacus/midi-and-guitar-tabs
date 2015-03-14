@@ -1,7 +1,7 @@
 #ifndef __PRINTVISITOR__
 #define __PRINTVISITOR__
 #include "Visitor.h"
-
+#include "base.h"
 
 class printVisitor : public Visitor
 {
