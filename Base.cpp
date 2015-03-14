@@ -3,6 +3,12 @@
 void Base::grid_init()
 {
     int value;
+    tuning[0] = 28  //E
+    tuning[1] = 33; //A
+    tuning[2] = 39; //D
+    tuning[3] = 43; //G
+    tuning[4] = 47; //B
+    tuning[5] = 52; //E
     cout << "called Grid Init" << endl;
     for(int string_ind = 0;string_ind<6;string_ind++)
     {
