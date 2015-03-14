@@ -160,7 +160,7 @@ Options options;
 	
    checkOptions(options, argc, argv);
    MidiFile midifile(options.getArg(1));
-   Basestructs refs = new Basestructs;
+   Base_structs refs = new Base_structs;
    refs.config();
    
    vector<Bar*> score= convertMidiFileToText(midifile);
