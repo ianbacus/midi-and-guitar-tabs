@@ -4,7 +4,7 @@
 class printVisitor : public Visitor
 {
   private:
-    vector<char> string_buffer[7];
+    string string_buffer[7];
   public:
   
     virtual void visitNote(Note*);
