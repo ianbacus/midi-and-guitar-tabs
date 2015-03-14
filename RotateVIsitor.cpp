@@ -116,7 +116,8 @@ bool RotateVisitor::compare_with_stack(Note* n)
 	  Note* current = stack_copy.top();
 	  //check if the string is available
 	  cout << "COPIED TOP ITEM" << endl;
-
+	cout << "FRET:" << current->get_fret() << endl;
+	cout << "STRING:" << current->get_string() << endl;
 	  	//continue;
 	  if(n->get_string() == current->get_string()){
 	  	cout << "OVERLAP" << endl;
