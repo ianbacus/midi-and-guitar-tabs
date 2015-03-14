@@ -1,3 +1,5 @@
+#ifndef __PRINTVISITOR__
+#define __PRINTVISITOR__
 #include "Visitor.h"
 
 
@@ -13,4 +15,5 @@ class printVisitor : public Visitor
     virtual void visitChunk(Chunk*);
 };
 
+#endif
 
