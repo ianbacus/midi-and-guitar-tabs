@@ -18,7 +18,6 @@ int Note::get_string() const
 
 int Note::get_fret() const
 {
-	cout << "called get fret" << endl;
 	//return pitch_to_frets_map[pitch][current_note_index]->first;
 	return Base::get_fret(pitch,current_note_index);
 }
