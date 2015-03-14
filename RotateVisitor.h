@@ -7,6 +7,8 @@
 class RotateVisitor : public Visitor
 {
 
+  private:
+    Stack<Note*> comparison_stack;
   public:
     virtual void visitNote();
     virtual void visitBar();
