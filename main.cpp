@@ -157,7 +157,9 @@ Options options;
 	
    checkOptions(options, argc, argv);
    MidiFile midifile(options.getArg(1));
-   convertMidiFileToText(midifile);
+   queue<Bar*> = convertMidiFileToText(midifile);
+   RotateVisitor thefixer = new RotateVisitor();
+   PrintVisitor theprinter = new PrintVisitor();
    return 0;
    
 }
