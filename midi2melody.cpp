@@ -50,10 +50,10 @@ void add_to_tree(int delta_start, int pitch)
 // convertMidiFileToText --
 //
 
-queue<Bar*> convertMidiFileToText(MidiFile& midifile) {
+vector<Bar*> convertMidiFileToText(MidiFile& midifile) {
    int delta_counter,last;
-   queue<Bar*> score;
-   score.push(new Bar());
+   vector<Bar*> score;
+   score.push_back(new Bar());
    score.back()->add_chunk(new Chunk());
    
   
