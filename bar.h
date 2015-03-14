@@ -15,6 +15,7 @@ class Bar : public Base
 		void add_Chunk(Chunk*);
 		//operator [] for accessing Chunks
 		virtual void reconfigure();
+		Chunk* get_child(int i) {return _bar_chunks[i];}
 		
 		virtual void accept(Visitor*v) {v->visitBar(this);}
 		virtual int get_children_size() const {return _bar_chunks.size();}
