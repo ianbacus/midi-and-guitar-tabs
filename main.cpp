@@ -163,6 +163,7 @@ Options options;
    queue<Bar*> score= convertMidiFileToText(midifile);
    RotateVisitor* thefixer = new RotateVisitor();
    PrintVisitor* theprinter = new PrintVisitor();
+   theprinter->print_out();
    return 0;
    
 }
