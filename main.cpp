@@ -11,19 +11,12 @@
 
 typedef unsigned char uchar;
 
-// user interface variables
+
 Options options;
 int     debugQ = 0;             // use with --debug option
 int     maxcount = 100000;
 double  tempo = 60.0;
 
-// function declarations:
-void convertMidiFileToText (MidiFile& midifile);
-void setTempo (MidiFile& midifile, int index, double& tempo);
-void checkOptions (Options& opts, int argc, char** argv);
-void example (void);
-void usage (const char* command);
-//////////////////////////////////////////////////////////////////////////
 
 using namespace std;
 struct Note {
