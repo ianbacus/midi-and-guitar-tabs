@@ -106,11 +106,13 @@ void RotateVisitor::visitChunk(Chunk* c)
 
 bool RotateVisitor::compare_with_stack(Note* n)
 {
-	cout << "note" << endl;
+	cout << "comparing..." << endl;
 	stack<Note*> stack_copy = _comparison_stack;
+	cout << "copied stack." << endl;
 	Note* current;
 	while(!stack_copy.empty())
 	{
+		cout << "EMPTYING STACK COPY" << endl;
 	  current = _comparison_stack.top();
 	  //check if the string is available
 
