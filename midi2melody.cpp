@@ -54,7 +54,7 @@ void convertMidiFileToText(MidiFile& midifile) {
    int command = 0;
 int truncate = 20;
 //   for (i=0; i<midifile.getNumEvents(0); i++) {
-cout << "actually there are " << midifile.getNumEvents(0) " events, but I truncated down to " << truncate << endl;
+cout << "actually there are " << midifile.getNumEvents(0) << " events, but I truncated down to " << truncate << endl;
    for (i=0; i<truncate; i++) {
 
       command = midifile[0][i][0] & 0xf0;
