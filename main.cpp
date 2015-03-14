@@ -54,6 +54,10 @@ int main()
 MidiFile midifile;
    int tracks = midifile.getTrackCount();
    midifile.read(fn);
-   midifile.getNumEvents(track);
+   while(int track = 0 < tracks)
+   {
+   	midifile.getNumEvents(track);
+   	track++;
+   }
   return 0;
 }
