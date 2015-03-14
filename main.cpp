@@ -1,4 +1,4 @@
-
+#include "Reader.h"
 #include "Options.h"
 #include "MidiFile.h"
 #include <iostream>
