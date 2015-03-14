@@ -36,7 +36,7 @@ void Chunk::rotate()
 // Compare function used by visitor. Shouldn't move anything around...
 // just inspect the notes separation? This function might be unneeded/unwanted here
 
-
+/*
 bool Chunk::compare_chunks(Chunk* chunk2)
 {
 //only passed other chunks, polymorphism here used lazily
@@ -50,3 +50,4 @@ bool Chunk::compare_chunks(Chunk* chunk2)
 	}
 
 }
+*/
