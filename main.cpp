@@ -3,7 +3,8 @@
 #include "Options.h"
 #include "midi2melody.h"
 #include "Visitor.h"
-
+#include "Printivisitor.h"
+#include "RotateVisitor.h"
 #include <ctype.h>
 #include <string.h>
 #include <stdio.h>
