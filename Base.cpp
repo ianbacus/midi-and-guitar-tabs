@@ -45,7 +45,7 @@ int Base::get_pitch_to_frets_entry_size(int pitch) const
 //returns the size of a vector of tab matrix coordinates associated with a pitch. Equivalently, returns the number
 // of frettable locations for a note.
 {
-	cout << "entry is " << (pitch_to_frets_map.find(pitch)->second).size() " units long" << endl;
+	cout << "entry is " << (pitch_to_frets_map.find(pitch)->second).size() << " units long" << endl;
 	return (pitch_to_frets_map.find(pitch)->second).size();
 
 }
