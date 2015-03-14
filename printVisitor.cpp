@@ -28,7 +28,7 @@ void printVisitor::visitChunk(Chunk* c)
   //TODO: logic for separating based on tick/notevalue
   for(int j=0; j<c->get_children_size(); j++)
   {
-    Note* current_note = get_note_at(j);
+    Note* current_note = c->get_note_at(j);
     if(current_note->get_string() == string_print_index)
     {
       current_note->accept(this);
