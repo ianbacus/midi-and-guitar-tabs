@@ -9,7 +9,7 @@
 
 void RotateVisitor::visitBar(Bar* b) 
 {
-  for(int i=0; i < b->get_children_vector_size(); i++)
+  for(int i=0; i < b->get_children_size(); i++)
   {
     b->get_child(i)->accept(this);
   }
@@ -76,9 +76,9 @@ void RotateVisitor::visitChunk(Chunk* c)
   int counter_index=0,fail_count=0;
 //  push_stack(c->get_note_at(++j)); //only if this increments after evaluating
 
-	  while(counter_index < c->get_children_vector_size() )
+	  while(counter_index < c->get_children_size())
 	  {
-	  	if(fail_count == c->get_entry_size())
+	  	if(fail_count == c->get_note_at(counter_index)->get_children_size())
 	  	{
 	  		//after exhausting all tries, go back one step on the stack
 	  		pop_stack();
@@ -112,7 +112,7 @@ bool RotateVisitor::compare_with_stack(Note* n)
 	  //check if the string is available
 
 	  	//continue;
-	  if(n->get_string() == current->get_string)
+	  if(n->get_string() == current->get_string())
 	  	return false;
 	  else if(n->get_fret() == 0 || current->get_fret() == 0)
 	  	_comparison_stack.pop();
