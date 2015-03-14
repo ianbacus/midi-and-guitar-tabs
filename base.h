@@ -20,6 +20,8 @@
 using namespace std;
 typedef vector<pair<int,int> * > coordinate_set;
 
+class Visitor;
+
 class Base
 {
 	public:
