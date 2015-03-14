@@ -13,12 +13,13 @@
 
 
 using namespace std;
+/*
 struct Note {
       double tick;
       double duration;
       int    pitch;
       void print_data() {cout << pitch << " for " << duration << ". Tick=" << tick << endl;}
-};
+};*/
 
 /*
 void read_chunk(Reader &ro)
