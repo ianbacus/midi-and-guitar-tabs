@@ -1,4 +1,4 @@
-#include "tabber.h"
+#include "base.h"
 #define ACCEPTABLE  8
 //Note should have a vector of possible string positions (which depend on the tuning in the tab matrix) by default
 // hold an index to tabmatrix, update by incrementing 
