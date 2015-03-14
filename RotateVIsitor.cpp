@@ -71,7 +71,8 @@ void RotateVisitor::visitChunk(Chunk* c)
   // go back to the previous candidate and increment its index
  
  //the items are essentially being moved from the vector tree into a stack for comparison purpose, element by element
- 
+void RotateVisitor::visitChunk(Chunk* c) 
+{
   int counter_index=0,fail_count=0;
 //  push_stack(c->get_note_at(++j)); //only if this increments after evaluating
 
@@ -126,7 +127,7 @@ bool RotateVisitor::compare_with_stack(Note* n)
 	
 }
 
-void RotateVisitor::visitNote() 
+void RotateVisitor::visitNote(Note* n) 
 {
-  increment_note_index(c->get_note_at(counter_index));
+  n->increment_note_index();
 }
