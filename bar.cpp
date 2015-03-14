@@ -1,4 +1,4 @@
-#include "tabber.h"
+#include "base.h"
 
 
 void Bar::reconfigure(Base*)
