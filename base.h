@@ -53,6 +53,7 @@ class Base
 		
 };
 
+#include "visitor.h"
 #include "note.h"
 #include "bar.h"
 #include "chunk.h"
