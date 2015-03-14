@@ -113,18 +113,18 @@ bool RotateVisitor::compare_with_stack(Note* n)
 	while(!stack_copy.empty())
 	{
 		cout << "EMPTYING STACK COPY" << endl;
-	  current = _comparison_stack.top();
+	  current = stack_copy.top();
 	  //check if the string is available
 
 	  	//continue;
 	  if(n->get_string() == current->get_string())
 	  	return false;
 	  else if(n->get_fret() == 0 || current->get_fret() == 0)
-	  	_comparison_stack.pop();
+	  	stack_copy.pop();
 	  else if(abs((n->get_fret() - current->get_fret())) > MAX)
 	  	return false;
 	  else
-	  	_comparison_stack.pop();
+	  	stack_copy.pop();
 	  
 	}
 	//if the candidate does not violate string overlap or fret over-extension, it is accepted
