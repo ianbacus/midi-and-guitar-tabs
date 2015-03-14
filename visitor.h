@@ -1,8 +1,6 @@
 #ifndef __VISITOR__
 #define __VISITOR__
 
-
-#include <stdio>
 #include <string>
 #include <vector>
 #include <map>
