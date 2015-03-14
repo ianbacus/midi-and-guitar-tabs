@@ -25,12 +25,7 @@ void      usage                 (const char* command);
 
 //////////////////////////////////////////////////////////////////////////
 
-int main(int argc, char* argv[]) {
-   checkOptions(options, argc, argv);
-   MidiFile midifile(options.getArg(1));
-   convertMidiFileToText(midifile);
-   return 0;
-}
+
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -57,8 +52,11 @@ void convertMidiFileToText(MidiFile& midifile) {
    int key = 0;
    int vel = 0;
    int command = 0;
+int truncate = 20;
+//   for (i=0; i<midifile.getNumEvents(0); i++) {
+cout << "actually there are " << midifile.getNumEvents(0) " events, but I truncated down to " << truncate << endl;
+   for (i=0; i<truncate; i++) {
 
-   for (i=0; i<midifile.getNumEvents(0); i++) {
       command = midifile[0][i][0] & 0xf0;
       if (command == 0x90 && midifile[0][i][2] != 0) {
          // store note-on velocity and time
