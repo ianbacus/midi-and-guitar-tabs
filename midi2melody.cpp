@@ -108,7 +108,7 @@ cout << "actually there are " << midifile.getNumEvents(0) << " events, but I tru
                else
                {
                   //a new chunk must be created, and the new note must be added to it
-                  score.back()->add_child(new Chunk());
+                  score.back()->add_chunk(new Chunk());
                   last =  score.back()->get_child()->get_children_size() - 1;
                   score.back()->get_child(last)->add_note(new Note(pitch));
                }
