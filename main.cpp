@@ -110,14 +110,19 @@ noteoff:
 
 int main()
 {
-	int track=0;
-  string fn ("canon.mid");
+	
+  MidiFile midifile;
+  vector<Note> piece;
+  int tracks;
+  
+while(1)
+{
+  int track=0;
  // Reader robj(fn);
   //read_file(robj);
-  vector<Note> piece;
-MidiFile midifile;
-   int tracks = midifile.getTrackCount();
-   midifile.read(fn);
+  
+   midifile = Midifile(cin);
+   tracks = midifile.getTrackCount();
    //int track = 0;
    cout << tracks << " tracks." << endl;
    while(track < tracks)
@@ -130,5 +135,6 @@ MidiFile midifile;
    {
    	n.print_data();
    }
+	}
   return 0;
 }
