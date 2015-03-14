@@ -4,8 +4,9 @@
 #include <string>
 #include <vector>
 #include <map>
-#include "Base.h"
-
+#include "Note.h"
+#include "Bar.h"
+#include "Chunk.h"
 class Visitor
 {
 
