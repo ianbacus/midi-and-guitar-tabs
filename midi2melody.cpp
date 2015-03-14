@@ -1,11 +1,4 @@
-#include "MidiFile.h"
-#include "Options.h"
-#include <ctype.h>
-#include <string.h>
-#include <stdio.h>
-#include <iostream>
-#include <vector>
-
+#include "midi2melody.h"
 using namespace std;
 
 typedef unsigned char uchar;
