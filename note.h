@@ -12,6 +12,7 @@ class Note : public Base
 
 		int get_fret() const;
 		int get_string() const;
+		int get_entry_size() const {return get_pitch_to_frets_entry_size(pitch);}
 		void increment_note_index();
 		//int get_current_note_index const {return current_note_index;}
 		int get_pitch() const {return pitch;}
