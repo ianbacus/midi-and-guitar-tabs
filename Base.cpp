@@ -1,6 +1,6 @@
 #include "base.h"
 
-void Base::grid_init()
+void Base_structs::config()
 {
     int value;
     tuning[0] = 28;  //E
