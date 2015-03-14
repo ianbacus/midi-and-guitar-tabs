@@ -9,12 +9,8 @@
 #include <vector>
 #include <iostream>
 
-/*
-Options options;
-int     debugQ = 0;             // use with --debug option
-int     maxcount = 100000;
-double  tempo = 60.0;
-*/
+
+
 
 using namespace std;
 struct Note {
@@ -155,6 +151,10 @@ void test()
 }
 
 int main(int argc, char* argv[]) {
+Options options;
+int     debugQ = 0;             // use with --debug option
+int     maxcount = 100000;
+double  tempo = 60.0;
 	
    checkOptions(options, argc, argv);
    MidiFile midifile(options.getArg(1));
