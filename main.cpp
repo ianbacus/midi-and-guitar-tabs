@@ -124,6 +124,6 @@ MidiFile midifile;
    	cout << "Track " << track << " has " << midifile.getNumEvents(track) << " events." << endl;
    	track++;
    }
-   convertToMelody(midifile,piece)
+   convertToMelody(midifile,piece);
   return 0;
 }
