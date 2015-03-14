@@ -9,14 +9,12 @@
 #include <vector>
 #include <iostream>
 
-typedef unsigned char uchar;
-
-
+/*
 Options options;
 int     debugQ = 0;             // use with --debug option
 int     maxcount = 100000;
 double  tempo = 60.0;
-
+*/
 
 using namespace std;
 struct Note {
