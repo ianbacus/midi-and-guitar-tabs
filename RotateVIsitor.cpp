@@ -1,4 +1,4 @@
-#include "Visitor.h"
+#include "RotateVisitor.h"
 #define MAX  8
 //This will recursively check and reconfigure all of the elements of the tree
 
