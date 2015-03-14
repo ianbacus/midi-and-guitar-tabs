@@ -65,7 +65,7 @@ void read_file(Reader &ro)
 //
 // convertToMelody --
 //
-
+/*
 void convertToMelody(MidiFile& midifile, vector<Note>& melody) {
    int track = 0;
    midifile.joinTracks();
@@ -149,7 +149,7 @@ void test()
 	   //	n.print_data();
 	   }
 	}
-}
+}*/
 
 int main(int argc, char* argv[]) {
 Options options;
