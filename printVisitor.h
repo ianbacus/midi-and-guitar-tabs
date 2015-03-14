@@ -3,7 +3,7 @@
 #include "Visitor.h"
 #include "base.h"
 
-class printVisitor : public Visitor
+class PrintVisitor : public Visitor
 {
   private:
     string string_buffer[7];
