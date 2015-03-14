@@ -9,6 +9,7 @@
 
 void RotateVisitor::visitBar(Bar* b) 
 {
+cout << "Bar" << endl;
   for(int i=0; i < b->get_children_size(); i++)
   {
     b->get_child(i)->accept(this);
