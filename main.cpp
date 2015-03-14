@@ -114,14 +114,15 @@ int main()
   MidiFile midifile;
   vector<Note> piece;
   int tracks;
-  
+  string filename;
 while(1)
 {
   int track=0;
  // Reader robj(fn);
   //read_file(robj);
-  
-   midifile = MidiFile(cin);
+  filename = "";
+  cin >> filename;
+   midifile = MidiFile(filename);
    tracks = midifile.getTrackCount();
    //int track = 0;
    cout << tracks << " tracks." << endl;
