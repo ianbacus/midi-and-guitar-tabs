@@ -13,13 +13,16 @@ Note::Note(int pitch_init)
 int Note::get_string() const
 {
 	//return pitch_to_frets_map[pitch][current_note_index]->second;
-	return Base::get_string(pitch,current_note_index);
+	return Base_structs::(pitch_to_frets_map.find(pitch)->second)[index]->first;
+//	return Base::get_string(pitch,current_note_index);
 }
 
 int Note::get_fret() const
 {
 	//return pitch_to_frets_map[pitch][current_note_index]->first;
-	return Base::get_fret(pitch,current_note_index);
+//	return Base::get_fret(pitch,current_note_index);
+	return Base_structs::(pitch_to_frets_map.find(pitch)->second)[index]->second;
+	
 }
 
 void Note::increment_note_index()
@@ -29,6 +32,7 @@ void Note::increment_note_index()
 }
 bool Note::compare(Note* note) const
 {
+	//this function will be deleted
 	if(note->get_string() == get_string()) return false;
 	else
 	{
