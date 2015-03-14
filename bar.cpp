@@ -1,6 +1,6 @@
 #include "base.h"
 
-
+/*
 void Bar::reconfigure(Base*)
 {
 	//possibly implement using visitor pattern, recursively search nonterminal nodes.. run a comparison on every set of 3 Chunks
@@ -15,4 +15,4 @@ void Bar::reconfigure(Base*)
 		}
 		
 	}
-}
+}*/
