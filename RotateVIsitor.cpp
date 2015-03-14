@@ -74,6 +74,7 @@ void RotateVisitor::visitChunk(Chunk* c)
  //the items are essentially being moved from the vector tree into a stack for comparison purpose, element by element
 void RotateVisitor::visitChunk(Chunk* c) 
 {
+	cout << "chunk" << endl;
   int counter_index=0,fail_count=0;
 //  push_stack(c->get_note_at(++j)); //only if this increments after evaluating
 
@@ -105,6 +106,7 @@ void RotateVisitor::visitChunk(Chunk* c)
 
 bool RotateVisitor::compare_with_stack(Note* n)
 {
+	cout << "note" << endl;
 	stack<Note*> stack_copy = _comparison_stack;
 	Note* current;
 	while(!stack_copy.empty())
