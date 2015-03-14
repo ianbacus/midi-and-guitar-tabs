@@ -1,5 +1,5 @@
 #include "Visitor.h"
-
+#define MAX  8
 //This will recursively check and reconfigure all of the elements of the tree
 
 //Possibly...
@@ -14,7 +14,7 @@ void RotateVisitor::visitBar(Bar* b)
     b->get_child(i)->accept(this);
   }
 }
-
+/*
 void Chunk::rotate()
 {
 
@@ -51,22 +51,82 @@ void RotateVisitor::visitChunk(Chunk* c)
   //hold a "locus" note in the chunk and compares it against all other notes. If no configuration works, tries next note as locus
   for(int i=0; i < c->get_children_vector_size()-1; i++)
   {
-    tabstrings_reset(); //mark all strings as open except the current locus
-    tabstrings_close(c->get_child(i)->get_string());
+//    tabstrings_reset(); //mark all strings as open except the current locus
+//    tabstrings_close(c->get_child(i)->get_string());
     
     for(int j=0; j < c->get_children_vector_size()-1; j++)
     {if(j != i){ //Loop over all of the non-i elements for comparison purposes. If they are valid, don't visit
+    // but... call a function from them to recurse back to. (?)
         if(tabstrings_close(c->get_child(j)) && c->get_child(i)->compare(c->get_child(j))) 
         {
+        	push_stack(c);
         	c->get_child(i)->accept(this);
         }
     }}  
   }
-  
+  */
+  //Algorithm idea: 
+  // Increment through vector of notes. If a candidate compares nicely with the current stack of accepted notes,
+  // add it to the stack and continue to the next candidate. If it does not work with the rest of the note coordinates,
+  // go back to the previous candidate and increment its index
+ 
+ //the items are essentially being moved from the vector tree into a stack for comparison purpose, element by element
+ 
+  int counter_index=0,fail_count=0;
+//  push_stack(c->get_note_at(++j)); //only if this increments after evaluating
+
+	  while(counter_index < c->get_children_vector_size() )
+	  {
+	  	if(fail_count == c->get_entry_size())
+	  	{
+	  		//after exhausting all tries, go back one step on the stack
+	  		pop_stack();
+	  		counter_index--;
+	  		c->get_note_at(counter_index)->accept(this);
+	  	}
+	  	else if(compare_with_stack(c->get_note_at(counter_index)) )
+	  	{
+	  		//if the note to be added is compatible with the rest of the stack, continue on to the next note
+	  		push_stack(c->get_note_at(counter_index));
+	  		counter_index++;
+	  		fail_count=0;
+	  		
+	  	}
+	  	else //should only be these three cases
+	  	{
+	  		//if the note is incompatible, begin reconfiguring the candidate note
+	  		c->get_note_at(counter_index)->accept(this);
+	  		fail_count++;
+	  	}
+	  }
 }
 
+bool RotateVisitor::compare_with_stack(Note* n)
+{
+	stack<Note*> stack_copy = _comparison_stack;
+	Note* current;
+	while(!stack_copy.empty())
+	{
+	  current = _comparison_stack.top();
+	  //check if the string is available
+
+	  	//continue;
+	  if(n->get_string() == current->get_string)
+	  	return false;
+	  else if(n->get_fret() == 0 || current->get_fret() == 0)
+	  	_comparison_stack.pop();
+	  else if(abs((n->get_fret() - current->get_fret())) > MAX)
+	  	return false;
+	  else
+	  	_comparison_stack.pop();
+	  
+	}
+	//if the candidate does not violate string overlap or fret over-extension, it is accepted
+	return true;
+	
+}
 
 void RotateVisitor::visitNote() 
 {
-  
+  increment_note_index(c->get_note_at(counter_index));
 }
