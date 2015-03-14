@@ -12,7 +12,7 @@ class Bar : public Base
 	public:
 		vector<Chunk*> _bar_chunks; //Chunks are children of Bar	
 
-		void add_chunk(Chunk*);
+		void add_chunk(Chunk* c) {_bar_chunks.push_back(c);}
 		//operator [] for accessing Chunks
 		virtual void reconfigure();
 		Chunk* get_child(int i) {return _bar_chunks[i];}
