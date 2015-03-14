@@ -3,7 +3,7 @@
 void Base::grid_init()
 {
     int value;
-    tuning[0] = 28  //E
+    tuning[0] = 28;  //E
     tuning[1] = 33; //A
     tuning[2] = 39; //D
     tuning[3] = 43; //G
