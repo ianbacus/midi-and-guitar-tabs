@@ -18,7 +18,7 @@ class Chunk : public Base
 		int get_chunk_size() {return _chunk_notes.size();}
 		//vector<Note*> * get_chunk_notes_vector() {return &_chunk_notes;}
 		
-		virtual void accept(Visitor* v) {v.visitChunk(this);}
+		virtual void accept(Visitor* v) {v->visitChunk(this);}
 	//	virtual void reconfigure(); //removed parameter Base*
 		bool compare_chunks(Chunk*);
 	
