@@ -6,7 +6,7 @@
 
 Note::PitchMap Note::config()
 {
-    Base::PitchMap initmap;
+    PitchMap initmap;
     int value;
     int tuning[6];
     tuning[0] = 28;  //E
