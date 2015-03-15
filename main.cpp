@@ -193,9 +193,11 @@ Options options;
    
    cout << "Main: note size: " << score[0]->get_child(0)->get_note_at(0)->get_children_size() << endl;
    
-   cout << "Main: note string: " << score[0]->get_child(0)->get_note_at(0)->get_pitch() << endl;
+   int pitch = score[0]->get_child(0)->get_note_at(2)->get_pitch() ;
+   
+   cout << "Main: note string: " << << endl;
    Note::PitchMap pmap = Note::pitch_to_frets_map;
-   pair<int,int> * &pairy = pmap.at(50)[0];
+   pair<int,int> * &pairy = pmap.at(pitch)[0];
    cout << "Main: note string: " << pairy->first << endl;
    cout << "Main: note fret: " << pairy->second << endl;
    
