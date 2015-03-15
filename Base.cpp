@@ -24,7 +24,7 @@ void Base_structs::config()
     }
 }
 
-
+/*
 int Base::get_string(int pitch,int index) const
 {
 	cout << pitch << " is on string " << ((pitch_to_frets_map.find(pitch)->second)[index]->first) << endl;
@@ -48,4 +48,4 @@ int Base::get_pitch_to_frets_entry_size(int pitch) const
 	cout << "entry is " << (pitch_to_frets_map.find(pitch)->second).size() << " units long" << endl;
 	return (pitch_to_frets_map.find(pitch)->second).size();
 
-}
+}*/
