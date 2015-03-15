@@ -26,8 +26,8 @@ class Base
 {
 	private:
  	static std::map <int, vector< pair<int,int> * >  > pitch_to_frets_map;
-    	int tuning[6];
-    	int tab_matrix [6][20];
+    //	int tuning[6];
+    //	int tab_matrix [6][20];
     	public:
     		void config();
 		Base() {config();}
