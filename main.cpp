@@ -195,7 +195,7 @@ Options options;
    
    int pitch = score[0]->get_child(0)->get_note_at(2)->get_pitch() ;
    
-   cout << "Main: note string: " << << endl;
+   cout << "Main: note pitch: " << pitch << endl;
    Note::PitchMap pmap = Note::pitch_to_frets_map;
    pair<int,int> * &pairy = pmap.at(pitch)[0];
    cout << "Main: note string: " << pairy->first << endl;
