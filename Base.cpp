@@ -30,7 +30,7 @@ Base::PitchMap Base::config()
 
 int Base::get_string(int pitch,int index) const
 {
-//	cout << pitch << " is on string " << ((pitch_to_frets_map.find(pitch)->second)[index]->first) << endl;
+	cout << pitch << " is on string " << ((pitch_to_frets_map.find(pitch)->second)[index]->first) << endl;
 	return (pitch_to_frets_map.find(pitch)->second)[index]->first;
 	
 }
@@ -39,7 +39,7 @@ int Base::get_fret(int pitch, int index) const
 {
 	//const vector<pair<int,int>* > pairy = (pitch_to_frets_map.find(pitch)->second);
 	//cout << pairy[index]->second << endl;
-//	cout << pitch << " is on fret " << ((pitch_to_frets_map.find(pitch)->second)[index]->second) << endl;
+	cout << pitch << " is on fret " << ((pitch_to_frets_map.find(pitch)->second)[index]->second) << endl;
 	return (pitch_to_frets_map.find(pitch)->second)[index]->second;
 }
 
