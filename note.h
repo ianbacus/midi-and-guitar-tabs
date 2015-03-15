@@ -18,8 +18,8 @@ class Note : public Base
 		
 		
 		virtual void accept(Visitor* v) {v->visitNote(this);}
-		virtual int get_children_size() const {return Base_structs::pitch_to_frets_map.find(pitch)->second).size();}
-	
+		//virtual int get_children_size() const {return Base_structs::pitch_to_frets_map.find(pitch)->second).size();}
+		virtual int get_children_size() const {return Base::get_pitch_to_frets_entry_size(pitch);}
 		virtual bool compare(Note*) const;
 //		virtual void reconfigure();
 	
