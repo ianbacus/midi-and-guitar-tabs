@@ -46,7 +46,7 @@ class Base
 	//	friend struct Base_structs;
 //		int get_string_pos(int,int) const; 
 //		int get_fret_pos(int,int) const;
-		int get_pitch_to_frets_entry_size(int pitch) const;
+//		int get_pitch_to_frets_entry_size(int pitch) const;
 		
 		//int set_tuning(string);
 		
