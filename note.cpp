@@ -46,7 +46,9 @@ int Note::get_string() const
 {
 	int ret;
 	try {
-		ret = (pitch_to_frets_map.at(pitch))[index]->first;
+		vector<pair<int, int> * > &tempvec =  pitch_to_frets_map.at(pitch);
+		//ret = (pitch_to_frets_map.at(pitch))[index]->first;
+		ret = tempvec[index]->first;
 	}
 	catch (const std::out_of_range& oor) {
 		std::cerr << "Out of Range error: " << oor.what() << '\n';
