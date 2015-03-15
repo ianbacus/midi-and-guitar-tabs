@@ -194,7 +194,7 @@ Options options;
    cout << "Main: note size: " << score[0]->get_child(0)->get_note_at(0)->get_children_size() << endl;
    
    cout << "Main: note string: " << score[0]->get_child(0)->get_note_at(0)->get_pitch() << endl;
-   cout << "Main: note string: " << Note::pitch_to_frets_map[50] << endl;
+   cout << "Main: note string: " << Note::pitch_to_frets_map[50]->second << endl;
    
    cout << "Main: chunk size: " << score[0]->get_child(0)->get_children_size() << endl;
    cout << "Main: bar size: " << score[0]->get_children_size() << endl;
