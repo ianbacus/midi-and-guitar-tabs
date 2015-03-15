@@ -31,6 +31,7 @@ class Base
     	int tuning[6];
     	int tab_matrix [6][20];
     	public:
+    		void config();
 		Base() {config();}
 		~Base();
 		//This structure is a bit unwieldy. Referencing the pair pointers inside the vector takes several
@@ -43,7 +44,7 @@ class Base
 		//accessors
 		
 		//retrieve string and fret information from the fret map with modulo addressing (circular vector)
-		friend struct Base_structs;
+	//	friend struct Base_structs;
 	//	int get_string(int,int) const; 
 	//	int get_fret(int,int) const;
 	//	int get_pitch_to_frets_entry_size(int pitch) const;
