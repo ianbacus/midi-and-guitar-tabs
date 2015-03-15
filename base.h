@@ -44,8 +44,8 @@ class Base
 		
 		//retrieve string and fret information from the fret map with modulo addressing (circular vector)
 	//	friend struct Base_structs;
-		int get_string(int,int) const; 
-		int get_fret(int,int) const;
+		int get_string_pos(int,int) const; 
+		int get_fret_pos(int,int) const;
 		int get_pitch_to_frets_entry_size(int pitch) const;
 		
 		//int set_tuning(string);
