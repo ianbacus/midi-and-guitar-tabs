@@ -44,7 +44,7 @@ int Note::get_string() const
 {
 	int ret;
 	try {
-		ret = (pitch_to_frets_map.at(pitch))[index]->first;
+		ret = (pitch_to_frets_map.at(pitch).second)[index]->first;
 	}
 	catch (const std::out_of_range& oor) {
 		std::cerr << "Out of Range error: " << oor.what() << '\n';
@@ -57,7 +57,7 @@ int Note::get_fret() const
 {
 	int ret;
 	try {
-		ret = (pitch_to_frets_map.at(pitch))[index]->second;
+		ret = (pitch_to_frets_map.at(pitch).second)[index]->second;
 	}
 	catch (const std::out_of_range& oor) {
 		std::cerr << "Out of Range error: " << oor.what() << '\n';
@@ -96,7 +96,10 @@ bool Note::compare(Note* note) const
 		}
 	}
 	*/
-	
+int Note::get_pitch_entry_size()
+{
+	return (pitch_to_frets_map.at(pitch).second).size();
+}
 	
 Note::PitchMap Note::pitch_to_frets_map = Note::config();
 
