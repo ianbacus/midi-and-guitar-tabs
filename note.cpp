@@ -25,8 +25,9 @@ Note::PitchMap Note::config()
                 //tab_matrix[string_ind][fret_ind] = value;
                 pair<int,int> map_point = make_pair(string_ind,fret_ind);
                 initmap[value].push_back(&map_point); //add note to (note : location on fretboard) pitch_to_frets. this will help for determining how many placements there are for a note, and quickly indexing them (is this any faster than indexing the array? TODO)
-            	cout << value <<  "first/string " << (*pitch_to_frets_map.at(value))[0]->first;
-            	cout << "second/fret "<< (*pitch_to_frets_map.at(value))[0]->second << endl;
+  		cout << pitch_to_frets_map.at(value) << endl;
+  //          	cout << value <<  "first/string " << (*pitch_to_frets_map.at(value))[0]->first;
+    //        	cout << "second/fret "<< (*pitch_to_frets_map.at(value))[0]->second << endl;
             	
             }
         }
@@ -44,7 +45,7 @@ int Note::get_string() const
 {
 	int ret;
 	try {
-		ret = (*pitch_to_frets_map.at(pitch))[index]->first;
+//		ret = (*pitch_to_frets_map.at(pitch))[index]->first;
 	}
 	catch (const std::out_of_range& oor) {
 		std::cerr << "Out of Range error: " << oor.what() << '\n';
@@ -57,7 +58,7 @@ int Note::get_fret() const
 {
 	int ret;
 	try {
-		ret = (*pitch_to_frets_map.at(pitch))[index]->second;
+//		ret = (*pitch_to_frets_map.at(pitch))[index]->second;
 	}
 	catch (const std::out_of_range& oor) {
 		std::cerr << "Out of Range error: " << oor.what() << '\n';
@@ -98,7 +99,9 @@ bool Note::compare(Note* note) const
 	*/
 int Note::get_pitch_entry_size()
 {
-	return (pitch_to_frets_map.at(pitch).second).size();
+//return (pitch_to_frets_map.at(pitch).second).size();
+	return 1;
+	
 }
 	
 Note::PitchMap Note::pitch_to_frets_map = Note::config();
