@@ -191,7 +191,10 @@ Options options;
   // refs.config();
    vector<Bar*> score= convertMidiFileToText(midifile);
    
-   cout << "Main: " << score[0]->get_child(0)->get_note_at(0)->get_fret() << endl;
+   cout << "Main: note size: " << score[0]->get_child(0)->get_note_at(0)->get_children_size() << endl;
+   cout << "Main: chunk size: " << score[0]->get_child(0)->get_children_size() << endl;
+   cout << "Main: bar size: " << score[0]->get_children_size() << endl;
+
    
    RotateVisitor* thefixer = new RotateVisitor();
    PrintVisitor* theprinter = new PrintVisitor();
