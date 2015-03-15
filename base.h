@@ -28,9 +28,9 @@ class Base
    // 	int tuning[6];
   //  	int tab_matrix [6][20];
     	public:
-    	typedef std::map <int, vector< pair<int,int> * >  > PitchMap;
- 	static PitchMap pitch_to_frets_map;
-    	static PitchMap config();
+//    	typedef std::map <int, vector< pair<int,int> * >  > PitchMap;
+// 	static PitchMap pitch_to_frets_map;
+//   	static PitchMap config();
 		Base() {}
 		~Base();
 		//This structure is a bit unwieldy. Referencing the pair pointers inside the vector takes several
@@ -44,8 +44,8 @@ class Base
 		
 		//retrieve string and fret information from the fret map with modulo addressing (circular vector)
 	//	friend struct Base_structs;
-		int get_string_pos(int,int) const; 
-		int get_fret_pos(int,int) const;
+//		int get_string_pos(int,int) const; 
+//		int get_fret_pos(int,int) const;
 		int get_pitch_to_frets_entry_size(int pitch) const;
 		
 		//int set_tuning(string);
