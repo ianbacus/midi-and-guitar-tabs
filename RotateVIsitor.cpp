@@ -142,6 +142,7 @@ bool RotateVisitor::compare_with_stack(Note* n)
 
 void RotateVisitor::visitNote(Note* n) 
 {
-cout << "incrementing note" << endl;
+  cout << "incrementing note: " << n->get_fret() << " " << n->get_string() <<"to";
   n->increment_note_index();
+  cout <<  n->get_fret() << " " << n->get_string() << endl;
 }
