@@ -34,9 +34,14 @@ Base::PitchMap Base::config()
 int Base::get_string_pos(int pitch,int index) const
 {
 	//cout << pitch << " is on string " << ((pitch_to_frets_map.at(pitch))[index]->first) << endl;
-	int ret = (pitch_to_frets_map.at(pitch))[index]->first;
-	if(ret == std::out_of_range)
-		cout << "uh oh";
+	int ret;
+	try {
+		ret = (pitch_to_frets_map.at(pitch))[index]->first;
+	}
+	catch (const std::out_of_range& oor) {
+		std::cerr << "Out of Range error: " << oor.what() << '\n';
+		//cout << "uh oh";
+	}
 	return ret;
 	
 }
@@ -46,9 +51,14 @@ int Base::get_fret_pos(int pitch, int index) const
 	//const vector<pair<int,int>* > pairy = (pitch_to_frets_map.find(pitch)->second);
 	//cout << pairy[index]->second << endl;
 	//cout << pitch << " is on fret " << ((pitch_to_frets_map.at(pitch))[index]->second) << endl;
-	int ret = (pitch_to_frets_map.at(pitch))[index]->second;
-	if(ret == std::out_of_range)
-		cout << "uh oh";
+	int ret;
+	try {
+		ret = (pitch_to_frets_map.at(pitch))[index]->second;
+	}
+	catch (const std::out_of_range& oor) {
+		std::cerr << "Out of Range error: " << oor.what() << '\n';
+		//cout << "uh oh";
+	}
 	return ret;
 }
 
