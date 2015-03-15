@@ -47,7 +47,7 @@ int Note::get_string() const
 	int ret;
 	try {
 		//vector<pair<int, int> * > &tempvec =  pitch_to_frets_map.at(pitch);
-		pair<int,int> * &pairy = pitch_to_frets_map.at(pitch)[index];
+		pair<int,int> * &pairy = pitch_to_frets_map.at(pitch)[current_note_index];
 		ret = pairy->first;
 		//ret = (pitch_to_frets_map.at(pitch))[current_note_index]->first;
 		//ret = tempvec[current_note_index]->first;
@@ -63,7 +63,7 @@ int Note::get_fret() const
 {
 	int ret;
 	try {		
-		pair<int,int> * &pairy = pitch_to_frets_map.at(pitch)[index];
+		pair<int,int> * &pairy = pitch_to_frets_map.at(pitch)[current_note_index];
 		ret = pairy->first;
 		//ret = (pitch_to_frets_map.at(pitch))[current_note_index]->second;
 	}
