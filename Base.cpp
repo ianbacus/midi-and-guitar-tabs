@@ -1,9 +1,8 @@
 #include "base.h"
-using Base::PitchMap;
 
-static PitchMap Base::config()
+static Base::PitchMap Base::config()
 {
-    PitchMap initmap;
+    Base::PitchMap initmap;
     int value;
     int tuning[6];
     tuning[0] = 28;  //E
@@ -53,5 +52,5 @@ int Base::get_pitch_to_frets_entry_size(int pitch) const
 	return (pitch_to_frets_map.find(pitch)->second).size();
 
 }
-PitchMap Base::pitch_to_frets_map = Base::config();
+Base::PitchMap Base::pitch_to_frets_map = Base::config();
 
