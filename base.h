@@ -28,10 +28,10 @@ class Base
    // 	int tuning[6];
   //  	int tab_matrix [6][20];
     	public:
-    	
+    	typedef <int, vector< pair<int,int> * >  > PitchMap;
  	static std::map <int, vector< pair<int,int> * >  > pitch_to_frets_map;
-    		void config();
-		Base() {config();}
+    		static PitchMap config();
+		Base() {}
 		~Base();
 		//This structure is a bit unwieldy. Referencing the pair pointers inside the vector takes several
 		// layers of indirection. Map's find function preserves constness, but it returns iterators which add even more indirection
