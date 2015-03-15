@@ -25,7 +25,7 @@ Note::PitchMap Note::config()
                 //tab_matrix[string_ind][fret_ind] = value;
                 pair<int,int> map_point = make_pair(string_ind,fret_ind);
                 initmap[value].push_back(&map_point); //add note to (note : location on fretboard) pitch_to_frets. this will help for determining how many placements there are for a note, and quickly indexing them (is this any faster than indexing the array? TODO)
-  		&vector<pair<int, int> * > testo =  pitch_to_frets_map.at(value);
+  		vector<pair<int, int> * > &testo =  pitch_to_frets_map.at(value);
   //          	cout << value <<  "first/string " << (*pitch_to_frets_map.at(value))[0]->first;
     //        	cout << "second/fret "<< (*pitch_to_frets_map.at(value))[0]->second << endl;
             	
