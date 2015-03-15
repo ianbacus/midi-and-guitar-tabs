@@ -110,5 +110,5 @@ return (pitch_to_frets_map.at(pitch)).size();
 
 }
 	
-Note::PitchMap Note::pitch_to_frets_map = Note::config();
+//Note::PitchMap Note::pitch_to_frets_map = Note::config();
 
