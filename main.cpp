@@ -16,7 +16,7 @@
 
 
 using namespace std;
-
+/*
 void config()
 {
 int tuning[6];
@@ -42,7 +42,7 @@ int tuning[6];
         }
     }
 }
-/*
+
 
 struct Note {
       double tick;
