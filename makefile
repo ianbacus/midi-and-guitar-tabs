@@ -8,7 +8,7 @@ LIB_PATH = -L midifile/lib/ -l midifile
 all: $(EXE)
 
 $(EXE): base.h chunk.h bar.h note.h $(SOURCES)
-	g++ $(CFLAGS) -Wall -std=c++11 $(INC_PATH) $(SOURCES) main.cpp $(LIB_PATH) -o $(EXE)
+	g++ $(CFLAGS) -std=c++11 $(INC_PATH) $(SOURCES) main.cpp $(LIB_PATH) -o $(EXE)
 parser: parser.cpp
 	g++ $(CFLAGS) -std=c++11 parser.cpp main.cpp -o parser
 test: main.cpp
