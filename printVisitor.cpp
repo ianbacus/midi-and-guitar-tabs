@@ -3,7 +3,7 @@
 void PrintVisitor::visitBar(Bar* b)
 {
 
-  for(string_print_index=1; string_print_index<6; string_print_index++)
+  for(string_print_index=0; string_print_index<6; string_print_index++)
   {
     if(string_print_index==0)
     {
@@ -39,5 +39,6 @@ void PrintVisitor::visitChunk(Chunk* c)
 
 void PrintVisitor::visitNote(Note* n)
 {
+  cout << n->get_fret() << endl;
   string_buffer[string_print_index] += n->get_fret();
 }
