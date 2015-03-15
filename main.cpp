@@ -180,7 +180,6 @@ void test()
 	   }
 	}
 }*/
-Note::PitchMap Note::pitch_to_frets_map = Note::config();
 
 int main(int argc, char* argv[]) {
 Options options;
