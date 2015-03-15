@@ -22,15 +22,16 @@ typedef vector<pair<int,int> * > coordinate_set;
 
 class Visitor;
 struct Base_structs{
-	    std::map <int, vector< pair<int,int> * >  > pitch_to_frets_map;
-	    int tuning[6];
-	    int tab_matrix [6][20];
-	    void config();
+
 };
 class Base
 {
-	public:
-		Base() {}
+	private:
+	static std::map <int, vector< pair<int,int> * >  > pitch_to_frets_map;
+    	int tuning[6];
+    	int tab_matrix [6][20];
+    	public:
+		Base() {config();}
 		~Base();
 		//This structure is a bit unwieldy. Referencing the pair pointers inside the vector takes several
 		// layers of indirection. Map's find function preserves constness, but it returns iterators which add even more indirection
