@@ -52,5 +52,5 @@ int Base::get_pitch_to_frets_entry_size(int pitch) const
 	return (pitch_to_frets_map.find(pitch)->second).size();
 
 }
-Base::PitchMap Base::pitch_to_frets_map = config();
+Base::PitchMap Base::pitch_to_frets_map = Base::config();
 
