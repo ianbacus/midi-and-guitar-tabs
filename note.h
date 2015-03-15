@@ -4,15 +4,20 @@
 
 class Note : public Base 
 {
+	private:
+	    	typedef std::map <int, vector< pair<int,int> * >  > PitchMap;
+	 	static PitchMap pitch_to_frets_map;
+	    	static PitchMap config();
+	    	int pitch;
+	    	int delta;
+		int current_note_index;
 	public:
 		Note(int);
-		int pitch;
-		int current_note_index;
-		
 
 		int get_fret() const;
 		int get_string() const;
-			void increment_note_index();
+		
+		void increment_note_index();
 		//int get_current_note_index const {return current_note_index;}
 		int get_pitch() const {return pitch;}
 		
