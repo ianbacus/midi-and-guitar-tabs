@@ -143,5 +143,6 @@ bool RotateVisitor::compare_with_stack(Note* n)
 
 void RotateVisitor::visitNote(Note* n) 
 {
+cout << "incrementing note" << endl;
   n->increment_note_index();
 }
