@@ -21,8 +21,8 @@ Base::PitchMap Base::config()
                 //tab_matrix[string_ind][fret_ind] = value;
                 pair<int,int> map_point = make_pair(string_ind,fret_ind);
                 initmap[value].push_back(&map_point); //add note to (note : location on fretboard) pitch_to_frets. this will help for determining how many placements there are for a note, and quickly indexing them (is this any faster than indexing the array? TODO)
-            	cout << value <<  " " << (pitch_to_frets_map.at(value)->second)[0]->first;
-            	cout << value << " "<< (pitch_to_frets_map.at(value)->second)[0]->second << endl;
+            	cout << value <<  " " << (pitch_to_frets_map.at(value))[0]->first;
+            	cout << value << " "<< (pitch_to_frets_map.at(value))[0]->second << endl;
             	
             }
         }
@@ -33,8 +33,8 @@ Base::PitchMap Base::config()
 
 int Base::get_string(int pitch,int index) const
 {
-	cout << pitch << " is on string " << ((pitch_to_frets_map.at(pitch)->second)[index]->first) << endl;
-	return (pitch_to_frets_map.at(pitch)->second)[index]->first;
+	cout << pitch << " is on string " << ((pitch_to_frets_map.at(pitch))[index]->first) << endl;
+	return (pitch_to_frets_map.at(pitch))[index]->first;
 	
 }
 
@@ -42,8 +42,8 @@ int Base::get_fret(int pitch, int index) const
 {
 	//const vector<pair<int,int>* > pairy = (pitch_to_frets_map.find(pitch)->second);
 	//cout << pairy[index]->second << endl;
-	cout << pitch << " is on fret " << ((pitch_to_frets_map.at(pitch)->second)[index]->second) << endl;
-	return (pitch_to_frets_map.at(pitch)->second)[index]->second;
+	cout << pitch << " is on fret " << ((pitch_to_frets_map.at(pitch))[index]->second) << endl;
+	return (pitch_to_frets_map.at(pitch))[index]->second;
 }
 
 int Base::get_pitch_to_frets_entry_size(int pitch) const
@@ -52,7 +52,7 @@ int Base::get_pitch_to_frets_entry_size(int pitch) const
 // of frettable locations for a note.
 {
 //	cout << "entry is " << (pitch_to_frets_map.find(pitch)->second).size() << " units long" << endl;
-	return (pitch_to_frets_map.at(pitch)->second).size();
+	return (pitch_to_frets_map.at(pitch)).size();
 
 }
 Base::PitchMap Base::pitch_to_frets_map = Base::config();
