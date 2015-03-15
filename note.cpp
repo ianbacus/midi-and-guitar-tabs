@@ -14,6 +14,7 @@ int Note::get_string() const
 {
 	//return pitch_to_frets_map[pitch][current_note_index]->second;
 //	return Base_structs::(pitch_to_frets_map.find(pitch)->second)[index]->first;
+cout << "Note::" << pitch << " " << Base::get_string(pitch,current_note_index) << endl;
 	return Base::get_string(pitch,current_note_index);
 }
 
