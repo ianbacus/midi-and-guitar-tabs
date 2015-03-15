@@ -46,7 +46,6 @@ void Reader::read_midi_event(unsigned int event)
 	}
 	else
 	{
-//		cout << "shitnote" << endl;
 		discard_bytes(1);
 	}
 }
