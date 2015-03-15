@@ -1,7 +1,8 @@
 #include "base.h"
 
-void Base::config()
+static PitchMap Base::config()
 {
+	PitchMap initmap;
     int value;
     int tuning[6];
     tuning[0] = 28;  //E
@@ -19,10 +20,11 @@ void Base::config()
                 //cout << "gridmap: inserting " << value << " at coordinate point " << string_ind <<", " << fret_ind << endl;
                 //tab_matrix[string_ind][fret_ind] = value;
                 pair<int,int> map_point = make_pair(string_ind,fret_ind);
-                Base::pitch_to_frets_map[value].push_back(&map_point); //add note to (note : location on fretboard) pitch_to_frets. this will help for determining how many placements there are for a note, and quickly indexing them (is this any faster than indexing the array? TODO)
+                initmap[value].push_back(&map_point); //add note to (note : location on fretboard) pitch_to_frets. this will help for determining how many placements there are for a note, and quickly indexing them (is this any faster than indexing the array? TODO)
             }
         }
     }
+    return initmap;
 }
 
 
@@ -50,3 +52,5 @@ int Base::get_pitch_to_frets_entry_size(int pitch) const
 	return (pitch_to_frets_map.find(pitch)->second).size();
 
 }
+Base::PitchMap Base::pitch_to_frets_map = config();
+
