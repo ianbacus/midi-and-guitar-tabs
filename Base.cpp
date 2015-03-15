@@ -3,6 +3,7 @@
 void Base::config()
 {
     int value;
+    int tuning[6];
     tuning[0] = 28;  //E
     tuning[1] = 33; //A
     tuning[2] = 39; //D
