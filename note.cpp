@@ -4,7 +4,7 @@
 // hold an index to tabmatrix, update by incrementing 
 //
 
-Note::PitchMap Note::config()
+Note::PitchMap config()
 {
     PitchMap initmap;
     int value;
@@ -106,9 +106,9 @@ bool Note::compare(Note* note) const
 	*/
 int Note::get_children_size() const
 {
-return (pitch_to_frets_map.at(pitch)).size();
+	return (pitch_to_frets_map.at(pitch)).size();
 
 }
 	
-//Note::PitchMap Note::pitch_to_frets_map = Note::config();
+Note::PitchMap Note::pitch_to_frets_map = config();
 
