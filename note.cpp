@@ -13,15 +13,15 @@ Note::Note(int pitch_init)
 int Note::get_string() const
 {
 	//return pitch_to_frets_map[pitch][current_note_index]->second;
-	return Base_structs::(pitch_to_frets_map.find(pitch)->second)[index]->first;
-//	return Base::get_string(pitch,current_note_index);
+//	return Base_structs::(pitch_to_frets_map.find(pitch)->second)[index]->first;
+	return Base::get_string(pitch,current_note_index);
 }
 
 int Note::get_fret() const
 {
 	//return pitch_to_frets_map[pitch][current_note_index]->first;
-//	return Base::get_fret(pitch,current_note_index);
-	return Base_structs::(pitch_to_frets_map.find(pitch)->second)[index]->second;
+	return Base::get_fret(pitch,current_note_index);
+//	return Base_structs::(pitch_to_frets_map.find(pitch)->second)[index]->second;
 	
 }
 
