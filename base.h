@@ -28,9 +28,9 @@ class Base
    // 	int tuning[6];
   //  	int tab_matrix [6][20];
     	public:
-    	typedef <int, vector< pair<int,int> * >  > PitchMap;
- 	static std::map <int, vector< pair<int,int> * >  > pitch_to_frets_map;
-    		static PitchMap config();
+    	typedef std::map <int, vector< pair<int,int> * >  > PitchMap;
+ 	static PitchMap pitch_to_frets_map;
+    	static PitchMap config();
 		Base() {}
 		~Base();
 		//This structure is a bit unwieldy. Referencing the pair pointers inside the vector takes several
