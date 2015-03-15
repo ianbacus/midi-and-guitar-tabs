@@ -113,29 +113,28 @@ bool RotateVisitor::compare_with_stack(Note* n)
 	  Note* current = stack_copy.top();
 	  //check if the string is available
 //	  cout << "COPIED TOP ITEM" << endl;
-	  cout << "candidate fret:" << n->get_fret();
-	cout <<  " candidate string:" << n->get_string() << endl;
-	cout << "stack fret:" << current->get_fret();
-	cout << " stack string:" << current->get_string() << endl;
+	  cout << "candidate f/s:" << n->get_fret() << " " << n->get_string() << endl;
+	  cout << "stack f/s:" << current->get_fret() << " " << current->get_string() << endl;
 	  	//continue;
 	  if(n->get_string() == current->get_string()){
-	  	cout << "OVERLAP" << endl;
+	  //	cout << "OVERLAP" << endl;
 	  	return false;
 	  }
 	  else if(n->get_fret() == 0 || current->get_fret() == 0) {
-	  	cout << "FRETTED ZERO, NONOVERLAPPING" << endl;
+	 // 	cout << "FRETTED ZERO, NONOVERLAPPING" << endl;
 	  	stack_copy.pop();
 	  }
 	  else if(abs((n->get_fret() - current->get_fret())) > 10) {
-	  	cout << "SPACED " << MAX << " ITEMS AWAY" << endl;
+	  //	cout << "SPACED " << MAX << " ITEMS AWAY" << endl;
 	  	return false;
 	  }
 	  else{
-	  	cout << "ELSE: VALID" << endl;
+	  //	cout << "ELSE: VALID" << endl;
 	  	stack_copy.pop();
 	  }
 	  
 	}
+	cout << "candidate passes" << endl;
 	//if the candidate does not violate string overlap or fret over-extension, it is accepted
 	return true;
 	
