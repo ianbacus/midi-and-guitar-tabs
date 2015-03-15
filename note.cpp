@@ -97,7 +97,7 @@ bool Note::compare(Note* note) const
 		}
 	}
 	*/
-int Note::get_pitch_entry_size()
+int Note::get_children_size()
 {
 //return (pitch_to_frets_map.at(pitch).second).size();
 	return 1;
