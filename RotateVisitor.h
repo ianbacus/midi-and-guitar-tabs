@@ -9,7 +9,7 @@ class RotateVisitor : public Visitor
 
   private:
     stack<Note*> _comparison_stack;
-    int strings_occupied[6];
+    //int strings_occupied[6];
   public:
   
     void pop_stack() {_comparison_stack.pop();}
