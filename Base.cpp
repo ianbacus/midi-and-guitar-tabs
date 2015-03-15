@@ -38,7 +38,7 @@ int Base::get_string_pos(int pitch,int index) const
 	
 }
 
-int Base::get_fret_Pos(int pitch, int index) const
+int Base::get_fret_pos(int pitch, int index) const
 {
 	//const vector<pair<int,int>* > pairy = (pitch_to_frets_map.find(pitch)->second);
 	//cout << pairy[index]->second << endl;
