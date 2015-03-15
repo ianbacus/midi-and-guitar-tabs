@@ -18,7 +18,7 @@ void Base::config()
                 //cout << "gridmap: inserting " << value << " at coordinate point " << string_ind <<", " << fret_ind << endl;
                 tab_matrix[string_ind][fret_ind] = value;
                 pair<int,int> map_point = make_pair(string_ind,fret_ind);
-                pitch_to_frets_map[value].push_back(&map_point); //add note to (note : location on fretboard) pitch_to_frets. this will help for determining how many placements there are for a note, and quickly indexing them (is this any faster than indexing the array? TODO)
+                Base::pitch_to_frets_map[value].push_back(&map_point); //add note to (note : location on fretboard) pitch_to_frets. this will help for determining how many placements there are for a note, and quickly indexing them (is this any faster than indexing the array? TODO)
             }
         }
     }
