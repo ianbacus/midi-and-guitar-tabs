@@ -21,13 +21,11 @@ using namespace std;
 typedef vector<pair<int,int> * > coordinate_set;
 
 class Visitor;
-struct Base_structs{
 
-};
 class Base
 {
 	private:
-	static std::map <int, vector< pair<int,int> * >  > pitch_to_frets_map;
+ std::map <int, vector< pair<int,int> * >  > pitch_to_frets_map;
     	int tuning[6];
     	int tab_matrix [6][20];
     	public:
