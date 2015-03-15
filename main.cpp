@@ -190,6 +190,9 @@ Options options;
   // Base_structs refs = new Base_structs;
   // refs.config();
    vector<Bar*> score= convertMidiFileToText(midifile);
+   
+   cout << "Main: " << score[0]->get_chunk_at(0)->get_note_at(0)->get_fret() << endl;
+   
    RotateVisitor* thefixer = new RotateVisitor();
    PrintVisitor* theprinter = new PrintVisitor();
    
