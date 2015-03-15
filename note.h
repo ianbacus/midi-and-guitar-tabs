@@ -13,7 +13,7 @@ class Note : public Base
 		    	typedef std::map <int, vector< pair<int,int> * >  > PitchMap;
 	 	static PitchMap pitch_to_frets_map;
 	 	
-	    	static PitchMap config();
+	    //	static PitchMap config();
 	 	
 	 	
 	 	//****
