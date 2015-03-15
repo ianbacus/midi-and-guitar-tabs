@@ -24,7 +24,7 @@ Note::PitchMap config()
                 cout << "gridmap: inserting " << value << " at coordinate point " << string_ind <<", " << fret_ind << endl;
                 //tab_matrix[string_ind][fret_ind] = value;
                 pair<int,int> map_point = make_pair(string_ind,fret_ind);
-                initmap[value].push_back(&map_point); //add note to (note : location on fretboard) pitch_to_frets. this will help for determining how many placements there are for a note, and quickly indexing them (is this any faster than indexing the array? TODO)
+                initmap[value].push_back(map_point); //add note to (note : location on fretboard) pitch_to_frets. this will help for determining how many placements there are for a note, and quickly indexing them (is this any faster than indexing the array? TODO)
   	//	vector<pair<int, int> * > &testo =  pitch_to_frets_map.at(value);
   //		cout << (pitch_to_frets_map.at(value))[0]->first << endl;
   //          	cout << value <<  "first/string " << (*pitch_to_frets_map.at(value))[0]->first;
@@ -47,8 +47,8 @@ int Note::get_string() const
 	int ret;
 	try {
 		//vector<pair<int, int> * > &tempvec =  pitch_to_frets_map.at(pitch);
-		pair<int,int> * &pairy = pitch_to_frets_map.at(pitch)[current_note_index];
-		ret = pairy->first;
+		pair<int,int>  &pairy = pitch_to_frets_map.at(pitch)[current_note_index];
+		ret = pairy.first;
 		//ret = (pitch_to_frets_map.at(pitch))[current_note_index]->first;
 		//ret = tempvec[current_note_index]->first;
 	}
@@ -63,8 +63,8 @@ int Note::get_fret() const
 {
 	int ret;
 	try {		
-		pair<int,int> * &pairy = pitch_to_frets_map.at(pitch)[current_note_index];
-		ret = pairy->first;
+		pair<int,int>  &pairy = pitch_to_frets_map.at(pitch)[current_note_index];
+		ret = pairy.first;
 		//ret = (pitch_to_frets_map.at(pitch))[current_note_index]->second;
 	}
 	catch (const std::out_of_range& oor) {
