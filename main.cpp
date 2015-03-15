@@ -16,7 +16,7 @@
 
 
 using namespace std;
-/*
+
 void config()
 {
 int tuning[6];
@@ -42,16 +42,16 @@ int tuning[6];
         }
     }
 }
-
+/*
 
 struct Note {
       double tick;
       double duration;
       int    pitch;
       void print_data() {cout << pitch << " for " << duration << ". Tick=" << tick << endl;}
-};*/
+};
 
-/*
+
 void read_chunk(Reader &ro)
 {
   
