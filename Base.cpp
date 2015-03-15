@@ -1,6 +1,6 @@
 #include "base.h"
 
-static Base::PitchMap Base::config()
+Base::PitchMap Base::config()
 {
     Base::PitchMap initmap;
     int value;
