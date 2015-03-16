@@ -207,10 +207,12 @@ Options options;
    
    RotateVisitor* thefixer = new RotateVisitor();
    PrintVisitor* theprinter = new PrintVisitor();
-   
+   cout << "fixing..." << endl;
    score[0]->accept(thefixer);
+   cout << "fixed. printing..." << endl;
    score[0]->accept(theprinter);
    theprinter->print_out();
+   cout << "printed." << endl;
    return 0;
 
 	
