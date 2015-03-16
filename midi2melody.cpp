@@ -54,7 +54,7 @@ vector<Bar*> convertMidiFileToText(MidiFile& midifile) {
    int delta_counter,last;
    vector<Bar*> score;
    score.push_back(new Bar());
-   score.back()->add_chunk(new Chunk());
+   score.back()->add_chunk(new Chunk()); //the first chunk has been instantiated inside the first bar
    
   
    midifile.deltaTicks();
@@ -76,7 +76,7 @@ vector<Bar*> convertMidiFileToText(MidiFile& midifile) {
 int truncate = 50;
 //   for (i=0; i<midifile.getNumEvents(0); i++) {
 cout << "actually there are " << midifile.getNumEvents(0) << " events, but I truncated down to " << truncate << endl;
-  cout << "On time | offtime-ontime | key | velocity";
+  cout << "On time | offtime-ontime | key | velocity" << endl;
    for (i=0; i<truncate; i++) {
 
       command = midifile[0][i][0] & 0xf0;
