@@ -50,7 +50,7 @@ void add_to_tree(int delta_start, int pitch)
 // convertMidiFileToText --
 //
 
-vector<Bar*> convertMidiFileToText(MidiFile& midifile) {
+vector<Bar*> convertMidiFileToText(MidiFile& midifile,int num, int denm) {
   
   
 int truncate = 120;
@@ -77,7 +77,7 @@ int shift = 27;
    int key = 0;
    int vel = 0;
    int command = 0;
- 
+ cout << "Tempo is " << tempo << endl;
 cout << "actually there are " << midifile.getNumEvents(0) << " events, but I truncated down to " << truncate << endl;
   cout << "On time | offtime-ontime | key | velocity" << endl;
   for (i=0; i<midifile.getNumEvents(0); i++) {
@@ -88,7 +88,7 @@ cout << "actually there are " << midifile.getNumEvents(0) << " events, but I tru
          // store note-on velocity and time
          key = midifile[0][i][1];
          vel = midifile[0][i][2];
-         ontimes[key] = midifile[0][i].tick * 240 / tempo; /// tempo; // /
+         ontimes[key] = midifile[0][i].tick*num/denm;//* 240 / tempo; /// tempo; // /
              //  midifile.getTicksPerQuarterNote();
          onvelocities[key] = vel;
       } else if (command == 0x90 || command == 0x80) {
