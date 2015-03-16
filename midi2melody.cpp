@@ -118,7 +118,7 @@ cout << "actually there are " << midifile.getNumEvents(0) << " events, but I tru
          cout << "note\t" << ontimes[key]
               << "\t" << offtime - ontimes[key]
               << "\t" << key << "\t" << endl;
-              /*/
+              //*/
          onvelocities[key] = -1;
          ontimes[key] = -1.0;
       }
