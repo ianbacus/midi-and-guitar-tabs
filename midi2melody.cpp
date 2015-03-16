@@ -51,6 +51,10 @@ void add_to_tree(int delta_start, int pitch)
 //
 
 vector<Bar*> convertMidiFileToText(MidiFile& midifile) {
+  
+  
+int truncate = 90;
+int shift = 27;
    int delta_counter,last;
    vector<Bar*> score;
    score.push_back(new Bar());
@@ -73,8 +77,6 @@ vector<Bar*> convertMidiFileToText(MidiFile& midifile) {
    int key = 0;
    int vel = 0;
    int command = 0;
-int truncate = 110;
-int shift = 27;
  
 cout << "actually there are " << midifile.getNumEvents(0) << " events, but I truncated down to " << truncate << endl;
   cout << "On time | offtime-ontime | key | velocity" << endl;
