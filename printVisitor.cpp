@@ -57,9 +57,7 @@ void PrintVisitor::visitChunk(Chunk* c)
   }
       if(!strings_closed)
        string_buffer[string_print_index] += "---"; //note width, and padding
-       
-  }
-  
+
 }
 
 void PrintVisitor::visitNote(Note* n)
