@@ -109,8 +109,15 @@ void RotateVisitor::visitChunk(Chunk* c)
 	  		fail_count++;
 	  	}
 	  }
+	  empty_stack();
 }
-
+void RotateVisitor::empty_stack()
+{
+	while(!_comparison_stack.empty())
+	{
+		pop_stack();
+	}
+}
 bool RotateVisitor::compare_with_stack(Note* n)
 {
 	stack<Note*> stack_copy = _comparison_stack;
