@@ -53,7 +53,7 @@ void add_to_tree(int delta_start, int pitch)
 vector<Bar*> convertMidiFileToText(MidiFile& midifile) {
   
   
-int truncate = 90;
+int truncate = 120;
 int shift = 27;
    int delta_counter,last;
    vector<Bar*> score;
