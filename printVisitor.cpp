@@ -20,7 +20,7 @@ void PrintVisitor::visitBar(Bar* b)
 //    }
     for(int j=0; j<b->get_children_size(); j++)
     {
-        cout << j << endl;
+        //cout << j << endl;
       b->get_child(j)->accept(this);
     }
     //TODO: add logic to this to make the number of continuous bar prints variable by the client
