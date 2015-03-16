@@ -29,6 +29,7 @@ void PrintVisitor::visitChunk(Chunk* c)
   for(int j=0; j<c->get_children_size(); j++)
   {
     Note* current_note = c->get_note_at(j);
+    string_buffer[string_print_index] += "-";
     if(current_note->get_string() == string_print_index)
     {
       cout << "chunk going to note" << endl;
@@ -38,6 +39,7 @@ void PrintVisitor::visitChunk(Chunk* c)
       cout << "-";//* delta
       string_buffer[string_print_index] += "-";
     }
+    string_buffer[string_print_index] += "-";
   }
   
 }
