@@ -1,5 +1,5 @@
 #include "RotateVisitor.h"
-#define MAX  8
+#define ALLOWABLE  8
 //This will recursively check and reconfigure all of the elements of the tree
 
 //Possibly...
@@ -124,7 +124,7 @@ bool RotateVisitor::compare_with_stack(Note* n)
 	 // 	cout << "FRETTED ZERO, NONOVERLAPPING" << endl;
 	  	stack_copy.pop();
 	  }
-	  else if(abs((n->get_fret() - current->get_fret())) > 10) {
+	  else if(abs((n->get_fret() - current->get_fret())) > ALLOWABLE) {
 	  //	cout << "SPACED " << MAX << " ITEMS AWAY" << endl;
 	  	return false;
 	  }
