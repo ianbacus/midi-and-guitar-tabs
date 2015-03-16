@@ -3,7 +3,7 @@
 void PrintVisitor::visitBar(Bar* b)
 {
 
-   // char tuning[] = {'e','b','g','d','a','e'};
+    char tuning[] = {'e','b','g','d','a','e'};
 //  for(string_print_index=0; string_print_index<6; string_print_index++)
     for(string_print_index=7; string_print_index>= 0; string_print_index--)
   {
@@ -14,7 +14,7 @@ void PrintVisitor::visitBar(Bar* b)
     else
     {
       string_buffer[string_print_index] += "|";
-      //string_buffer[string_print_index].push_back(tuning[(string_print_index)]);
+      string_buffer[string_print_index].push_back(tuning[(string_print_index)]);
       
     }
     for(int j=0; j<b->get_children_size(); j++)
@@ -29,7 +29,7 @@ void PrintVisitor::visitBar(Bar* b)
 
 void PrintVisitor::visitChunk(Chunk* c)
 {
-    int strings_closed[] = {0,0,0,0,0,0};
+    bool strings_closed[] = {0,0,0,0,0,0};
   //TODO: logic for separating based on tick/notevalue
   // Currently, this filters out notes by the currently active string. The current printing method doesn't allow
   // multiple notes of the same chunk to appear at the same instant in time
@@ -50,7 +50,7 @@ void PrintVisitor::visitChunk(Chunk* c)
 //  else: update the stringsopen in reverse
   }
   for(int j=0; j<6; j++){
-      if(0==strings_closed[j])
+      if(!strings_closed[j])
        string_buffer[string_print_index] += "---"; //note width, and padding
        
   }
