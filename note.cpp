@@ -64,7 +64,7 @@ int Note::get_fret() const
 	int ret;
 	try {		
 		pair<int,int>  &pairy = pitch_to_frets_map.at(pitch)[current_note_index];
-		ret = pairy.first;
+		ret = pairy.second;
 		//ret = (pitch_to_frets_map.at(pitch))[current_note_index]->second;
 	}
 	catch (const std::out_of_range& oor) {
