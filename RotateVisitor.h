@@ -11,7 +11,7 @@ class RotateVisitor : public Visitor
     stack<Note*> _comparison_stack;
     //int strings_occupied[6];
   public:
-  
+    void empty_stack();
     void pop_stack() {_comparison_stack.pop();}
     void push_stack(Note* n) {_comparison_stack.push(n);}
     bool compare_with_stack(Note*);
