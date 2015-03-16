@@ -2,17 +2,20 @@
 
 void PrintVisitor::visitBar(Bar* b)
 {
-
+cout << "visitbar" << endl;
     char tuning[] = {'e','b','g','d','a','e'};
 //  for(string_print_index=0; string_print_index<6; string_print_index++)
     for(string_print_index=7; string_print_index>= 0; string_print_index--)
   {
+      cout << string_print_index << endl;
     if(string_print_index==7)
     {
+        cout << "whitespace" <<endl;
       string_buffer[string_print_index] += " ";
     }
     else
     {
+        cout << "note" << endl;
       string_buffer[string_print_index] += "|";
       string_buffer[string_print_index].push_back(tuning[(string_print_index)]);
       
