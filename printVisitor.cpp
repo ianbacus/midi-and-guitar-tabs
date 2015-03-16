@@ -29,6 +29,8 @@ void PrintVisitor::visitBar(Bar* b)
 void PrintVisitor::visitChunk(Chunk* c)
 {
   //TODO: logic for separating based on tick/notevalue
+  // Currently, this filters out notes by the currently active string. The current printing method doesn't allow
+  // multiple notes of the same chunk to appear at the same instant in time
   for(int j=0; j<c->get_children_size(); j++)
   {
     Note* current_note = c->get_note_at(j);
