@@ -80,8 +80,8 @@ int shift = 27;
  
 cout << "actually there are " << midifile.getNumEvents(0) << " events, but I truncated down to " << truncate << endl;
   cout << "On time | offtime-ontime | key | velocity" << endl;
-//  for (i=0; i<midifile.getNumEvents(0); i++) {
-   for (i=0; i<truncate; i++) {
+  for (i=0; i<midifile.getNumEvents(0); i++) {
+//   for (i=0; i<truncate; i++) {
 
       command = midifile[0][i][0] & 0xf0;
       if (command == 0x90 && midifile[0][i][2] != 0) {
