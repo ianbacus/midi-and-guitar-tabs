@@ -15,10 +15,18 @@ class PrintVisitor : public Visitor
     virtual void visitChunk(Chunk*);
     void print_out()
     {
+      
+	    ofstream ofile; //move to a constructor, make part of class attributes
+	    ofile.open("testoutput.txt");
+	    stringstream ss;
       for(int i=6; i>=0; i--)
       {
-        cout << string_buffer[i] << endl;
+//        cout << string_buffer[i] << endl;
+        ss << string_buffer[i];
       }
+      ofile << ss.rdbuf();
+		    ofile.close();
+		    
     }
 };
 
