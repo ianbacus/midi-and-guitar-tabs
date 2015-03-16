@@ -80,7 +80,7 @@ void RotateVisitor::visitChunk(Chunk* c)
 
 	  while(counter_index < c->get_children_size())
 	  {
-	  	cout << counter_index << "<" << get_children_size() <<  endl;
+	  	cout << counter_index << "<" << c->get_children_size() <<  endl;
 	  	if(fail_count == c->get_note_at(counter_index)->get_children_size())
 	  	{
 	  		//after exhausting all tries, go back one step on the stack
