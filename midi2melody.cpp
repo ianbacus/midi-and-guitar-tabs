@@ -88,7 +88,7 @@ cout << "actually there are " << midifile.getNumEvents(0) << " events, but I tru
          // store note-on velocity and time
          key = midifile[0][i][1];
          vel = midifile[0][i][2];
-         ontimes[key] = midifile[0][i].tick*num/denm;//* 240 / tempo; /// tempo; // /
+         ontimes[key] = midifile[0][i].tick*(num/denm) / midifile.getTicksPerQuarterNote();//* 240 / tempo; /// tempo; // /
              //  midifile.getTicksPerQuarterNote();
          onvelocities[key] = vel;
       } else if (command == 0x90 || command == 0x80) {
