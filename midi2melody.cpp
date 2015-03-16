@@ -108,14 +108,14 @@ cout << "actually there are " << midifile.getNumEvents(0) << " events, but I tru
                   //score.back()->get_children_size() returns the number of chunks, used to index the last chunk
                   //since the member vectors are inaccessible, using the "back()" function on the vector is not viable
                   last = score.back()->get_children_size() - 1;
-                  score.back()->get_child(last)->add_note(new Note(pitch-shift));
+                  score.back()->get_child(last)->add_note(new Note(pitch-shift,delta_start));
                }
                else
                {
                   //a new chunk must be created, and the new note must be added to it
                   score.back()->add_chunk(new Chunk());
                   last =  score.back()->get_children_size() - 1;
-                  score.back()->get_child(last)->add_note(new Note(pitch-shift));
+                  score.back()->get_child(last)->add_note(new Note(pitch-shift,delta_start));
                }
                ///////////////////////////////////////////////////////////////
                /*/
