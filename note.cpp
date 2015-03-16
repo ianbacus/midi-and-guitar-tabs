@@ -35,12 +35,6 @@ Note::PitchMap config()
     }
     return initmap;
 }
-Note::Note(int pitch_init)
-{
-	pitch = pitch_init;
-	current_note_index = 0;
-
-}
 
 int Note::get_string() const
 {
