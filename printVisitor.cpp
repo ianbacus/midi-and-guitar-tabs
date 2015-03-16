@@ -35,11 +35,11 @@ void PrintVisitor::visitChunk(Chunk* c)
     string_buffer[string_print_index] += "-";
     if(current_note->get_string() == string_print_index)
     {
-      cout << "chunk going to note" << endl;
+     // cout << "chunk going to note" << endl;
       current_note->accept(this);
     }
     else {
-      cout << "-";//* delta
+      //cout << "-";//* delta
       string_buffer[string_print_index] += "-";
     }
     string_buffer[string_print_index] += "-";
@@ -50,8 +50,8 @@ void PrintVisitor::visitChunk(Chunk* c)
 void PrintVisitor::visitNote(Note* n)
 {
   int fret = n->get_fret();
-  cout << fret << endl;
+  //cout << fret << endl;
   string_buffer[string_print_index] += std::to_string(fret);
-  cout << " string so far: ." << string_buffer[string_print_index] <<"." << endl;
+ // cout << " string so far: ." << string_buffer[string_print_index] <<"." << endl;
   
 }
