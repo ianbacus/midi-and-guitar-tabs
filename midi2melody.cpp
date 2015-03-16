@@ -57,7 +57,7 @@ vector<Bar*> convertMidiFileToText(MidiFile& midifile) {
    score.back()->add_chunk(new Chunk());
    
   
-   midifile.deltaTicks();
+   midifile.absoluteTicks();
    midifile.joinTracks();
 
    vector<double> ontimes(128);
@@ -94,7 +94,7 @@ cout << "actually there are " << midifile.getNumEvents(0) << " events, but I tru
                midifile.getTicksPerQuarterNote() / tempo;
                
                int delta_start = ontimes[key];
-               int pitch = key;
+               int pitch = key;/*/
                cout << "extracted note: " << key << " d" << delta_start << endl;
                ///////////////////////////////////////////////////////////////
                if(delta_start == 0)
@@ -114,11 +114,11 @@ cout << "actually there are " << midifile.getNumEvents(0) << " events, but I tru
                   score.back()->get_child(last)->add_note(new Note(pitch));
                }
                ///////////////////////////////////////////////////////////////
-               /*
+               /*/
          cout << "note\t" << ontimes[key]
               << "\t" << offtime - ontimes[key]
               << "\t" << key << "\t" << endl;
-              */
+              /*/
          onvelocities[key] = -1;
          ontimes[key] = -1.0;
       }
