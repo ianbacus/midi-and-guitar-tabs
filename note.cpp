@@ -45,10 +45,8 @@ int Note::get_string() const
 			return ret;
 		}
 		catch (const std::out_of_range& oor) {
-			if(pitch<28){cout << "up an octave.." << endl;
-				n+=12;}
-			else{ cout<<"down an octave.." << endl;
-				n-=12;}
+			if(pitch<28){ n+=12;}
+			else{ n-=12;}
 		}
 	}
 }
@@ -62,10 +60,8 @@ int Note::get_fret() const
 			return ret;
 		}
 		catch (const std::out_of_range& oor) {
-			if(pitch<28){cout << "up an octave.." << endl;
-				n+=12;}
-			else{ cout<<"down an octave.." << endl;
-				n-=12;}
+			if(pitch<28){n+=12;}
+			else{ n-=12;}
 		}
 	}
 }
@@ -111,10 +107,8 @@ int Note::get_children_size() const
 			return ret;
 		}
 		catch (const std::out_of_range& oor) {
-			if(pitch<28){cout << "up an octave.." << endl;
-				n +=12;}
-			else{ cout<<"down an octave.." << endl;
-				n -=12;	}
+			if(pitch<28){n +=12;}
+			else{ n -=12;	}
 		}
 	}
 }
