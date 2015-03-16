@@ -80,6 +80,7 @@ void RotateVisitor::visitChunk(Chunk* c)
 
 	  while(counter_index < c->get_children_size())
 	  {
+	  	cout << counter_index << "<" << get_children_size() <<  endl;
 	  	if(fail_count == c->get_note_at(counter_index)->get_children_size())
 	  	{
 	  		//after exhausting all tries, go back one step on the stack
@@ -113,8 +114,8 @@ bool RotateVisitor::compare_with_stack(Note* n)
 	  Note* current = stack_copy.top();
 	  //check if the string is available
 //	  cout << "COPIED TOP ITEM" << endl;
-	  cout << "candidate s/f:" << n->get_string() << " " << n->get_fret() << endl;
-	  cout << "stack s/f:" << current->get_string() << " " << current->get_fret() << endl;
+//	  cout << "candidate s/f:" << n->get_string() << " " << n->get_fret() << endl;
+//	  cout << "stack s/f:" << current->get_string() << " " << current->get_fret() << endl;
 	  	//continue;
 	  if(n->get_string() == current->get_string()){
 	  //	cout << "OVERLAP" << endl;
@@ -134,7 +135,7 @@ bool RotateVisitor::compare_with_stack(Note* n)
 	  }
 	  
 	}
-	cout << "candidate passes" << endl;
+//	cout << "candidate passes" << endl;
 	//if the candidate does not violate string overlap or fret over-extension, it is accepted
 	return true;
 	
@@ -142,7 +143,7 @@ bool RotateVisitor::compare_with_stack(Note* n)
 
 void RotateVisitor::visitNote(Note* n) 
 {
-  cout << "incrementing note: " << n->get_string() << " " << n->get_fret() <<"to";
+//  cout << "incrementing note: " << n->get_string() << " " << n->get_fret() <<"to";
   n->increment_note_index();
   cout <<  n->get_string() << " " << n->get_fret() << endl;
 }
