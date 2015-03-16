@@ -3,7 +3,7 @@
 void PrintVisitor::visitBar(Bar* b)
 {
 
-  for(string_print_index=0; string_print_index<6; string_print_index++)
+  for(string_print_index=6; string_print_index>=0; string_print_index--)
   {
     if(string_print_index==0)
     {
