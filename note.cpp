@@ -44,7 +44,7 @@ Note::Note(int pitch_init)
 
 int Note::get_string() const
 {
-	cout << pitch << endl;
+	//cout << pitch << endl;
 	int ret;
 	try {
 		//vector<pair<int, int> * > &tempvec =  pitch_to_frets_map.at(pitch);
@@ -62,7 +62,7 @@ int Note::get_string() const
 
 int Note::get_fret() const
 {
-	cout << pitch << endl;
+	//cout << pitch << endl;
 	int ret;
 	try {		
 		pair<int,int>  &pairy = pitch_to_frets_map.at(pitch)[current_note_index];
