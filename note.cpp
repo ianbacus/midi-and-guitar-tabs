@@ -15,7 +15,7 @@ Note::PitchMap config()
     tuning[3] = 43; //G
     tuning[4] = 47; //B
     tuning[5] = 52; //E
-     for(int string_ind = 0;string_ind<6;string_ind++)
+     for(int string_ind = 5;string_ind>= 0;string_ind--)
     {
         for(int fret_ind = 0; fret_ind<20; fret_ind++)
         {
