@@ -14,7 +14,7 @@ void PrintVisitor::visitBar(Bar* b)
     else
     {
       string_buffer[string_print_index] += "|";
-      string_buffer[string_print_index] += std::to_string(tuning[(string_print_index)]);
+      string_buffer[string_print_index] += tuning[(string_print_index)];
       
     }
     for(int j=0; j<b->get_children_size(); j++)
