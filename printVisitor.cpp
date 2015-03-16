@@ -48,7 +48,7 @@ void PrintVisitor::visitChunk(Chunk* c)
 //  else: update the stringsopen in reverse
   }
   for(int j=0; j<6; j++){
-      if(stringsclosed[j])
+      if(strings_closed[j])
        string_buffer[string_print_index] += "--"; //note width, and padding
        
   }
