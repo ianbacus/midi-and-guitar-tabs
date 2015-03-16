@@ -145,5 +145,5 @@ void RotateVisitor::visitNote(Note* n)
 {
 //  cout << "incrementing note: " << n->get_string() << " " << n->get_fret() <<"to";
   n->increment_note_index();
-  cout <<  n->get_string() << " " << n->get_fret() << endl;
+//  cout <<  n->get_string() << " " << n->get_fret() << endl;
 }
