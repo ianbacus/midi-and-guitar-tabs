@@ -71,7 +71,10 @@ void RotateVisitor::visitChunk(Chunk* c)
   // add it to the stack and continue to the next candidate. If it does not work with the rest of the note coordinates,
   // go back to the previous candidate and increment its index
  
- //the items are essentially being moved from the vector tree into a stack for comparison purpose, element by element
+ //the items are essentially being moved from the vector tree into a stack for comparison purpose, element by element.
+ // the counter_index allows "iterative recursion" to take place. If the maximum allowable failure count is reached,
+ // the current existing portion that was assumed to be correct must be wrong. Reversing the counter and incrementing
+ // the note index at that point by one, and then checking all the future notes after that should fix this.
 void RotateVisitor::visitChunk(Chunk* c) 
 {
 	cout << "chunk" << endl;
@@ -87,6 +90,7 @@ void RotateVisitor::visitChunk(Chunk* c)
 	  		pop_stack();
 	  		counter_index--;
 	  		c->get_note_at(counter_index)->accept(this);
+	  		fail_count=0;
 	  	}
 	  	else if(compare_with_stack(c->get_note_at(counter_index)) )
 	  	{
