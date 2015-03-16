@@ -38,43 +38,39 @@ Note::PitchMap config()
 
 int Note::get_string() const
 {
-	//cout << pitch << endl;
 	int ret;
-	try {
-//		pair<int,int>  &pairy = pitch_to_frets_map.at(pitch)[current_note_index];
-//		ret = pairy.first;
-		ret = pitch_to_frets_map.at(pitch)[current_note_index].first;
-
-	}
-	catch (const std::out_of_range& oor) {
-		
-		cout << "lalalala" << endl;
-		if(pitch<28)
-			ret =  pitch_to_frets_map.at(pitch+12)[current_note_index].second;
-		else
-			ret =  pitch_to_frets_map.at(pitch-12)[current_note_index].second;			
+	while(1) {
+		try {
+			ret = pitch_to_frets_map.at(pitch)[current_note_index].first;
 		}
+		catch (const std::out_of_range& oor) {
+			if(pitch<28){cout << "up an octave.." << endl;
+				pitch +=12;}
+			else{ cout<<"down an octave.." << endl;
+				pitch -=12;}			
+			}
+	}
 	return ret;
 }
 
 int Note::get_fret() const
 {
-	//cout << pitch << endl;
+{
 	int ret;
-	try {		
-	//	pair<int,int>  &pairy = pitch_to_frets_map.at(pitch)[current_note_index];
-	//	ret = pairy.second;
-	ret =  pitch_to_frets_map.at(pitch)[current_note_index].second;
-		//ret = (pitch_to_frets_map.at(pitch))[current_note_index]->second;
+	while(1) {
+		try {
+			ret = pitch_to_frets_map.at(pitch)[current_note_index].second;
+		}
+		catch (const std::out_of_range& oor) {
+			if(pitch<28){cout << "up an octave.." << endl;
+				pitch +=12;}
+			else{ cout<<"down an octave.." << endl;
+				pitch -=12;}			
+			}
 	}
-	catch (const std::out_of_range& oor) {
-		std::cerr << "Out of Range error: " << oor.what() << '\n';
-		if(pitch<28)
-			ret =  pitch_to_frets_map.at(pitch+12)[current_note_index].second;
-		else
-			ret =  pitch_to_frets_map.at(pitch-12)[current_note_index].second;			
-	}
-	return ret;	
+	return ret;
+}
+	
 }
 
 void Note::increment_note_index()
@@ -111,20 +107,22 @@ bool Note::compare(Note* note) const
 	*/
 int Note::get_children_size() const
 {
+{
 	int ret;
-	try{
-		cout << pitch << endl;
-		ret = (pitch_to_frets_map.at(pitch)).size();
-	}
-	catch(const std::out_of_range& oor){
-		if(pitch<28)
-			ret = (pitch_to_frets_map.at(pitch+12)).size();
-		else
-			ret = (pitch_to_frets_map.at(pitch-12)).size();
-			
-		std::cerr << "Out of Range error, gaining octave: " << oor.what() << '\n';
+	while(1) {
+		try {
+			ret = pitch_to_frets_map.at(pitch).size();
+		}
+		catch (const std::out_of_range& oor) {
+			if(pitch<28){cout << "up an octave.." << endl;
+				pitch +=12;}
+			else{ cout<<"down an octave.." << endl;
+				pitch -=12;}			
+			}
 	}
 	return ret;
+}
+
 
 }
 	
