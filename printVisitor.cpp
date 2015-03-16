@@ -34,6 +34,10 @@ void PrintVisitor::visitChunk(Chunk* c)
       cout << "chunk going to note" << endl;
       current_note->accept(this);
     }
+    else {
+      cout << "-";//* delta
+      string_buffer[string_print_index] += "-";
+    }
   }
   
 }
