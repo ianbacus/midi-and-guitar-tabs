@@ -100,7 +100,7 @@ cout << "actually there are " << midifile.getNumEvents(0) << " events, but I tru
                
                long double delta_start = ontimes[key];///getTicksPerQuarterNote();
                int pitch = key;//*/
-               cout << "extracted note: " << key << " d" << std::setprecision (9) << delta_start << endl;
+               cout << "extracted note: " << key << " d" << std::basic_ios<char>::precision (9) << delta_start << endl;
                ///////////////////////////////////////////////////////////////
                if(delta_start == 0)
                {
