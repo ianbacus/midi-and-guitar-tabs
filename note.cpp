@@ -38,39 +38,38 @@ Note::PitchMap config()
 
 int Note::get_string() const
 {
-	int ret;
+	int ret,n=0;
 	while(1) {
 		try {
-			ret = pitch_to_frets_map.at(pitch)[current_note_index].first;
+			ret = pitch_to_frets_map.at(pitch+n)[current_note_index].first;
 		}
 		catch (const std::out_of_range& oor) {
 			if(pitch<28){cout << "up an octave.." << endl;
-				pitch +=12;}
+				n+=12;
 			else{ cout<<"down an octave.." << endl;
-				pitch -=12;}			
-			}
+				n-=12;
+			n++;
+		}
 	}
 	return ret;
 }
 
 int Note::get_fret() const
 {
-{
-	int ret;
+	int ret,n=0;
 	while(1) {
 		try {
-			ret = pitch_to_frets_map.at(pitch)[current_note_index].second;
+			ret = pitch_to_frets_map.at(pitch+n)[current_note_index].second;
 		}
 		catch (const std::out_of_range& oor) {
 			if(pitch<28){cout << "up an octave.." << endl;
-				pitch +=12;}
+				n+=12;
 			else{ cout<<"down an octave.." << endl;
-				pitch -=12;}			
-			}
+				n-=12;
+			n++;
+		}
 	}
 	return ret;
-}
-	
 }
 
 void Note::increment_note_index()
@@ -107,23 +106,20 @@ bool Note::compare(Note* note) const
 	*/
 int Note::get_children_size() const
 {
-{
-	int ret;
+	int ret,n=0;
 	while(1) {
 		try {
-			ret = pitch_to_frets_map.at(pitch).size();
+			ret = pitch_to_frets_map.at(pitch+n).size();
 		}
 		catch (const std::out_of_range& oor) {
 			if(pitch<28){cout << "up an octave.." << endl;
-				pitch +=12;}
+				n +=12;
 			else{ cout<<"down an octave.." << endl;
-				pitch -=12;}			
-			}
+				n -=12;	
+			n++;
+		}
 	}
 	return ret;
-}
-
-
 }
 	
 Note::PitchMap Note::pitch_to_frets_map = config();
