@@ -11,7 +11,7 @@
 #include <vector>
 
 
-vector<Bar*> convertMidiFileToText (MidiFile& midifile);
+vector<Bar*> convertMidiFileToText (MidiFile& midifile, int, int);
 void setTempo (MidiFile& midifile, int index, double& tempo);
 void checkOptions (Options& opts, int argc, char** argv);
 void example (void);
