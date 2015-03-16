@@ -3,7 +3,7 @@
 void PrintVisitor::visitBar(Bar* b)
 {
 
-    char tuning[] = {'e','b','g','d','a','e'};
+   // char tuning[] = {'e','b','g','d','a','e'};
 //  for(string_print_index=0; string_print_index<6; string_print_index++)
     for(string_print_index=7; string_print_index>= 0; string_print_index--)
   {
