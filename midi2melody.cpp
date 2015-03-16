@@ -94,8 +94,8 @@ cout << "actually there are " << midifile.getNumEvents(0) << " events, but I tru
       } else if (command == 0x90 || command == 0x80) {
          // note off command write to output
          key = midifile[0][i][1];
-         offtime = midifile[0][i].tick * 60.0 /
-               midifile.getTicksPerQuarterNote() / tempo;
+         offtime = midifile[0][i].tick;
+         //* 60.0 / (midifile.getTicksPerQuarterNote() / tempo);
                
                int delta_start = ontimes[key];///getTicksPerQuarterNote();
                int pitch = key;//*/
