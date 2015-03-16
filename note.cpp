@@ -21,7 +21,7 @@ Note::PitchMap config()
         {
             {
                 value = tuning[string_ind] + fret_ind;
-                cout << "gridmap: inserting " << value << " at coordinate point " << string_ind <<", " << fret_ind << endl;
+                //cout << "gridmap: inserting " << value << " at coordinate point " << string_ind <<", " << fret_ind << endl;
                 //tab_matrix[string_ind][fret_ind] = value;
                 pair<int,int> map_point = make_pair(string_ind,fret_ind);
                 initmap[value].push_back(map_point); //add note to (note : location on fretboard) pitch_to_frets. this will help for determining how many placements there are for a note, and quickly indexing them (is this any faster than indexing the array? TODO)
@@ -78,7 +78,7 @@ void Note::increment_note_index()
 {
 	int sizetemp = get_children_size();
 	//does polymorphism apply to calls of "this?" go through base pointer, or through this pointer..
-	cout << get_children_size() << " alternates, at " << current_note_index << ", "<< (current_note_index+sizetemp+1)%sizetemp  << " is next." << endl;
+//	cout << get_children_size() << " alternates, at " << current_note_index << ", "<< (current_note_index+sizetemp+1)%sizetemp  << " is next." << endl;
 	current_note_index = (current_note_index+1+sizetemp)%(sizetemp);
 }
 bool Note::compare(Note* note) const
