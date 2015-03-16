@@ -2,7 +2,6 @@
 
 void PrintVisitor::visitBar(Bar* b)
 {
-cout << "visitbar" << endl;
     char tuning[] = {'e','a','d','g','b','e'};
 //  for(string_print_index=0; string_print_index<6; string_print_index++)
     for(string_print_index=6; string_print_index>= 0; string_print_index--)
@@ -10,13 +9,11 @@ cout << "visitbar" << endl;
       cout << string_print_index << endl;
     if(string_print_index==6)
     {
-        cout << "whitespace" <<endl;
       string_buffer[string_print_index] += " ";
       continue;
     }
     else
     {
-        cout << "note" << endl;
       string_buffer[string_print_index] += "|";
       string_buffer[string_print_index].push_back(tuning[(string_print_index)]);
       
@@ -34,7 +31,6 @@ cout << "visitbar" << endl;
 
 void PrintVisitor::visitChunk(Chunk* c)
 {
-    cout << "chunking" << endl;
     bool strings_closed;
   //TODO: logic for separating based on tick/notevalue
   // Currently, this filters out notes by the currently active string. The current printing method doesn't allow
