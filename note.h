@@ -17,7 +17,7 @@ class Note : public Base
 	 	
 	 	
 	 	//****
-		Note(int);
+		Note(int p, int d) : pitch(p), delta(d), current_note_index(0) {}
 
 		int get_fret() const;
 		int get_string() const;
