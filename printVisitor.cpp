@@ -6,18 +6,18 @@ void PrintVisitor::visitBar(Bar* b)
 //  for(string_print_index=0; string_print_index<6; string_print_index++)
     for(string_print_index=6; string_print_index>= 0; string_print_index--)
   {
-      cout << string_print_index << endl;
-    if(string_print_index==6)
+    //  cout << string_print_index << endl;
+/*    if(string_print_index==6)
     {
       string_buffer[string_print_index] += " ";
       continue;
     }
-    else
-    {
+    else*/
+//    {
       string_buffer[string_print_index] += "|";
       string_buffer[string_print_index].push_back(tuning[(string_print_index)]);
       
-    }
+//    }
     for(int j=0; j<b->get_children_size(); j++)
     {
         cout << j << endl;
