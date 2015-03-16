@@ -9,7 +9,7 @@
 
 void RotateVisitor::visitBar(Bar* b) 
 {
-cout << "Bar" << endl;
+//cout << "Bar" << endl;
   for(int i=0; i < b->get_children_size(); i++)
   {
     b->get_child(i)->accept(this);
@@ -77,13 +77,13 @@ void RotateVisitor::visitChunk(Chunk* c)
  // the note index at that point by one, and then checking all the future notes after that should fix this.
 void RotateVisitor::visitChunk(Chunk* c) 
 {
-	cout << "chunk" << endl;
+//	cout << "chunk" << endl;
   int counter_index=0,fail_count=0,super_fail=0;
 //  push_stack(c->get_note_at(++j)); //only if this increments after evaluating
 
 	  while(counter_index < c->get_children_size())
 	  {
-	  	cout << counter_index << "<" << c->get_children_size() << ", failcount = " << fail_count <<  endl;
+//	  	cout << counter_index << "<" << c->get_children_size() << ", failcount = " << fail_count <<  endl;
 	  	if(super_fail > 5) {cout << "error" << endl; break;}
 	  	if(fail_count == c->get_note_at(counter_index)->get_children_size())
 	  	{
