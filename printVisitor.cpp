@@ -12,6 +12,7 @@ cout << "visitbar" << endl;
     {
         cout << "whitespace" <<endl;
       string_buffer[string_print_index] += " ";
+      continue;
     }
     else
     {
