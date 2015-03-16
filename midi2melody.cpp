@@ -57,7 +57,7 @@ vector<Bar*> convertMidiFileToText(MidiFile& midifile) {
    score.back()->add_chunk(new Chunk());
    
   
-   midifile.deltaTicks();
+   midifile.deltaTime();
    midifile.joinTracks();
 
    vector<double> ontimes(128);
