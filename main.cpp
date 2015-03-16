@@ -192,7 +192,7 @@ Options options;
   int arg1,arg2;
   cout << "Input numerator and denominator:" << endl;
   cin >> arg1 >> arg2;
-   vector<Bar*> score= convertMidiFileToText(midifile,arg1,arg2;
+   vector<Bar*> score= convertMidiFileToText(midifile,arg1,arg2);
    
 //   cout << "Main: note size: " << score[0]->get_child(0)->get_note_at(0)->get_children_size() << endl;
    
