@@ -3,7 +3,7 @@
 void PrintVisitor::visitBar(Bar* b)
 {
 
-    char* tuning[] = {'e','b','g','d','a','e'};
+    char tuning[] = {'e','b','g','d','a','e'};
 //  for(string_print_index=0; string_print_index<6; string_print_index++)
     for(string_print_index=7; string_print_index>= 0; string_print_index--)
   {
@@ -14,7 +14,7 @@ void PrintVisitor::visitBar(Bar* b)
     else
     {
       string_buffer[string_print_index] += "|";
-      string_buffer[string_print_index] += tuning[std::to_string(string_print_index)];
+      string_buffer[string_print_index] += std::to_string(tuning[(string_print_index)]);
       
     }
     for(int j=0; j<b->get_children_size(); j++)
