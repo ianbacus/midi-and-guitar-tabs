@@ -47,18 +47,19 @@ int Note::get_string() const
 	//cout << pitch << endl;
 	int ret;
 	try {
-		//vector<pair<int, int> * > &tempvec =  pitch_to_frets_map.at(pitch);
-		pair<int,int>  &pairy = pitch_to_frets_map.at(pitch)[current_note_index];
-		ret = pairy.first;
-		//ret = (pitch_to_frets_map.at(pitch))[current_note_index]->first;
-		//ret = tempvec[current_note_index]->first;
+//		pair<int,int>  &pairy = pitch_to_frets_map.at(pitch)[current_note_index];
+//		ret = pairy.first;
+		ret = pitch_to_frets_map.at(pitch)[current_note_index].first;
+
 	}
 	catch (const std::out_of_range& oor) {
 		
 		cout << "lalalala" << endl;
-		std::cerr << "Out of Range error: " << oor.what() << '\n';
-		//cout << "uh oh";
-	}
+		if(pitch<28)
+			ret =  pitch_to_frets_map.at(pitch+12)[current_note_index].second;
+		else
+			ret =  pitch_to_frets_map.at(pitch-12)[current_note_index].second;			
+		}
 	return ret;
 }
 
@@ -67,15 +68,17 @@ int Note::get_fret() const
 	//cout << pitch << endl;
 	int ret;
 	try {		
-		pair<int,int>  &pairy = pitch_to_frets_map.at(pitch)[current_note_index];
-		ret = pairy.second;
+	//	pair<int,int>  &pairy = pitch_to_frets_map.at(pitch)[current_note_index];
+	//	ret = pairy.second;
+	ret =  pitch_to_frets_map.at(pitch)[current_note_index].second;
 		//ret = (pitch_to_frets_map.at(pitch))[current_note_index]->second;
 	}
 	catch (const std::out_of_range& oor) {
-		
-		cout << "lalalala" << endl;
 		std::cerr << "Out of Range error: " << oor.what() << '\n';
-		//cout << "uh oh";
+		if(pitch<28)
+			ret =  pitch_to_frets_map.at(pitch+12)[current_note_index].second;
+		else
+			ret =  pitch_to_frets_map.at(pitch-12)[current_note_index].second;			
 	}
 	return ret;	
 }
@@ -120,14 +123,14 @@ int Note::get_children_size() const
 		ret = (pitch_to_frets_map.at(pitch)).size();
 	}
 	catch(const std::out_of_range& oor){
-		(pitch_to_frets_map.at(pitch+12)).size();
+		if(pitch<28)
+			ret = (pitch_to_frets_map.at(pitch+12)).size();
+		else
+			ret = (pitch_to_frets_map.at(pitch-12)).size();
+			
 		std::cerr << "Out of Range error, gaining octave: " << oor.what() << '\n';
 	}
-	catch(const std::out_of_range& oor){
-		(pitch_to_frets_map.at(pitch-12)).size();
-		std::cerr << "Out of Range error, losing octave: " << oor.what() << '\n';
-	}
-	
+	return ret;
 
 }
 	
