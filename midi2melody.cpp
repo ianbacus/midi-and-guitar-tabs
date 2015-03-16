@@ -93,7 +93,7 @@ cout << "actually there are " << midifile.getNumEvents(0) << " events, but I tru
          offtime = midifile[0][i].tick * 60.0 /
                midifile.getTicksPerQuarterNote() / tempo;
                
-               int delta_start = ontimes[key];
+               int delta_start = ontimes[key]/getTicksPerQuarterNote();
                int pitch = key;/*/
                cout << "extracted note: " << key << " d" << delta_start << endl;
                ///////////////////////////////////////////////////////////////
