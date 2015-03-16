@@ -46,7 +46,7 @@ void PrintVisitor::visitNote(Note* n)
 {
   int fret = n->get_fret();
   cout << fret << endl;
-  string_buffer[string_print_index] += fret;
+  string_buffer[string_print_index] += (string)fret;
   cout << " string so far: ." << string_buffer[string_print_index] <<"." << endl;
   
 }
