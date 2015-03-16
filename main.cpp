@@ -189,7 +189,8 @@ Options options;
    MidiFile midifile(options.getArg(1));
   // Base_structs refs = new Base_structs;
   // refs.config();
-   vector<Bar*> score= convertMidiFileToText(midifile);
+  
+   vector<Bar*> score= convertMidiFileToText(midifile,atoi(argv[2]),atoi(argv[3]));
    
 //   cout << "Main: note size: " << score[0]->get_child(0)->get_note_at(0)->get_children_size() << endl;
    
