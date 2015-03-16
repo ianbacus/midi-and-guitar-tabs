@@ -54,6 +54,8 @@ int Note::get_string() const
 		//ret = tempvec[current_note_index]->first;
 	}
 	catch (const std::out_of_range& oor) {
+		
+		cout << "lalalala" << endl;
 		std::cerr << "Out of Range error: " << oor.what() << '\n';
 		//cout << "uh oh";
 	}
@@ -70,6 +72,8 @@ int Note::get_fret() const
 		//ret = (pitch_to_frets_map.at(pitch))[current_note_index]->second;
 	}
 	catch (const std::out_of_range& oor) {
+		
+		cout << "lalalala" << endl;
 		std::cerr << "Out of Range error: " << oor.what() << '\n';
 		//cout << "uh oh";
 	}
