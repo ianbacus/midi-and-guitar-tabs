@@ -31,6 +31,7 @@ void PrintVisitor::visitChunk(Chunk* c)
     Note* current_note = c->get_note_at(j);
     if(current_note->get_string() == string_print_index)
     {
+      cout << "chunk going to note" << endl;
       current_note->accept(this);
     }
   }
@@ -41,4 +42,5 @@ void PrintVisitor::visitNote(Note* n)
 {
   cout << n->get_fret() << endl;
   string_buffer[string_print_index] += n->get_fret();
+  
 }
