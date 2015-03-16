@@ -55,7 +55,8 @@ vector<Bar*> convertMidiFileToText(MidiFile& midifile,int num, int denm) {
   
 int truncate = 120;
 int shift = 27;
-   int delta_counter,last;
+   int last;
+   double delta_counter;
    vector<Bar*> score;
    score.push_back(new Bar());
    score.back()->add_chunk(new Chunk()); //the first chunk has been instantiated inside the first bar
@@ -97,7 +98,7 @@ cout << "actually there are " << midifile.getNumEvents(0) << " events, but I tru
          offtime = midifile[0][i].tick;
          //* 60.0 / (midifile.getTicksPerQuarterNote() / tempo);
                
-               int delta_start = ontimes[key];///getTicksPerQuarterNote();
+               double delta_start = ontimes[key];///getTicksPerQuarterNote();
                int pitch = key;//*/
                cout << "extracted note: " << key << " d" << delta_start << endl;
                ///////////////////////////////////////////////////////////////
