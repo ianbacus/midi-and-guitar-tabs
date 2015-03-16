@@ -37,10 +37,11 @@ void PrintVisitor::visitChunk(Chunk* c)
   for(int j=0; j<c->get_children_size(); j++)
   {
     Note* current_note = c->get_note_at(j);
-    string_buffer[string_print_index] += "-"; //pre pad
     if(current_note->get_string() == string_print_index)
     {
      // cout << "chunk going to note" << endl;
+     
+      string_buffer[string_print_index] += "-"; //pre pad
       strings_closed[string_print_index] = 1;
       current_note->accept(this);
       
@@ -50,7 +51,7 @@ void PrintVisitor::visitChunk(Chunk* c)
   }
   for(int j=0; j<6; j++){
       if(0==strings_closed[j])
-       string_buffer[string_print_index] += "--"; //note width, and padding
+       string_buffer[string_print_index] += "---"; //note width, and padding
        
   }
   
