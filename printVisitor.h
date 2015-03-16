@@ -15,7 +15,7 @@ class PrintVisitor : public Visitor
     virtual void visitChunk(Chunk*);
     void print_out()
     {
-      for(int i=0; i<7; i++)
+      for(int i=7; i>=0; i--)
       {
         cout << string_buffer[i] << endl;
       }
