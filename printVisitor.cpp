@@ -29,6 +29,7 @@ void PrintVisitor::visitBar(Bar* b)
 
 void PrintVisitor::visitChunk(Chunk* c)
 {
+    cout << "chunking" << endl;
     bool strings_closed[] = {0,0,0,0,0,0};
   //TODO: logic for separating based on tick/notevalue
   // Currently, this filters out notes by the currently active string. The current printing method doesn't allow
