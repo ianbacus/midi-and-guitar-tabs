@@ -73,7 +73,7 @@ vector<Bar*> convertMidiFileToText(MidiFile& midifile) {
    int key = 0;
    int vel = 0;
    int command = 0;
-int truncate = 20;
+int truncate = 50;
 //   for (i=0; i<midifile.getNumEvents(0); i++) {
 cout << "actually there are " << midifile.getNumEvents(0) << " events, but I truncated down to " << truncate << endl;
   cout << "On time | offtime-ontime | key | velocity";
