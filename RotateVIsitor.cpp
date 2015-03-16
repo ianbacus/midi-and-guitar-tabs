@@ -83,7 +83,7 @@ void RotateVisitor::visitChunk(Chunk* c)
 
 	  while(counter_index < c->get_children_size())
 	  {
-	  	cout << counter_index << "<" << c->get_children_size() <<  endl;
+	  	cout << counter_index << "<" << c->get_children_size() << ", failcount = " << fail_count <<  endl;
 	  	if(counter_index == -1) {cout << "error" << endl; break;}
 	  	if(fail_count == c->get_note_at(counter_index)->get_children_size())
 	  	{
