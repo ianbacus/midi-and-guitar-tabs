@@ -2,6 +2,12 @@
 #define __PRINTVISITOR__
 #include "Visitor.h"
 #include "base.h"
+#include <iostream>
+#include <cstdlib>
+#include <fstream>
+#include <sstream>
+#include <iomanip>
+using namespace std;
 
 class PrintVisitor : public Visitor
 {
