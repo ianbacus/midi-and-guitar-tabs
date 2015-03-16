@@ -1,5 +1,5 @@
 #include "RotateVisitor.h"
-#define ALLOWABLE  8
+#define ALLOWABLE  7
 //This will recursively check and reconfigure all of the elements of the tree
 
 //Possibly...
