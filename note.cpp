@@ -114,8 +114,13 @@ bool Note::compare(Note* note) const
 	*/
 int Note::get_children_size() const
 {
-	cout << pitch << endl;
-	return (pitch_to_frets_map.at(pitch)).size();
+	try{
+		cout << pitch << endl;
+		return (pitch_to_frets_map.at(pitch)).size();
+	}
+	catch(const std::out_of_range& oor){
+		std::cerr << "Out of Range error: " << oor.what() << '\n';
+	}
 
 }
 	
