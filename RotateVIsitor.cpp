@@ -78,13 +78,13 @@ void RotateVisitor::visitChunk(Chunk* c)
 void RotateVisitor::visitChunk(Chunk* c) 
 {
 	cout << "chunk" << endl;
-  int counter_index=0,fail_count=0;
+  int counter_index=0,fail_count=0,super_fail=0;
 //  push_stack(c->get_note_at(++j)); //only if this increments after evaluating
 
 	  while(counter_index < c->get_children_size())
 	  {
 	  	cout << counter_index << "<" << c->get_children_size() << ", failcount = " << fail_count <<  endl;
-	  	if(counter_index == -1) {cout << "error" << endl; break;}
+	  	if(super_fail > 5) {cout << "error" << endl; break;}
 	  	if(fail_count == c->get_note_at(counter_index)->get_children_size())
 	  	{
 	  		//after exhausting all tries, go back one step on the stack
@@ -92,6 +92,7 @@ void RotateVisitor::visitChunk(Chunk* c)
 	  		counter_index--;
 	  		c->get_note_at(counter_index)->accept(this);
 	  		fail_count=0;
+	  		super_fail++;
 	  	}
 	  	else if(compare_with_stack(c->get_note_at(counter_index)) )
 	  	{
