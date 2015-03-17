@@ -54,7 +54,7 @@ void add_to_tree(int delta_start, int pitch)
 vector<Bar*> convertMidiFileToText(MidiFile& midifile,int num, int denm) {
   
   
-int truncate = 120;
+int truncate = denm;
 int shift = 27;
    int last;
    double delta_counter;
@@ -79,24 +79,24 @@ int shift = 27;
    int key = 0;
    int vel = 0;
    int command = 0;
- cout << "Tempo is " << tempo << endl;
+ cout << "Tempo is " << tempo << ", " << midifile.getTicksPerQuarterNote() << " ticks/Q (beat) " << endl;
 cout << "actually there are " << midifile.getNumEvents(0) << " events, but I truncated down to " << truncate << endl;
   cout << "On time | offtime-ontime | key | velocity" << endl;
-  for (i=0; i<midifile.getNumEvents(0); i++) {
-//   for (i=0; i<truncate; i++) {
+//  for (i=0; i<midifile.getNumEvents(0); i++) {
+   for (i=0; i<truncate; i++) {
 
       command = midifile[0][i][0] & 0xf0;
       if (command == 0x90 && midifile[0][i][2] != 0) {
          // store note-on velocity and time
          key = midifile[0][i][1];
          vel = midifile[0][i][2];
-         ontimes[key] = midifile[0][i].tick*(num/denm) / midifile.getTicksPerQuarterNote();//* 240 / tempo; /// tempo; // /
+         ontimes[key] = midifile[0][i].tick*num / midifile.getTicksPerQuarterNote();//* 240 / tempo; /// tempo; // /
              //  midifile.getTicksPerQuarterNote();
          onvelocities[key] = vel;
       } else if (command == 0x90 || command == 0x80) {
          // note off command write to output
          key = midifile[0][i][1];
-         offtime = midifile[0][i].tick;
+         offtime = midifile[0][i].tick*num / midifile.getTicksPerQuarterNote();
          //* 60.0 / (midifile.getTicksPerQuarterNote() / tempo);
                
                long double delta_start = ontimes[key];///getTicksPerQuarterNote();
@@ -120,7 +120,7 @@ cout << "actually there are " << midifile.getNumEvents(0) << " events, but I tru
                   score.back()->get_child(last)->add_note(new Note(pitch-shift,delta_start));
                }
                ///////////////////////////////////////////////////////////////
-               /*/
+               //*/
          cout << "note\t" << ontimes[key]
               << "\t" << offtime - ontimes[key]
               << "\t" << key << "\t" << endl;
