@@ -7,21 +7,20 @@ void PrintVisitor::visitBar(Bar* b)
     for(string_print_index=6; string_print_index>= 0; string_print_index--)
   {
     //  cout << string_print_index << endl;
-/*    if(string_print_index==6)
+    if(string_print_index==6)
     {
       string_buffer[string_print_index] += " ";
-      continue;
     }
-    else*/
-//    {
-      string_buffer[string_print_index] += "|";
-      string_buffer[string_print_index].push_back(tuning[(string_print_index)]);
-      
-//    }
-    for(int j=0; j<b->get_children_size(); j++)
+    else
     {
-        //cout << j << endl;
-      b->get_child(j)->accept(this);
+        string_buffer[string_print_index] += "|";
+        string_buffer[string_print_index].push_back(tuning[(string_print_index)]);
+    
+        for(int j=0; j<b->get_children_size(); j++)
+        {
+            //cout << j << endl;
+          b->get_child(j)->accept(this);
+        }
     }
     //TODO: add logic to this to make the number of continuous bar prints variable by the client
     string_buffer[string_print_index] += "\n";
