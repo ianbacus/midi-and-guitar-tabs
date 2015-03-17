@@ -31,28 +31,30 @@ void PrintVisitor::visitBar(Bar* b)
 
 void PrintVisitor::visitChunk(Chunk* c)
 {
-    bool strings_closed;
+    bool strings_closed=false;
   //TODO: logic for separating based on tick/notevalue
   // Currently, this filters out notes by the currently active string. The current printing method doesn't allow
   // multiple notes of the same chunk to appear at the same instant in time
   // - padding should use delta values of the chunk in terms of smallest note division for a bar
   for(int j=0; j<c->get_children_size(); j++)
   {
+    //only print out the notes in the chunk on the current string being printed. If none of the notes in the chunk 
+    // match the current string index, then pad the space instead.
     Note* current_note = c->get_note_at(j);
     if(current_note->get_string() == string_print_index)
     {
      // cout << "chunk going to note" << endl;
      
       string_buffer[string_print_index] += "-"; //pre pad
-      strings_closed = 1;
+      strings_closed = true;
       current_note->accept(this);
       
       string_buffer[string_print_index] += "-";
     }
 //  else: update the stringsopen in reverse
   }
-      if(!strings_closed)
-       string_buffer[string_print_index] += "---"; //note width, and padding
+  if(!strings_closed)
+    string_buffer[string_print_index] += "---"; //note width, and padding
 
 }
 
