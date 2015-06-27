@@ -1,5 +1,5 @@
 #include "RotateVisitor.h"
-#define ALLOWABLE  7
+#define ALLOWABLE  4
 //This will recursively check and reconfigure all of the elements of the tree
 
 //Possibly...
@@ -15,6 +15,125 @@ void RotateVisitor::visitBar(Bar* b)
     b->get_child(i)->accept(this);
   }
 }
+  //Algorithm idea: 
+  // Increment through vector of notes. If a candidate compares nicely with the current stack of accepted notes,
+  // add it to the stack and continue to the next candidate. If it does not work with the rest of the note coordinates,
+  // go back to the previous candidate and increment its index
+ 
+ //the items are essentially being moved from the vector tree into a stack for comparison purpose, element by element.
+ // the counter_index allows "iterative recursion" to take place. If the maximum allowable failure count is reached,
+ // the current existing portion that was assumed to be correct must be wrong. Reversing the counter and incrementing
+ // the note index at that point by one, and then checking all the future notes after that should fix this.
+
+
+//Two levels of "failure":
+// - fail count keeps track of the number of string/fret positions that the candidate note has tried to use.
+//		it is reset when candidate notes are accepted
+// - super fail is used to prevent re-checking the same set infinitely once all rotations have been attempted
+
+void RotateVisitor::visitChunk(Chunk* c) 
+{
+//	cout << "chunk" << endl;
+
+  _chunk_count++;
+  int counter_index=0,fail_count=0,super_fail=0;
+//  push_stack(c->get_note_at(++j)); //only if this increments after evaluating
+
+	  while(counter_index < c->get_children_size())
+	  {
+//	  	cout << counter_index << "<" << c->get_children_size() << ", failcount = " << fail_count <<  endl;
+	  	if(super_fail > 5) {cout << "rotation error: max rotation limit" << endl; break;}
+	  	if(fail_count == c->get_note_at(counter_index)->get_children_size()){
+	  	//A note has only so many fret/string positions. These are its children
+	  		//after exhausting all tries, go back one step on the stack
+	  		pop_stack();
+	  		counter_index--;
+	  		c->get_note_at(counter_index)->accept(this);
+	  		fail_count=0;
+	  		super_fail++;
+	  	}
+	  	else if(int test = compare_with_stack(c->get_note_at(counter_index))){
+	  		switch(test){
+				case 1:
+					//discard note: duplicate
+					// will this cause strange race conditions? TODO: verify it wont
+					c->remove_note(c->get_note_at(counter_index));
+					break;
+				case 2: //passes all tests
+					//if the note to be added is compatible with the rest of the stack, continue on to the next note
+					push_stack(c->get_note_at(counter_index));
+					counter_index++;
+					fail_count=0;
+					break;
+				default:			
+					break;	  		
+		  	};
+		}
+	  	
+	  	else{ //should only be these three cases
+	  		//if the note is incompatible, begin reconfiguring the candidate note
+	  		c->get_note_at(counter_index)->accept(this);
+	  		fail_count++;
+	  	}
+	  }
+	  empty_stack();
+}
+void RotateVisitor::empty_stack()
+{
+	while(!_comparison_stack.empty()){
+		pop_stack();
+	}
+}
+
+int RotateVisitor::compare_with_stack(Note* n){
+enum {
+BAD, DISCARD, GOOD,
+};// Return true if the note is addable
+    // return false if the note should perform a rotation to a new fret/string
+    //discard message:
+    //bad message:
+    //good message:
+
+	stack<Note*> stack_copy = _comparison_stack;
+
+	while(!stack_copy.empty())
+	{
+	  Note* current = stack_copy.top();
+	  //check if the string is available
+	  
+	  if(n->get_pitch() == current->get_pitch())
+	  	  	return DISCARD;
+
+	  if(n->get_string() == current->get_string())//	cout << "OVERLAP" << endl;
+	  	return BAD;
+	  	
+	  else if(n->get_fret() == 0 || current->get_fret() == 0)// 	cout << "FRETTED ZERO, NONOVERLAPPING" << endl;
+	  	stack_copy.pop();
+
+	  else if(abs((n->get_fret() - current->get_fret())) > ALLOWABLE)
+	  // check if the fret position for the candidate note would fit with the current portion of the note stack
+	  //	cout << "SPACED " << MAX << " ITEMS AWAY" << endl;
+	  	return BAD;
+
+	  else//	cout << "ELSE: VALID" << endl;
+	  	stack_copy.pop();
+	  
+	}
+	return GOOD;
+	
+}
+
+void RotateVisitor::visitNote(Note* n) 
+{
+//  cout << "incrementing note: " << n->get_string() << " " << n->get_fret() <<"to";
+  n->increment_note_index();
+//  cout <<  n->get_string() << " " << n->get_fret() << endl;
+}
+
+
+
+
+
 /*
 void Chunk::rotate()
 {
@@ -66,97 +185,3 @@ void RotateVisitor::visitChunk(Chunk* c)
     }}  
   }
   */
-  //Algorithm idea: 
-  // Increment through vector of notes. If a candidate compares nicely with the current stack of accepted notes,
-  // add it to the stack and continue to the next candidate. If it does not work with the rest of the note coordinates,
-  // go back to the previous candidate and increment its index
- 
- //the items are essentially being moved from the vector tree into a stack for comparison purpose, element by element.
- // the counter_index allows "iterative recursion" to take place. If the maximum allowable failure count is reached,
- // the current existing portion that was assumed to be correct must be wrong. Reversing the counter and incrementing
- // the note index at that point by one, and then checking all the future notes after that should fix this.
-void RotateVisitor::visitChunk(Chunk* c) 
-{
-//	cout << "chunk" << endl;
-  int counter_index=0,fail_count=0,super_fail=0;
-//  push_stack(c->get_note_at(++j)); //only if this increments after evaluating
-
-	  while(counter_index < c->get_children_size())
-	  {
-//	  	cout << counter_index << "<" << c->get_children_size() << ", failcount = " << fail_count <<  endl;
-	  	if(super_fail > 5) {cout << "error" << endl; break;}
-	  	if(fail_count == c->get_note_at(counter_index)->get_children_size())
-	  	{
-	  		//after exhausting all tries, go back one step on the stack
-	  		pop_stack();
-	  		counter_index--;
-	  		c->get_note_at(counter_index)->accept(this);
-	  		fail_count=0;
-	  		super_fail++;
-	  	}
-	  	else if(compare_with_stack(c->get_note_at(counter_index)) )
-	  	{
-	  		//if the note to be added is compatible with the rest of the stack, continue on to the next note
-	  		push_stack(c->get_note_at(counter_index));
-	  		counter_index++;
-	  		fail_count=0;
-	  		
-	  	}
-	  	else //should only be these three cases
-	  	{
-	  		//if the note is incompatible, begin reconfiguring the candidate note
-	  		c->get_note_at(counter_index)->accept(this);
-	  		fail_count++;
-	  	}
-	  }
-	  empty_stack();
-}
-void RotateVisitor::empty_stack()
-{
-	while(!_comparison_stack.empty())
-	{
-		pop_stack();
-	}
-}
-bool RotateVisitor::compare_with_stack(Note* n)
-{
-	stack<Note*> stack_copy = _comparison_stack;
-
-	while(!stack_copy.empty())
-	{
-	  Note* current = stack_copy.top();
-	  //check if the string is available
-//	  cout << "COPIED TOP ITEM" << endl;
-//	  cout << "candidate s/f:" << n->get_string() << " " << n->get_fret() << endl;
-//	  cout << "stack s/f:" << current->get_string() << " " << current->get_fret() << endl;
-	  	//continue;
-	  if(n->get_string() == current->get_string()){
-	  //	cout << "OVERLAP" << endl;
-	  	return false;
-	  }
-	  else if(n->get_fret() == 0 || current->get_fret() == 0) {
-	 // 	cout << "FRETTED ZERO, NONOVERLAPPING" << endl;
-	  	stack_copy.pop();
-	  }
-	  else if(abs((n->get_fret() - current->get_fret())) > ALLOWABLE) {
-	  //	cout << "SPACED " << MAX << " ITEMS AWAY" << endl;
-	  	return false;
-	  }
-	  else{
-	  //	cout << "ELSE: VALID" << endl;
-	  	stack_copy.pop();
-	  }
-	  
-	}
-//	cout << "candidate passes" << endl;
-	//if the candidate does not violate string overlap or fret over-extension, it is accepted
-	return true;
-	
-}
-
-void RotateVisitor::visitNote(Note* n) 
-{
-//  cout << "incrementing note: " << n->get_string() << " " << n->get_fret() <<"to";
-  n->increment_note_index();
-//  cout <<  n->get_string() << " " << n->get_fret() << endl;
-}

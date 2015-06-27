@@ -2,66 +2,67 @@
 
 void PrintVisitor::visitBar(Bar* b)
 {
-    char tuning[] = {'e','a','d','g','b','e'};
-//  for(string_print_index=0; string_print_index<6; string_print_index++)
-    for(string_print_index=6; string_print_index>= 0; string_print_index--)
-  {
-    //  cout << string_print_index << endl;
-    if(string_print_index==6)
-    {
-      string_buffer[string_print_index] += " ";
-    }
-    else
-    {
-        string_buffer[string_print_index] += "|";
-        string_buffer[string_print_index].push_back(tuning[(string_print_index)]);
-    
-        for(int j=0; j<b->get_children_size(); j++)
-        {
-            //cout << j << endl;
-          b->get_child(j)->accept(this);
-        }
-    }
+    for(string_print_index=5; string_print_index>= 0; string_print_index--){
+		(string_buffer.back())[string_print_index] += "|";
+		for(int j=0; j<b->get_children_size(); j++){
+
+			b->get_child(j)->accept(this);
+			}
+		(string_buffer.back())[string_print_index] += "-";
+	}
     //TODO: add logic to this to make the number of continuous bar prints variable by the client
-    string_buffer[string_print_index] += "\n";
-  }
+    
 }
 
 
-void PrintVisitor::visitChunk(Chunk* c)
-{
-    bool strings_closed=false;
-  //TODO: logic for separating based on tick/notevalue
-  // Currently, this filters out notes by the currently active string. The current printing method doesn't allow
-  // multiple notes of the same chunk to appear at the same instant in time
-  // - padding should use delta values of the chunk in terms of smallest note division for a bar
-  for(int j=0; j<c->get_children_size(); j++)
-  {
-    //only print out the notes in the chunk on the current string being printed. If none of the notes in the chunk 
-    // match the current string index, then pad the space instead.
-    Note* current_note = c->get_note_at(j);
-    if(current_note->get_string() == string_print_index)
-    {
-     // cout << "chunk going to note" << endl;
-     
-      string_buffer[string_print_index] += "-"; //pre pad
-      strings_closed = true;
-      current_note->accept(this);
-      
-      string_buffer[string_print_index] += "-";
+void PrintVisitor::visitChunk(Chunk* c){
+/*
+	Visit a chunk and iterate through all of its notes. Only visit notes which are on the currently set
+	string index, which each enclosing bar decrements through. Decrementing is chosen arbitrarily (?)	
+
+*/
+//	cout << "visiting chunk" << endl;
+	strings_closed=false;
+	bool locked = false;
+	
+	//bar_ticks_inc(c.get_delta());
+	
+	int delta = 0;
+	string result;
+	Note* current_note;
+	int j = c->get_children_size();
+	if(c->get_children_size() == 0)
+		return;
+	for(int j=0; j<c->get_children_size(); j++){
+		//cout << j << " out of " << c->get_children_size() << endl;
+		current_note = c->get_note_at(j);
+		if(!strings_closed)
+			current_note->accept(this);
+		if(strings_closed && !locked){
+			int fret = current_note->get_fret();
+			if(fret < 10)
+				result = "-" + std::to_string(fret);
+			else
+				result = std::to_string(fret);		
+			locked = true;
+			}
+			
+		delta += current_note->get_delta(); //TODO: change this logic to use chunk deltas instead of note deltas
+	}
+	if(!strings_closed)//none of the chunk members were on the current string index, so print null space instead
+		result = "--" ;
+		
+	//delta = log2(delta);	
+	// cout << result << endl;
+	string_buffer.back()[string_print_index] += std::string(delta,'-') + result;
+}
+
+void PrintVisitor::visitNote(Note* n){
+  //int fret = n->get_fret();
+  if(n->get_string() == string_print_index){
+      	strings_closed = true; 
+      	//only one note will be printed for a chunk at a time
+
     }
-//  else: update the stringsopen in reverse
-  }
-  if(!strings_closed)
-    string_buffer[string_print_index] += "---"; //note width, and padding
 
-}
-
-void PrintVisitor::visitNote(Note* n)
-{
-  int fret = n->get_fret();
-  //cout << fret << endl;
-  string_buffer[string_print_index] += std::to_string(fret);
- // cout << " string so far: ." << string_buffer[string_print_index] <<"." << endl;
-  
 }

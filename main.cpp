@@ -12,6 +12,25 @@
 #include <vector>
 #include <iostream>
 
+/*
+
+cool things to add still:
+
+intra-chunk processing. 
+	- the chunk rotating visitor could take into account the state of adjacent chunks, but this may sometimes require 
+	arbitrary "recursive" stack permuting - a chunk may have two suitable states, but one would work better for the next chunk processed.
+	The previous chunk with two states would not take this into account during its initial reconfiguration
+	
+	Melodies, defined by their track or (Specifically for baroque music) their distance from previous notes could be monitored so that
+	configurations that break melodic coherency (ie during a subject entry in a fugue) would have a lower priority than "good" configurations
+	with continuous melodic lines
+	
+	Fret spacings could be limited between chunks so that tabs don't contain unplayable sequences, or create comically spaced chunks
+	that would make a guitarist feel like they were giving a handy to their guitar neck
+	
+	
+	
+*/
 
 
 
@@ -182,17 +201,69 @@ void test()
 }*/
 
 int main(int argc, char* argv[]) {
-Options options;
+/*
+	 This project transforms midi files into guitar tabs.
+	 ./a <note_deltas.txt> <noteoffset=20> <bar_formatting=1> <align=0>
+argv: 0	      1					2				  3				 4
+*/
+	if(argc != 5){
+		cout << "Invalid entry. use the following format:\n>> ./a note_deltas.txt, #noteoffset=20, #bar_formatting=1, #align=0" << endl;
+		cout << "Note deltas is a text file with a simple format. One row is for note pitches, and one is for time deltas. See midi_writer.py for more info." << endl;
+		cout <<"Note offset can be used to change the key of a song. It just offsets all of the notes by a set amount." << endl;
+		cout <<"Bar formatting sets how many bars will show up per 'row' on the output text file with the tabs."<<endl;
+		cout <<"Align sets how many eighth notes should appear before the first note." <<endl;
+		return 0;
+	}
+	string note_deltas = argv[1];
+	int note_offset=atoi(argv[2]);
+	int align=atoi(argv[4]);
+	vector<Bar*> score = score_maker(note_deltas,note_offset,align);
+	
+	RotateVisitor* thefixer = new RotateVisitor();
+	PrintVisitor* theprinter = new PrintVisitor();
+	
+	int barset = atoi(argv[3]);
+	int format_count = barset;
+	int inform_count = 0;
+	cout << "working ..." << endl;
+	for (std::vector< Bar* >::iterator it = score.begin() ; it != score.end(); ++it){
+		cout << inform_count ++ << endl;
+		if(format_count == barset){
+		   theprinter->newlines();
+		   format_count = 0;
+		}
+		//cout << "shity" << endl;
+		(*it)->accept(thefixer);
+		//cout << "QUESTON MARK" << endl;
+		(*it)->accept(theprinter);
+		format_count++;
+	}
+	cout << "printing ... " << endl;
+	theprinter->print_out();
+	cout << "done." << endl;
+  
+	delete thefixer;
+	delete theprinter; 
+	for (std::vector< Bar* >::iterator it = score.begin() ; it != score.end(); ++it)
+		delete (*it);
+  	
+	return 0;
+  
+}
 
 
-   checkOptions(options, argc, argv);
-   MidiFile midifile(options.getArg(1));
+
+//Options options;
+
+
+//   checkOptions(options, argc, argv);
+//   MidiFile midifile(options.getArg(1));
   // Base_structs refs = new Base_structs;
   // refs.config();
-  int arg1,arg2;
-  cout << "Input numerator and denominator:" << endl;
-  cin >> arg1 >> arg2;
-   vector<Bar*> score= convertMidiFileToText(midifile,arg1,arg2);
+//  int arg1,arg2;
+//  cout << "Input numerator and denominator:" << endl;
+//  cin >> arg1 >> arg2;
+//   vector<Bar*> score= convertMidiFileToText(midifile,arg1,arg2);
    
 //   cout << "Main: note size: " << score[0]->get_child(0)->get_note_at(0)->get_children_size() << endl;
    
@@ -207,7 +278,9 @@ Options options;
  // cout << "Main: chunk size: " << score[0]->get_child(0)->get_children_size() << endl;
  //  cout << "Main: bar size: " << score[0]->get_children_size() << endl;
 
+  // vector<Bar*> score = score_maker(argv[1],atoi(argv[2]));
    
+   /*
    RotateVisitor* thefixer = new RotateVisitor();
    PrintVisitor* theprinter = new PrintVisitor();
    cout << "fixing..." << endl;
@@ -216,7 +289,10 @@ Options options;
    score[0]->accept(theprinter);
    theprinter->print_out();
    cout << "printed." << endl;
+   
+   
    return 0;
 
 	
 }
+*/

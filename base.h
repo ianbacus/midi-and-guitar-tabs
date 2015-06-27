@@ -32,7 +32,8 @@ class Base
 // 	static PitchMap pitch_to_frets_map;
 //   	static PitchMap config();
 		Base() {}
-		~Base();
+		virtual ~Base() {}
+		
 		//This structure is a bit unwieldy. Referencing the pair pointers inside the vector takes several
 		// layers of indirection. Map's find function preserves constness, but it returns iterators which add even more indirection
 		// - Accessing vector:     (*map.find(pitch))                      returns a vector< pair<int, int> *>

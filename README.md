@@ -1,7 +1,59 @@
 # midi
 
 
-Small personal project for converting midi files into tablature. Utilizes a composite pattern hierarchy for creating a tree structure for the notes (individual notes belong to chunks of notes, which belong to bars). Designed a MIDI parser from scratch, but currently testing is being done with code from an existing MIDI parser library from elsewhere.
+Small personal project for converting midi files into tablature. Utilizes a composite pattern hierarchy for creating a tree structure for the notes (individual notes belong to chunks of notes, which belong to bars). 
+Designed a MIDI parser from scratch, but currently testing is being done with code from an existing MIDI parser library from elsewhere.
+(update) using python module to parse midi files
+
+General:
+
+Composite tree is rooted by a "score" object containing a vector of bars, to chunks, to notes etc
+
+Score
+	Bar 1
+		Chunk 1
+			Note 1
+				delta
+				note
+			Note 2
+				delta
+				note
+		Chunk 2
+			Note 1
+				delta
+				note
+			Note 2
+				delta
+				note
+			Note 3
+				delta
+				note
+		Chunk 3
+			Note 1
+	Bar 2
+		Chunk 1
+			Note 1
+				delta
+				note
+			Note 2
+				delta
+				note
+		Chunk 2
+			Note 1
+				delta
+				note
+			Note 2
+				delta
+				note
+			Note 3
+				delta
+				note
+		Chunk 3
+			Note 1
+			
+
+
+Extra notes:
 
 A visitor pattern is used to traverse this tree and perform operations. Currently, there are only reconfigure and print options. The reconfigure option is such an essential part of the program that the code might have to be reworked. The print option is intended to recursively print out specific elements based on their note and delta (time) values.
 

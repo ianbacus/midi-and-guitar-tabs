@@ -1,36 +1,42 @@
 #include "base.h"
-#define ACCEPTABLE  8
+#define ACCEPTABLE  5
 //Note should have a vector of possible string positions (which depend on the tuning in the tab matrix) by default
 // hold an index to tabmatrix, update by incrementing 
 //
 
 Note::PitchMap config()
 {
+//PitchMap is std::map <int, vector< pair<int,int> >  > 
     Note::PitchMap initmap;
+
     int value;
     int tuning[6];
-    tuning[0] = 28;  //E
+    tuning[0] = 28;  //E:28, D:26
     tuning[1] = 33; //A
-    tuning[2] = 39; //D
+    tuning[2] = 38; //D
     tuning[3] = 43; //G
     tuning[4] = 47; //B
     tuning[5] = 52; //E
-     for(int string_ind = 5;string_ind>= 0;string_ind--)
+    
+	//char tuning [6] = {'e','a','d','g','b','e'}; //for print tests
+    for(int string_ind = sizeof(tuning)/sizeof(int);string_ind>= 0;string_ind--)
     {
         for(int fret_ind = 0; fret_ind<20; fret_ind++)
         {
             {
                 value = tuning[string_ind] + fret_ind;
-                //cout << "gridmap: inserting " << value << " at coordinate point " << string_ind <<", " << fret_ind << endl;
+				pair<int,int> map_point = make_pair(string_ind,fret_ind);
+                initmap[value].push_back(map_point); 
+                
+                //add note to (note : location on fretboard) pitch_to_frets. 
+                //this will help for determining how many placements there are for a note, 
+                //and quickly indexing them (is this any faster than indexing the array? TODO)
+  
+                //cout << "gridmap: inserting note " << value << " at coordinate string " << geetarstring[string_ind] <<", fret " << fret_ind << endl;
                 //tab_matrix[string_ind][fret_ind] = value;
-                pair<int,int> map_point = make_pair(string_ind,fret_ind);
-                initmap[value].push_back(map_point); //add note to (note : location on fretboard) pitch_to_frets. this will help for determining how many placements there are for a note, and quickly indexing them (is this any faster than indexing the array? TODO)
-  	//	vector<pair<int, int> * > &testo =  pitch_to_frets_map.at(value);
-  //		cout << (pitch_to_frets_map.at(value))[0]->first << endl;
-  //          	cout << value <<  "first/string " << (*pitch_to_frets_map.at(value))[0]->first;
-    //        	cout << "second/fret "<< (*pitch_to_frets_map.at(value))[0]->second << endl;
-            	
+                	
             }
+            
         }
     }
     return initmap;
@@ -71,7 +77,7 @@ void Note::increment_note_index()
 	int sizetemp = get_children_size();
 	//does polymorphism apply to calls of "this?" go through base pointer, or through this pointer..
 //	cout << get_children_size() << " alternates, at " << current_note_index << ", "<< (current_note_index+sizetemp+1)%sizetemp  << " is next." << endl;
-	current_note_index = (current_note_index+1+sizetemp)%(sizetemp);
+	current_note_index = (current_note_index+1)%(sizetemp);
 }
 bool Note::compare(Note* note) const
 {

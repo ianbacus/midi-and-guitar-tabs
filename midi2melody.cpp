@@ -1,5 +1,7 @@
 #include "midi2melody.h"
 #include <iomanip>
+
+#include <stdlib.h>
 using namespace std;
 
 typedef unsigned char uchar;
@@ -21,6 +23,90 @@ void      usage                 (const char* command);
 */
 //////////////////////////////////////////////////////////////////////////
 
+//////////////////////////////
+//
+// example --
+//
+
+
+vector<Bar*> score_maker(std::string infile, int shift,int align) {
+	/* handles input in this form
+  	 	 line 0: 72,100
+		 line 1: 72,0
+	*/
+    std::ifstream file( infile );
+    int last;
+    
+    int beat_per_measure = 4;
+    map<int,int> beat_value = {{2,16},{4,8},{8,4},{16,2}};
+    
+    int bartime = 0;
+    int counter = 0;
+    int beat_overflow=24;
+	vector<Bar*> score;
+	
+    score.push_back(new Bar());
+    score.back()->add_chunk(new Chunk());
+    std::string line;
+    
+    
+	align = align*(beat_overflow/(2*(beat_per_measure)));
+	bartime += align;
+    while( std::getline( file, line ) ) {
+      //get newline separated lines from file
+      
+        std::istringstream iss( line );
+		if(line == "SIGEVENT"){
+			std::getline(file, line);
+			std::istringstream iss( line );
+			std::string num,denom;
+			if( std::getline( iss, num , ',') && std::getline( iss, denom )) {
+				cout << num << " " << denom << endl;
+				beat_overflow = ((std::stoi(num)) * (beat_value[std::stoi(denom)]) );
+				cout << "BO is " << beat_overflow << endl;
+			}
+		}	
+        std::string p,d;
+		if( std::getline( iss, p , ',') && std::getline( iss, d )) {
+			//delimiting character inside each line
+			counter++;
+			int delta = stoi(d); 
+			int pitch = stoi(p);
+			//if(counter == 1) bartime += delta;
+			if(counter == 1) cout << pitch << "," << delta << endl;
+			bartime += delta;
+			if(bartime >= beat_overflow && delta != 0){
+				//Case 1: the bar is full, create a new one with an empty initial chunk
+				score.push_back(new Bar());	
+			    score.back()->add_chunk(new Chunk());
+				bartime = 0;
+				
+			}
+			
+			if(delta == 0){
+			  //Case 2: this note must be added to the current chunk in the current bar
+			  //score.back() returns the last bar
+			  //score.back()->get_children_size() returns the number of chunks, used to index the last chunk
+			  //since the member vectors are inaccessible, using the "back()" function on the vector is not viable
+			 
+			  last = score.back()->get_children_size() - 1;
+			  score.back()->get_child(last)->add_note(new Note(pitch-shift,delta));
+			}
+			else{
+			  //Case 3: a new chunk in the current bar is needed
+			  
+			  score.back()->add_chunk(new Chunk(delta));
+			  last =  score.back()->get_children_size() - 1;
+			  score.back()->get_child(last)->add_note(new Note(pitch-shift,delta));
+			  if(counter == 1) cout << "HELLO"<<pitch << "," << delta << endl;
+			}	
+			
+			//...
+		}
+	}
+	return score;
+
+}
 /*
 void add_to_tree(int delta_start, int pitch)
 {
@@ -50,7 +136,7 @@ void add_to_tree(int delta_start, int pitch)
 //
 // convertMidiFileToText --
 //
-
+/*
 vector<Bar*> convertMidiFileToText(MidiFile& midifile,int num, int denm) {
   
   
@@ -100,7 +186,9 @@ cout << "actually there are " << midifile.getNumEvents(0) << " events, but I tru
          //* 60.0 / (midifile.getTicksPerQuarterNote() / tempo);
                
                long double delta_start = ontimes[key];///getTicksPerQuarterNote();
-               int pitch = key;//*/
+               int pitch = key;/*/
+               
+            /*
                cout << "extracted note: " << key << " d" << std::setprecision(9) << delta_start << endl;
                ///////////////////////////////////////////////////////////////
                if(delta_start == 0)
@@ -120,11 +208,11 @@ cout << "actually there are " << midifile.getNumEvents(0) << " events, but I tru
                   score.back()->get_child(last)->add_note(new Note(pitch-shift,delta_start));
                }
                ///////////////////////////////////////////////////////////////
-               //*/
+
          cout << "note\t" << ontimes[key]
               << "\t" << offtime - ontimes[key]
               << "\t" << key << "\t" << endl;
-              //*/
+
          onvelocities[key] = -1;
          ontimes[key] = -1.0;
       }
@@ -143,6 +231,7 @@ return score;
 //
 // setTempo -- set the current tempo
 //
+
 
 void setTempo(MidiFile& midifile, int index, double& tempo) {
    double newtempo = 0.0;
@@ -209,25 +298,25 @@ void checkOptions(Options& opts, int argc, char* argv[]) {
    }
 
 }
+*/
 
 
+/*
 
-//////////////////////////////
-//
-// example --
-//
+{
 
-void example(void) {
-
-}
-
-
+                std::string token;
+                while( std::getline( iss, token, ',' ) )
+                {
+                    std::cout << token << std::endl;
+                }
+*/
 
 //////////////////////////////
 //
 // usage --
 //
-
+/*
 void usage(const char* command) {
    cout << "Usage: " << command << " midifile" << endl;
-}
+}*/
