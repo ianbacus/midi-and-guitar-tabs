@@ -1,6 +1,10 @@
 #include "RotateVisitor.h"
 #define ALLOWABLE  4
+
 //This will recursively check and reconfigure all of the elements of the tree
+
+//This algorithm is terribly inefficient right now, it does a brute force check through permutations. I kept tweaking it until it worked.
+//If chunk configurations were configured in terms of adjacent chunks, then analysis would be simpler. 
 
 //Possibly...
 // - separate into a "stringopen" checker and a "fingerable" checker
@@ -12,7 +16,10 @@ void RotateVisitor::visitBar(Bar* b)
 //cout << "Bar" << endl;
   for(int i=0; i < b->get_children_size(); i++)
   {
+  	recursion_lock=0;
+  	clear_cache();
     b->get_child(i)->accept(this);
+    _chunk_count++;
   }
 }
   //Algorithm idea: 
@@ -34,12 +41,12 @@ void RotateVisitor::visitBar(Bar* b)
 
 void RotateVisitor::visitChunk(Chunk* c) 
 {
-  _chunk_count++;
+  empty_stack();
   int counter_index=0,fail_count=0,super_fail=0;
 //  push_stack(c->get_note_at(++j)); //only if this increments after evaluating
 
 	  while(counter_index < c->get_children_size()){//cout << counter_index << "<" << c->get_children_size() << ", failcount = " << fail_count <<  endl;
-	  	if(super_fail > c->get_children_size()) //cout << "rotation error: max rotation limit" << endl;
+	  	if(super_fail > pow(2,(c->get_children_size() ))  ) //cout << "rotation error: max rotation limit" << endl;
 			break;
 	  	if(fail_count == c->get_note_at(counter_index)->get_children_size()){
 	  	//A note has only so many fret/string positions, indicated by "get_children_size()". after exhausting all tries, go back one step on the stack
@@ -60,19 +67,46 @@ cout << "good'ed:";print_stack();
 					counter_index++;
 					fail_count=0;
 					break;
-				case BAD:			
+				case BAD:
+					cout << "THIS WILL NEVER HAPPEN " << endl;		
 					break;	  		
 		  	};
 		}
-	  	
 	  	else{ //should only be these three cases
 	  		//if the note is incompatible, begin reconfiguring the candidate note
 	  		c->get_note_at(counter_index)->accept(this);
 	  		fail_count++;
 	  	}
 	  }
-	  cout << "FINAL:";print_stack();
-	  empty_stack();
+
+	  recursion_lock++;
+	  
+	  //cout << "break, r_lock = " << recursion_lock <<  endl;
+	  if (recursion_lock < pow(2,(c->get_children_size() ))) {//c->get_children_size()){
+	 	 compare_chunks(c->get_note_indices());
+	 	 
+			/*
+			cout << "current optima["<< _optima.size() << "] <";
+
+			for(int i=0;i<_optima.size();i++)
+				cout << Note::get_fret_at(_optima[i].first, _optima[i].second) << ", ";
+			cout << ">" << endl;
+			*/
+			
+			for(int i=0;i< (c->get_children_size());i++){
+				for(int i2=0;i2<3;i2++){
+					if(!in_cache( c->get_note_indices() ) )
+						break;
+					c->get_note_at(i)->accept(this);
+				}
+			}//could this be done with a callback
+			visitChunk(c);
+	  }
+	  else{
+	  	 force_chunk_note_indices(_optima,c);
+	  	 clear_cache();
+	  	 empty_stack();
+	  }
 }
 void RotateVisitor::empty_stack()
 {
@@ -82,6 +116,7 @@ void RotateVisitor::empty_stack()
 }
 
 void RotateVisitor::print_stack() {
+//TODO: add more templates
 	stack<Note*> stack_copy = _comparison_stack; 
 	cout << "<";
 	while(!stack_copy.empty()){
@@ -91,6 +126,61 @@ void RotateVisitor::print_stack() {
 	}
 	cout << ">" << endl;
 }
+
+void RotateVisitor::compare_chunks(vector<pair <int, int> > current_indices) {
+	//TODO: make this less sloppy and hacky
+	//Test max fret spacing
+
+	if (!in_cache(current_indices)){
+		_cache.push_back(current_indices);
+		if (_optima.size() == current_indices.size()){
+			int spacing1=0, spacing2=0;
+			int fret =0;
+			int fmin =24, fmax1=0;
+			//cout << "s1: " ;
+			for(auto i : _optima){
+				fret = Note::get_fret_at(i.first, i.second);
+				//cout << fret << " ";
+				if (fret > fmax1)
+					fmax1 = fret;
+				if (fret < fmin)
+					fmin = fret;		
+			}
+			//cout << endl;
+			spacing1 = fmax1-fmin;
+			fmin =24;
+			int fmax2=0;
+			//cout << "s2: " ;
+			for(auto i : current_indices){
+				fret = Note::get_fret_at(i.first, i.second);
+				//cout << fret << " ";
+				if (fret > fmax2)
+					fmax2 = fret;
+				if (fret < fmin)
+					fmin = fret;	
+			}
+			//cout << endl;
+			spacing2=fmax2-fmin;
+			//cout << "compared s1, s2: " << spacing1 << " " << spacing2 << endl;
+			if (spacing1 < spacing2 && (spacing2 - spacing1) > 3 )//current optima is still better
+				return;
+			else if (fmax1 < fmax2)
+				return;
+		}
+	
+		_optima = current_indices;
+	}
+	
+}
+
+
+void RotateVisitor::force_chunk_note_indices( vector<pair<int, int> > indices, Chunk* c ){
+	if (indices.size() == c->get_children_size()){
+		for(int i=0; i<c->get_children_size(); i++)
+			c->get_note_at(i)->set_note_index(indices[i].first);
+	}
+}
+
 
 int RotateVisitor::compare_with_stack(Note* n){
 // Return true if the note is addable. This method will copy the stack of notes 

@@ -42,7 +42,7 @@ Note::PitchMap config()
     return initmap;
 }
 
-int Note::get_string() const
+int Note::get_string() 
 {
 	int ret,n=0;
 	while(1) {
@@ -51,18 +51,17 @@ int Note::get_string() const
 			return ret;
 		}
 		catch (const std::out_of_range& oor) {
-			if(pitch<28){ n+=12;}
-			else{ n-=12;}
+			if(pitch<28){ alter_pitch(12);}
+			else{ alter_pitch(-12);}
 		}
 	}
 }
 
-int Note::get_fret() const
-{
+int Note::get_fret_at(int n_index, int pitch){
 	int ret,n=0;
 	while(1) {
 		try {
-			ret = pitch_to_frets_map.at(pitch+n)[current_note_index].second;
+			ret = pitch_to_frets_map.at(pitch+n)[n_index].second;
 			return ret;
 		}
 		catch (const std::out_of_range& oor) {
@@ -72,15 +71,31 @@ int Note::get_fret() const
 	}
 }
 
+int Note::get_fret() {
+//TODO: make this method static and replace it elsewhere in code
+	int ret,n=0;
+	while(1) {
+		try {
+			ret = pitch_to_frets_map.at(pitch)[current_note_index].second;
+			return ret;
+		}
+		catch (const std::out_of_range& oor) {
+			if(pitch<28){ alter_pitch(12);}
+			else{ alter_pitch(-12);}
+		}
+	}
+}
+
 void Note::increment_note_index()
 {
 	int sizetemp = get_children_size();
-	//does polymorphism apply to calls of "this?" go through base pointer, or through this pointer..
 //	cout << get_children_size() << " alternates, at " << current_note_index << ", "<< (current_note_index+sizetemp+1)%sizetemp  << " is next." << endl;
 	current_note_index = (current_note_index+1)%(sizetemp);
 }
-bool Note::compare(Note* note) const
-{
+
+
+
+bool Note::compare(Note* note) {
 	//this function will be deleted
 	if(note->get_string() == get_string()) return false;
 	else

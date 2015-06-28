@@ -24,19 +24,27 @@ class Note : public Base
 			}
 		}
 		virtual ~Note() {}
-		int get_fret() const;
-		int get_string() const;
+		int get_fret() ;
+		
+		static int get_fret_at(int,int);
+		virtual bool compare(Note*) ;
+		
+		int get_string() ;
 		int get_noteslost() const {return noteslost;}
 		//static void increment_noteslost {noteslost++;}
 		void increment_note_index();
-		//int get_current_note_index const {return current_note_index;}
+		void set_note_index(int n) {current_note_index = n;}
+		int get_current_note_index() const {return current_note_index;}
+		
+		
 		int get_pitch() const {return pitch;}
-		int get_delta() const {return delta;}
+		void alter_pitch(int n) {pitch +=n; }
+		int get_delta()  const {return delta;}
 		
 		virtual void accept(Visitor* v) {v->visitNote(this);}
 		//virtual int get_children_size() const {return Base_structs::pitch_to_frets_map.find(pitch)->second).size();}
 		virtual int get_children_size() const;// {return Base::get_pitch_to_frets_entry_size(pitch);}
-		virtual bool compare(Note*) const;
+
 //		virtual void reconfigure();
 	
 //		void set_fret_string();

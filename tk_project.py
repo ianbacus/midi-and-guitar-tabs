@@ -122,7 +122,7 @@ if __name__ == "__main__":
 			root.wm_title(file_name)
 			root.mainloop()
 		else:
-			raise BadInput
+			raise ValueError
 	except ValueError:
 		print 'Enter the name of the midifile without a file extension and a global offset for pitch values'
 		
