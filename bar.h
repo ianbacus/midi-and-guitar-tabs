@@ -23,6 +23,7 @@ class Bar : public Base
 		//operator [] for accessing Chunks
 		//virtual void reconfigure();
 		Chunk* get_child(int i) {return _bar_chunks[i];}
+		Chunk* get_child() {return _bar_chunks.back();}
 		
 		virtual void accept(Visitor*v) {v->visitBar(this);}
 		virtual int get_children_size() const {return _bar_chunks.size();}

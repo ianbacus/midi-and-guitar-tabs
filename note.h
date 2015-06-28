@@ -6,26 +6,28 @@ class Note : public Base
 {
 	private:
 
-	    	int pitch;
-	    	int delta;
+		int pitch;
+		int delta;
 		int current_note_index;
 	public:
 		typedef std::map <int, vector< pair<int,int> >  > PitchMap;
 	 	static PitchMap pitch_to_frets_map;
-	 	
+		static int noteslost;
 	    //	static PitchMap config();
 	 	
 	 	
 	 	//****
 		Note(int p, int d) : pitch(p), delta(d), current_note_index(0) {
 			PitchMap::iterator it = (pitch_to_frets_map.find(p));
-			if(it == pitch_to_frets_map.end())
-				cout << "note error: note lost" << endl;
+			if(it == pitch_to_frets_map.end()) {//cout << "note error: note lost" << endl;
+				noteslost++;
+			}
 		}
 		virtual ~Note() {}
 		int get_fret() const;
 		int get_string() const;
-		
+		int get_noteslost() const {return noteslost;}
+		//static void increment_noteslost {noteslost++;}
 		void increment_note_index();
 		//int get_current_note_index const {return current_note_index;}
 		int get_pitch() const {return pitch;}

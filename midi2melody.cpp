@@ -98,7 +98,6 @@ vector<Bar*> score_maker(std::string infile, int shift,int align) {
 			  score.back()->add_chunk(new Chunk(delta));
 			  last =  score.back()->get_children_size() - 1;
 			  score.back()->get_child(last)->add_note(new Note(pitch-shift,delta));
-			  if(counter == 1) cout << "HELLO"<<pitch << "," << delta << endl;
 			}	
 			
 			//...

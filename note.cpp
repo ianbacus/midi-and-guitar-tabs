@@ -120,4 +120,4 @@ int Note::get_children_size() const
 }
 	
 Note::PitchMap Note::pitch_to_frets_map = config();
-
+int Note::noteslost = 0;

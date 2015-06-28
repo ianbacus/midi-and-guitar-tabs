@@ -227,7 +227,7 @@ argv: 0	      1					2				  3				 4
 	int inform_count = 0;
 	cout << "working ..." << endl;
 	for (std::vector< Bar* >::iterator it = score.begin() ; it != score.end(); ++it){
-		cout << inform_count ++ << endl;
+		//cout << inform_count ++ << endl;
 		if(format_count == barset){
 		   theprinter->newlines();
 		   format_count = 0;
@@ -238,9 +238,9 @@ argv: 0	      1					2				  3				 4
 		(*it)->accept(theprinter);
 		format_count++;
 	}
-	cout << "printing ... " << endl;
+	cout << "printing ... tampered with " <<score[0]->get_child()->get_note_at(0)->get_noteslost() << " notes (octaved)." << endl;
 	theprinter->print_out();
-	cout << "done." << endl;
+	cout << "done. " ;//<< //child(0)->get_note_at(0)->get_noteslost() << endl;
   
 	delete thefixer;
 	delete theprinter; 

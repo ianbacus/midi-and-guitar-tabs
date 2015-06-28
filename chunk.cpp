@@ -1,6 +1,6 @@
 #include "base.h"
 
-//The iterators point to pointers, so they must be dereferenced twice essentially
+//The iterators point to pointers, so they must be dereferenced twice 
 /*
 void Chunk::rotate()
 {

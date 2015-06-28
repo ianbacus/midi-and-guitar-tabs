@@ -19,11 +19,15 @@ class RotateVisitor : public Visitor
     void empty_stack();
     void pop_stack() { _comparison_stack.pop();}
     void push_stack(Note* n) {_comparison_stack.push(n); }
+    void print_stack();
     int compare_with_stack(Note*);
     virtual void visitNote(Note*);
     virtual void visitBar(Bar*);
     virtual void visitChunk(Chunk*);
 
+};
+enum {
+BAD, DISCARD, GOOD,
 };
 
 #endif

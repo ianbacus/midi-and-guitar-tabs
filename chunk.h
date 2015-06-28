@@ -21,6 +21,7 @@ class Chunk : public Base
 		//void rotate();
 		
 		Note* get_note_at(int i) {return _chunk_notes[i];}
+		Note* get_note_at(void) {return _chunk_notes.back();}
 		int get_delta() const {return delta;}
 		virtual int get_children_size() const {return _chunk_notes.size();}
 		//vector<Note*> * get_chunk_notes_vector() {return &_chunk_notes;}
