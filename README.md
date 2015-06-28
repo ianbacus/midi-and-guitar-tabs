@@ -1,9 +1,19 @@
 # midi
 
+Use:  python tk_project.py <midi filename, no extension> <negative note offset>
+
+Midi parser library doesn't support python 3, need to fix that still
+For testing purposes, this project searches a directory called "midi_files" and writes extracted information into a directory called "pitch_deltas"
+The midi_writer.py module assumes you have a midi library with unique names, and generates a parseable file for the c++ module with a matching name (and a .txt extension)
+
+Right now tabs are written to a "testoutput.txt" file. Parsing can be done with a pitch_delta.txt file and the c++ module, but the tk_project will run all of the commands for you.
+
 
 Small personal project for converting midi files into tablature. Utilizes a composite pattern hierarchy for creating a tree structure for the notes (individual notes belong to chunks of notes, which belong to bars). 
 Designed a MIDI parser from scratch, but currently testing is being done with code from an existing MIDI parser library from elsewhere.
 (update) using python module to parse midi files
+
+
 
 General:
 
