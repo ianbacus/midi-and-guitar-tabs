@@ -59,8 +59,8 @@ class App:
 	def autoscroll(self):
 		#self.canvas.move(self.tabID,-50,0)
 		self.i +=10
-		self.currentscroll.set(self.i,self.i)
-		self.frame.after(1000, self.autoscroll)
+		self.frametext.xview(tk.SCROLL, 1, tk.UNITS)
+		self.frametext.after(50, self.autoscroll)
 
 
 if __name__ == "__main__":
