@@ -110,3 +110,6 @@ def make(newfile,infile):
 			prev_instant = instant
 	
 
+#	outstring = str(obj.data[0]) + ',' + str(obj.data[1])
+#	outfile.write(outstring+'\n')
+
