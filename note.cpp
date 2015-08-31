@@ -1,4 +1,5 @@
 #include "base.h"
+#include "tuning.h"
 #define ACCEPTABLE  5
 //Note should have a vector of possible string positions (which depend on the tuning in the tab matrix) by default
 // hold an index to tabmatrix, update by incrementing 
@@ -10,18 +11,11 @@ Note::PitchMap config()
     Note::PitchMap initmap;
 
     int value;
-    int tuning[6];
-    tuning[0] = 28;  //E:28, D:26
-    tuning[1] = 33; //A
-    tuning[2] = 38; //D
-    tuning[3] = 43; //G
-    tuning[4] = 47; //B
-    tuning[5] = 52; //E
-    
+
 	//char tuning [6] = {'e','a','d','g','b','e'}; //for print tests
-    for(int string_ind = sizeof(tuning)/sizeof(int);string_ind>= 0;string_ind--)
+    for(int string_ind = SIZEOF_TUNING;string_ind>= 0;string_ind--)
     {
-        for(int fret_ind = 0; fret_ind<20; fret_ind++)
+        for(int fret_ind = 0; fret_ind<12; fret_ind++)
         {
             {
                 value = tuning[string_ind] + fret_ind;
@@ -70,7 +64,20 @@ int Note::get_fret_at(int n_index, int pitch){
 		}
 	}
 }
+void Note::decrement_octave(){
+  pitch-=12;
+  octave_refcount--;
+}
 
+void Note::increment_octave(){
+  pitch+=12;
+  octave_refcount++;
+}
+void Note::rebalance_note(){
+  pitch += octave_refcount*12;
+  octave_refcount = 0;
+}
+		
 int Note::get_fret() {
 //TODO: make this method static and replace it elsewhere in code
 	int ret,n=0;

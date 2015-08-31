@@ -9,6 +9,7 @@ class Note : public Base
 		int pitch;
 		int delta;
 		int current_note_index;
+		int octave_refcount;
 	public:
 		typedef std::map <int, vector< pair<int,int> >  > PitchMap;
 	 	static PitchMap pitch_to_frets_map;
@@ -22,6 +23,7 @@ class Note : public Base
 			if(it == pitch_to_frets_map.end()) {//cout << "note error: note lost" << endl;
 				noteslost++;
 			}
+			if (d < 0) cout << "NOTE.h SAW SOMETGHING" << endl;
 		}
 		virtual ~Note() {}
 		int get_fret() ;
@@ -35,7 +37,9 @@ class Note : public Base
 		void increment_note_index();
 		void set_note_index(int n) {current_note_index = n;}
 		int get_current_note_index() const {return current_note_index;}
-		
+		void decrement_octave();
+		void increment_octave();
+		void rebalance_note();
 		
 		int get_pitch() const {return pitch;}
 		void alter_pitch(int n) {pitch +=n; }

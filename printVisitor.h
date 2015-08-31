@@ -2,6 +2,7 @@
 #define __PRINTVISITOR__
 #include "Visitor.h"
 #include "base.h"
+#include "tuning.h"
 #include <iostream>
 #include <cstdlib>
 #include <fstream>
@@ -19,13 +20,15 @@ class PrintVisitor : public Visitor
     vector< vector<string> > string_buffer;
     int string_print_index;
     int bar_ticks;
-    bool strings_closed;
+    bool tripled;
+    bool strings_closed; //this is used to 
   public:
   	
   	PrintVisitor(){
-		string_buffer.push_back(vector<string>(7));
+		string_buffer.push_back(vector<string>(SIZEOF_TUNING+2));
 		string_print_index=0;
 		strings_closed=false;
+		tripled = false;
   	}
   	virtual ~PrintVisitor() {
   		//delete[] string_buffer;
@@ -36,18 +39,18 @@ class PrintVisitor : public Visitor
     void bar_ticks_reset() {bar_ticks = 0;}
     void bar_ticks_increment(int d) {bar_ticks+=d;}
     void newlines() { 
-    	for(string_print_index=6; string_print_index>= 0; string_print_index--){
-			if(string_print_index==6) string_buffer.back()[string_print_index] += " ";
+    	for(string_print_index=SIZEOF_TUNING+1; string_print_index>= 0; string_print_index--){
+			if(string_print_index>=SIZEOF_TUNING) string_buffer.back()[string_print_index] += " ";
 			else
 				string_buffer.back()[string_print_index] += "|";
 		}
-    	string_buffer.push_back(vector<string>(7) );
-        char tuning[] = {'d','a','d','g','b','?'};
-	    for(string_print_index=6; string_print_index>= 0; string_print_index--){
-			if(string_print_index==6) string_buffer.back()[string_print_index] += " ";
+    	string_buffer.push_back(vector<string>(SIZEOF_TUNING+2) );
+        
+	    for(string_print_index=SIZEOF_TUNING+1; string_print_index>= 0; string_print_index--){
+			if(string_print_index>=SIZEOF_TUNING) string_buffer.back()[string_print_index] += " ";
 			else{
 				string_buffer.back()[string_print_index] += "|";
-				string_buffer.back()[string_print_index].push_back(tuning[(string_print_index)]);
+				string_buffer.back()[string_print_index].push_back(ptuning[(string_print_index)]);
 			}
 		}
 	}
@@ -57,7 +60,7 @@ class PrintVisitor : public Visitor
 		ofile.open("testoutput.txt");
 		stringstream ss;
 		for(std::vector< vector<string> >::iterator it = string_buffer.begin() ; it != string_buffer.end(); ++it) {
-			for(int i=6; i>=0; i--){
+			for(int i=SIZEOF_TUNING; i>=0; i--){
 			//  cout << string_buffer[i] << endl;
 				ss << (*it)[i] << '\n';
 			}

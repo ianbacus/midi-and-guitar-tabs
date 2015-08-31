@@ -25,10 +25,6 @@ intra-chunk processing.
 	configurations that break melodic coherency (ie during a subject entry in a fugue) would have a lower priority than "good" configurations
 	with continuous melodic lines
 	
-	Fret spacings could be limited between chunks so that tabs don't contain unplayable sequences, or create comically spaced chunks
-	that would make a guitarist feel like they were giving a handy to their guitar neck
-	
-	
 	
 */
 
@@ -36,39 +32,6 @@ intra-chunk processing.
 
 using namespace std;
 /*
-void config()
-{
-int tuning[6];
-//int tab_matrix [6][20];
-    int value;
-    tuning[0] = 28;  //E
-    tuning[1] = 33; //A
-    tuning[2] = 39; //D
-    tuning[3] = 43; //G
-    tuning[4] = 47; //B
-    tuning[5] = 52; //E
-     for(int string_ind = 0;string_ind<5;string_ind++)
-    {
-        for(int fret_ind = 0; fret_ind<20; fret_ind++)
-        {
-            {
-                value = tuning[string_ind] + fret_ind;
-                //cout << "gridmap: inserting " << value << " at coordinate point " << string_ind <<", " << fret_ind << endl;
-                //tab_matrix[string_ind][fret_ind] = value;
-                pair<int,int> map_point = make_pair(string_ind,fret_ind);
-                Base::pitch_to_frets_map[value].push_back(&map_point); //add note to (note : location on fretboard) pitch_to_frets. this will help for determining how many placements there are for a note, and quickly indexing them (is this any faster than indexing the array? TODO)
-            }
-        }
-    }
-}
-
-
-struct Note {
-      double tick;
-      double duration;
-      int    pitch;
-      void print_data() {cout << pitch << " for " << duration << ". Tick=" << tick << endl;}
-};
 
 
 void read_chunk(Reader &ro)
@@ -200,6 +163,49 @@ void test()
 	}
 }*/
 
+
+void clean_input(){
+	/*
+	
+	Timing interfaces: sending mirror messages
+	
+	
+	
+	Train system interface
+	
+		send Train GPIO messages
+		DCC train protocol messages
+		Receive gpio information from sensors, ping messages back from trains with antennae + microcontrollers
+		
+		Introduce timeslicing system:
+		- requires a timer configuration setting
+		- requires communication with the trains (selecting the right ID information)
+		- asynchronous events are posted: they are not immediately executed
+		- interrupts are prevented from occurring by different methods:
+			- Interrupt disabling
+			- Callback flag control from main loop scheduler (design pattern), >ISR only operates on flags based on comparisons made by ISRs
+			- Everything falls into a neatly organized time system. 
+			
+		- Interrupt priority is introduced conceptually. A strobe light makes all of the lights perform a pattern when 
+		->stupid attempt: try to make a while loop that delays between strobes, and never responds to switch information
+		-> fix the code: allow the sensors to interrupt the annoying strobes
+		-> new problem: allow the strobes to continue during sensor handlers with systick instead of delay loops
+		-> additional problem: write a debouncing software circuit using the timer/PWM module (hardware support for channels)
+		-> put critical update functions in systick handler: send/receive pings by setting situational ping flags for rx/tx channels
+		-> detect sensory information from environment with a signal acquisition system (analog to digitial converter)
+			-o measure the signal from a potentiometer and generate discrete voltage states with ADC
+			-o each voltage state marks a different pattern of behavior for the microcontroller
+			-o the voltage states are stored in a set number of loci. These determine the situationally branching decisions of the main questioning loop.
+			-o the queries made by this main loop determine important questions such as:
+			 -- is there a brownout
+		-> implement user thread handler
+		-> 
+		
+		
+		
+	
+	*/
+}
 int main(int argc, char* argv[]) {
 /*
 	 This project transforms midi files into guitar tabs.
@@ -214,9 +220,10 @@ argv: 0	      1					2				  3				 4
 		cout <<"Align sets how many eighth notes should appear before the first note." <<endl;
 		return 0;
 	}
-	string note_deltas = argv[1];
+	string note_deltas = argv[1]; //name of input file
 	int note_offset=atoi(argv[2]);
 	int align=atoi(argv[4]);
+	
 	vector<Bar*> score = score_maker(note_deltas,note_offset,align);
 	
 	RotateVisitor* thefixer = new RotateVisitor();
@@ -234,11 +241,12 @@ argv: 0	      1					2				  3				 4
 		}
 		//cout << "shity" << endl;
 		(*it)->accept(thefixer);
-		//cout << "QUESTON MARK" << endl;
 		(*it)->accept(theprinter);
+		
 		format_count++;
 	}
-	cout << "printing ... tampered with " <<score[0]->get_child()->get_note_at(0)->get_noteslost() << " notes (octaved)." << endl;
+	
+	//cout << "printing ... tampered with " <<score[0]->get_child()->get_note_at(0)->get_noteslost() << " notes (octaved)." << endl;
 	theprinter->print_out();
 	cout << "done. " ;//<< //child(0)->get_note_at(0)->get_noteslost() << endl;
   

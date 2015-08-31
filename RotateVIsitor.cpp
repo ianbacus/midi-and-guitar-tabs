@@ -18,9 +18,11 @@ void RotateVisitor::visitBar(Bar* b)
   {
   	recursion_lock=0;
   	clear_cache();
+
     b->get_child(i)->accept(this);
     _chunk_count++;
   }
+
 }
   //Algorithm idea: 
   // Increment through vector of notes. If a candidate compares nicely with the current stack of accepted notes,
@@ -46,7 +48,7 @@ void RotateVisitor::visitChunk(Chunk* c)
 //  push_stack(c->get_note_at(++j)); //only if this increments after evaluating
 
 	  while(counter_index < c->get_children_size()){//cout << counter_index << "<" << c->get_children_size() << ", failcount = " << fail_count <<  endl;
-	  	if(super_fail > pow(2,(c->get_children_size() ))  ) //cout << "rotation error: max rotation limit" << endl;
+	  	if(super_fail > pow(3,(c->get_children_size() ))  ) //cout << "rotation error: max rotation limit" << endl;
 			break;
 	  	if(fail_count == c->get_note_at(counter_index)->get_children_size()){
 	  	//A note has only so many fret/string positions, indicated by "get_children_size()". after exhausting all tries, go back one step on the stack
@@ -63,7 +65,7 @@ void RotateVisitor::visitChunk(Chunk* c)
 					break;
 				case GOOD: //if the note to be added is compatible with the rest of the stack, continue on to the next note
 					push_stack(c->get_note_at(counter_index));
-cout << "good'ed:";print_stack();
+//cout << "good'ed:";print_stack();
 					counter_index++;
 					fail_count=0;
 					break;
@@ -82,7 +84,7 @@ cout << "good'ed:";print_stack();
 	  recursion_lock++;
 	  
 	  //cout << "break, r_lock = " << recursion_lock <<  endl;
-	  if (recursion_lock < pow(2,(c->get_children_size() ))) {//c->get_children_size()){
+	  if (recursion_lock < pow(3,(c->get_children_size() ))) {//c->get_children_size()){
 	 	 compare_chunks(c->get_note_indices());
 	 	 
 			/*
@@ -185,9 +187,9 @@ void RotateVisitor::force_chunk_note_indices( vector<pair<int, int> > indices, C
 int RotateVisitor::compare_with_stack(Note* n){
 // Return true if the note is addable. This method will copy the stack of notes 
     //return false if the note should perform a rotation to a new fret/string
-	//bad(0) message:
-    //discard(1) message:
-    //good(2) message:
+	//bad(0) message: not compatible with chunk
+    //discard(1) message: permanently remove note
+    //good(2) message: this note works with the current chunk
 
 	stack<Note*> stack_copy = _comparison_stack;
 
@@ -200,15 +202,23 @@ int RotateVisitor::compare_with_stack(Note* n){
 
 	  if(n->get_string() == current->get_string())//string overlaps
 	  	return BAD;
-	  	
-	  else if(n->get_fret() == 0 || current->get_fret() == 0)//open frets are fine
+	  
+	  
+	  /*
+	  if((n->get_pitch() - current->get_pitch()) > 28) {
+	  	if( !(n->get_fret() == 0 || current->get_fret() == 0))
+		    current->decrement_octave();
+		    cout << "niggers" << endl;
+	  }*/
+	  
+	  if(n->get_fret() == 0 || current->get_fret() == 0)//open frets are fine
 	  	stack_copy.pop();//GOOD
 
 	  else if(abs((n->get_fret() - current->get_fret())) > ALLOWABLE){
 	  // check if the fret position for the candidate note would fit with the current portion of the note stack
 	  	return BAD;
 	  }
-
+	  
 	  else
 	  	stack_copy.pop();//GOOD
 	  

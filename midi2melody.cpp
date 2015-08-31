@@ -2,6 +2,7 @@
 #include <iomanip>
 
 #include <stdlib.h>
+#include <cmath>
 using namespace std;
 
 typedef unsigned char uchar;
@@ -30,7 +31,26 @@ void      usage                 (const char* command);
 
 
 vector<Bar*> score_maker(std::string infile, int shift,int align) {
-	/* handles input in this form
+	/* 
+	  A beat overflow is calculated by multiplying the numerator of the time signature with
+	  the mapped value of the denominator. This the denominator is mapped as 32/n, where n is the denominator.
+	  
+	  So really, the time signature ratio is multiplied by 32 to count how many 32nd notes would fit in a bar.
+	  
+	  4/4 time: 32 32nd notes .... 128 128th notes
+	     four quarter notes : 6 quarter triplets
+	     sixteen sixteenth notes : 16*3/2 = 24 sixteenth triplets
+	  6/8 time: 24 32nd notes
+	  
+	  This is because 32nd notes are used as the most precise bits (highest resolution).
+	  
+	  Triplets are 2/3 of their normal note value, so in the time that 2 eighth notes pass 3 triple-eighth notes pass
+	  There are no reasonably low numbers with common multiples that are compatible with triplets
+	  
+	  all that matters is that the beginning and end notes are aligned properly... 
+	  
+	  
+	  handles input in this form
   	 	 line 0: 72,100
 		 line 1: 72,0
 	*/
@@ -38,11 +58,12 @@ vector<Bar*> score_maker(std::string infile, int shift,int align) {
     int last;
     
     int beat_per_measure = 4;
-    map<int,int> beat_value = {{2,16},{4,8},{8,4},{16,2}};
-    
-    int bartime = 0;
+    //how to account for triplets?
+    map<int,int> beat_value = {{1,32},{2,16},{4,8},{8,4},{16,2},{32,1}};
+    //map<int,int> beat_value = {{1,32},{2,16},{4,8},{8,4},{16,2},{32,1}};
+    float bartime = 0;
     int counter = 0;
-    int beat_overflow=24;
+    int beat_overflow=36;
 	vector<Bar*> score;
 	
     score.push_back(new Bar());
@@ -70,11 +91,11 @@ vector<Bar*> score_maker(std::string infile, int shift,int align) {
 		if( std::getline( iss, p , ',') && std::getline( iss, d )) {
 			//delimiting character inside each line
 			counter++;
-			int delta = stoi(d); 
+			float delta = stof(d); 
 			int pitch = stoi(p);
 			//if(counter == 1) bartime += delta;
 			if(counter == 1) cout << pitch << "," << delta << endl;
-			bartime += delta;
+			bartime += abs(delta);
 			if(bartime >= beat_overflow && delta != 0){
 				//Case 1: the bar is full, create a new one with an empty initial chunk
 				score.push_back(new Bar());	
@@ -88,7 +109,7 @@ vector<Bar*> score_maker(std::string infile, int shift,int align) {
 			  //score.back() returns the last bar
 			  //score.back()->get_children_size() returns the number of chunks, used to index the last chunk
 			  //since the member vectors are inaccessible, using the "back()" function on the vector is not viable
-			 
+			  
 			  last = score.back()->get_children_size() - 1;
 			  score.back()->get_child(last)->add_note(new Note(pitch-shift,delta));
 			}

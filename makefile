@@ -1,5 +1,5 @@
 EXE = a
-SOURCES = base.cpp bar.cpp chunk.cpp note.cpp rotatevisitor.cpp printvisitor.cpp midi2melody.cpp
+SOURCES = base.cpp bar.cpp chunk.cpp note.cpp rotatevisitor.cpp printvisitor.cpp midi2melody.cpp tuning.cpp
 OBJECTS := (SOURCES:%.cpp=%.o)
 DEPS := (SOURCES:%.cpp=%.h)
 

@@ -24,7 +24,7 @@ class App:
 		self.file_name = filename
 		self.global_offset = global_offset
 		self.chosen = 'testoutput.txt'
-		self.framerate=500
+		self.framerate=900
 		self.speedctl=0
 		self.dir=0
 		#self.chosen = askopenfilename(initialdir='~')
@@ -43,7 +43,7 @@ class App:
 		self.downshift_btn = Button(frame, text="-", command=self.downshift).pack(side=BOTTOM)
 		self.upshift_btn = Button(frame, text="+", command=self.upshift).pack(side=BOTTOM)
 		#self.tempo=textfield
-		frameID = self.frametext = Text(frame, wrap=NONE, width=1000, font=("Courier", 18))
+		frameID = self.frametext = Text(frame, wrap=NONE, width=1000, font=("Courier", 12))
 		self.frametext.grid(row=0)
 		currentscroll = Scrollbar(frame,orient=HORIZONTAL)
 		
@@ -66,7 +66,7 @@ class App:
 	def upshift(self):
 		self.pause()
 		self.global_offset-=1
-		spstring= ['./a', 'pitch_deltas/'+self.file_name+'.txt', str(self.global_offset), '0', '0',]
+		spstring= ['./a', 'pitch_deltas/'+self.file_name+'.txt', str(self.global_offset), '4', '0',]
 		subprocess.call(spstring)
 		print spstring
 		self.frametext.delete(1.0, END) 
@@ -74,7 +74,7 @@ class App:
 	def downshift(self):
 		self.pause()
 		self.global_offset+=1
-		spstring= ['./a', 'pitch_deltas/'+self.file_name+'.txt', str(self.global_offset), '0', '0',]
+		spstring= ['./a', 'pitch_deltas/'+self.file_name+'.txt', str(self.global_offset), '4', '0',]
 		subprocess.call(spstring)
 		print spstring
 		self.frametext.delete(1.0, END) 
@@ -91,7 +91,7 @@ class App:
 	def set_scrollspeed(self,n):
 		self.speedctl=n
 	def autoscroll(self):
-		self.frametext.xview(tk.SCROLL, self.dir, tk.UNITS)
+		self.frametext.yview(tk.SCROLL, self.dir, tk.UNITS)
 		self.frametext.after(self.framerate, self.autoscroll)
 		#self.frametext.xview(tk.SCROLL, 1, tk.UNITS)
 		#self.frametext.after(10, self.autoscroll)
@@ -117,7 +117,7 @@ if __name__ == "__main__":
 			root = tk.Tk()
 			app = App(root,file_name,global_offset)
 			generate_pitch_delta(newfile="pitch_deltas/"+file_name+".txt", infile="midi_files/"+file_name+".mid")
-			spstring= ['./a', 'pitch_deltas/'+file_name+'.txt', str(global_offset), '0', '0',]
+			spstring= ['./a', 'pitch_deltas/'+file_name+'.txt', str(global_offset), '3', '0',]
 			subprocess.call(spstring)#join this as a thread
 			root.wm_title(file_name)
 			root.mainloop()

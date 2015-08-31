@@ -1,14 +1,22 @@
 #include "printvisitor.h"
 
+
 void PrintVisitor::visitBar(Bar* b)
 {
-    for(string_print_index=5; string_print_index>= 0; string_print_index--){
-		(string_buffer.back())[string_print_index] += "|";
+    for(string_print_index=SIZEOF_TUNING; string_print_index>= 0; string_print_index--){
+    	if(string_print_index == SIZEOF_TUNING) {
+    		string_buffer.back()[SIZEOF_TUNING] += "   ";
+    		continue;
+    		
+    	}
+    	(string_buffer.back())[string_print_index] += "|";
 		for(int j=0; j<b->get_children_size(); j++){
 
 			b->get_child(j)->accept(this);
 			}
 		(string_buffer.back())[string_print_index] += "-";
+		if(!tripled) string_buffer.back()[SIZEOF_TUNING] += "   ";
+		tripled = false;
 	}
     //TODO: add logic to this to make the number of continuous bar prints variable by the client
     
@@ -54,7 +62,19 @@ void PrintVisitor::visitChunk(Chunk* c){
 		
 	//delta = log2(delta);	
 	// cout << result << endl;
-	string_buffer.back()[string_print_index] += std::string(delta,'-') + result;
+
+	//This is where the padding takes place for notes based on their note duration
+	if(delta >= 0){
+		
+		string_buffer.back()[string_print_index] += std::string(delta,'-') + result;
+	 }
+	else {
+	//triplets
+		tripled = true;
+		string_buffer.back()[SIZEOF_TUNING] += ' t';
+		string_buffer.back()[string_print_index] +=  result;
+	}
+
 }
 
 void PrintVisitor::visitNote(Note* n){
