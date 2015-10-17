@@ -43,7 +43,8 @@ void RotateVisitor::visitBar(Bar* b)
 
 void RotateVisitor::visitChunk(Chunk* c) 
 {
-  empty_stack();
+  //empty_stack();
+  NoteStack = ComparisonStack();
   int counter_index=0,fail_count=0,super_fail=0;
 //  push_stack(c->get_note_at(++j)); //only if this increments after evaluating
 
@@ -52,19 +53,19 @@ void RotateVisitor::visitChunk(Chunk* c)
 			break;
 	  	if(fail_count == c->get_note_at(counter_index)->get_children_size()){
 	  	//A note has only so many fret/string positions, indicated by "get_children_size()". after exhausting all tries, go back one step on the stack
-	  		pop_stack();
+	  		NoteStack->pop_stack();
 	  		counter_index--;
 	  		c->get_note_at(counter_index)->accept(this);
 	  		fail_count=0;
 	  		super_fail++;
 	  	}
-	  	else if(int test = compare_with_stack(c->get_note_at(counter_index))){
+	  	else if(int test = NoteStack->compare_with_stack(c->get_note_at(counter_index))){
 	  		switch(test){
 				case DISCARD: //discard note: duplicate
 					c->remove_note(c->get_note_at(counter_index));
 					break;
 				case GOOD: //if the note to be added is compatible with the rest of the stack, continue on to the next note
-					push_stack(c->get_note_at(counter_index));
+					NoteStack->push_stack(c->get_note_at(counter_index));
 //cout << "good'ed:";print_stack();
 					counter_index++;
 					fail_count=0;
@@ -106,28 +107,11 @@ void RotateVisitor::visitChunk(Chunk* c)
 	  }
 	  else{
 	  	 force_chunk_note_indices(_optima,c);
-	  	 clear_cache();
-	  	 empty_stack();
+	  	 NoteStack->clear_cache();
+	  	 NoteStack->empty_stack();
 	  }
 }
-void RotateVisitor::empty_stack()
-{
-	while(!_comparison_stack.empty()){
-		pop_stack();
-	}
-}
 
-void RotateVisitor::print_stack() {
-//TODO: add more templates
-	stack<Note*> stack_copy = _comparison_stack; 
-	cout << "<";
-	while(!stack_copy.empty()){
-		int fretn = stack_copy.top()->get_fret();
-		cout << fretn << ",";
-		stack_copy.pop();
-	}
-	cout << ">" << endl;
-}
 
 void RotateVisitor::compare_chunks(vector<pair <int, int> > current_indices) {
 	//TODO: make this less sloppy and hacky
@@ -184,7 +168,36 @@ void RotateVisitor::force_chunk_note_indices( vector<pair<int, int> > indices, C
 }
 
 
-int RotateVisitor::compare_with_stack(Note* n){
+
+
+
+/*
+ * NOTE STACK METHODS
+ */
+void Comparison_Stack::visitNote(Note* n) { 
+ n->increment_note_index();
+}
+
+void Comparison_Stack::empty_stack()
+{
+	while(!_comparison_stack.empty()){
+		pop_stack();
+	}
+}
+
+void Comparison_Stack::print_stack() {
+//TODO: add more templates
+	stack<Note*> stack_copy = _comparison_stack; 
+	cout << "<";
+	while(!stack_copy.empty()){
+		int fretn = stack_copy.top()->get_fret();
+		cout << fretn << ",";
+		stack_copy.pop();
+	}
+	cout << ">" << endl;
+}
+
+int Comparison_Stack::compare_with_stack(Note* n){
 // Return true if the note is addable. This method will copy the stack of notes 
     //return false if the note should perform a rotation to a new fret/string
 	//bad(0) message: not compatible with chunk
@@ -227,12 +240,17 @@ int RotateVisitor::compare_with_stack(Note* n){
 	
 }
 
-void RotateVisitor::visitNote(Note* n) 
-{
-//  cout << "incrementing note: " << n->get_string() << " " << n->get_fret() <<"to";
-  n->increment_note_index();
-//  cout <<  n->get_string() << " " << n->get_fret() << endl;
-}
+
+
+
+
+
+
+
+
+
+
+
 
 
 
