@@ -2,6 +2,8 @@
 #define __NOTE__
 #include "base.h"
 
+#include "tuning.h"
+
 class Note : public Base 
 {
 	private:
@@ -18,12 +20,14 @@ class Note : public Base
 	 	
 	 	
 	 	//****
-		Note(int p, int d) : pitch(p), delta(d), current_note_index(0) {
+		Note(int p, int d) : pitch(p), delta(d), current_note_index(0) 
+		{
+			
 			PitchMap::iterator it = (pitch_to_frets_map.find(p));
 			if(it == pitch_to_frets_map.end()) {//cout << "note error: note lost" << endl;
 				noteslost++;
 			}
-			if (d < 0) cout << "NOTE.h SAW SOMETGHING" << endl;
+			if (d < 0) cout << "triple" << endl;
 		}
 		virtual ~Note() {}
 		int get_fret() ;

@@ -12,12 +12,12 @@ Note::PitchMap config()
 
     int value;
 
-	//char tuning [6] = {'e','a','d','g','b','e'}; //for print tests
     for(int string_ind = SIZEOF_TUNING;string_ind>= 0;string_ind--)
     {
-        for(int fret_ind = 0; fret_ind<12; fret_ind++)
+        for(int fret_ind = 0; fret_ind<15; fret_ind++)
         {
             {
+            	
                 value = tuning[string_ind] + fret_ind;
 				pair<int,int> map_point = make_pair(string_ind,fret_ind);
                 initmap[value].push_back(map_point); 
@@ -141,5 +141,6 @@ int Note::get_children_size() const
 	}
 }
 	
+
 Note::PitchMap Note::pitch_to_frets_map = config();
 int Note::noteslost = 0;

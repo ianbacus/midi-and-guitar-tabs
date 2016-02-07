@@ -1,14 +1,43 @@
 #include "tuning.h"
+//Recompile the project after updating the tuning of the instrument
 
 
-//char tuning[] = {76, 81, 86, 91, 95, 100};
-//char ptuning[] = "Fbeadfgbe";
 
+
+/*
+std::vector<int> tuning = {28, 33, 38, 43, 47, 52};
+std::vector<char> ptuning = {'e','a','d','g','b','e'};
+int SIZEOF_TUNING = 6;
+*/
+
+//STANDARD GUITAR
 
 char tuning[] = {28, 33, 38, 43, 47, 52};
 char ptuning[] = "eadgbe";
 
+
+//CODY BASS TAB
+//char tuning[] = {16, 21, 26, 31};
+//char ptuning[] = "eadg";
+
+//8STRING TAB
+//char tuning[] = {76, 81, 86, 91, 95, 100};
+//char ptuning[] = "Fbeadfgbe";
+
+
+//goldberg variations tuning
+//char tuning[] = {26, 31, 38, 43, 47, 52};
+//char ptuning[] = "dgdgbe";
+
+
 const int SIZEOF_TUNING = sizeof(tuning)/sizeof(tuning[0]);
+
+
+
+
+
+
+
 
 /*
 __________________________________________________________________________________________

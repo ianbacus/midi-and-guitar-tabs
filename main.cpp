@@ -1,3 +1,4 @@
+
 #include "Reader.h"
 #include "MidiFile.h"
 #include "Options.h"
@@ -5,6 +6,8 @@
 #include "Visitor.h"
 #include "Printvisitor.h"
 #include "RotateVisitor.h"
+
+
 #include <ctype.h>
 #include <string.h>
 #include <stdio.h>
@@ -14,7 +17,7 @@
 
 /*
 
-cool things to add still:
+things to add still:
 
 intra-chunk processing. 
 	- the chunk rotating visitor could take into account the state of adjacent chunks, but this may sometimes require 
@@ -28,26 +31,41 @@ intra-chunk processing.
 	
 */
 
-char tuning[] = {28, 33, 38, 43, 47, 52};
-char ptuning[] = "eadgbe";
 
+/*
+void set_tuning(char setting)
+{
+	std::cout << tuning.size() << std::endl;
 
-//CODY BASS TAB
-//char tuning[] = {16, 21, 26, 31};
-//char ptuning[] = "eadg";
-
-//8STRING TAB
-//char tuning[] = {76, 81, 86, 91, 95, 100};
-//char ptuning[] = "Fbeadfgbe";
-
-
-//goldberg variations tuning
-//char tuning[] = {26, 31, 38, 43, 47, 52};
-//char ptuning[] = "dgdgbe";
-
-
-const int SIZEOF_TUNING = sizeof(tuning)/sizeof(tuning[0]);
-
+	if (setting == 'd')
+	{
+		tuning = {26, 33, 38, 43, 47, 52};
+		ptuning = {'d','a','d','g','b','e'};
+		SIZEOF_TUNING = 6;
+	}
+	else if (setting == 'b')
+	{
+		//BASS TAB
+		tuning = {16, 21, 26, 31};
+		ptuning = {'e','a','d','g'};
+		SIZEOF_TUNING = 4;
+	}
+	else if (setting == '8')
+	{
+		//8STRING TAB
+		tuning = {76, 81, 86, 91, 95, 100};
+		ptuning = {'F','b','e','a','d','g','b','e'};
+		SIZEOF_TUNING = 8;
+	}
+	else if (setting == 'g')
+	{
+		//goldberg variations tuning
+		tuning = {26, 31, 38, 43, 47, 52};
+		ptuning = {'d','g','d','g','b','e'};
+		SIZEOF_TUNING = 6;
+	}
+}
+*/
 
 using namespace std;
 /*
@@ -182,49 +200,6 @@ void test()
 	}
 }*/
 
-
-void clean_input(){
-	/*
-	
-	Timing interfaces: sending mirror messages
-	
-	
-	
-	Train system interface
-	
-		send Train GPIO messages
-		DCC train protocol messages
-		Receive gpio information from sensors, ping messages back from trains with antennae + microcontrollers
-		
-		Introduce timeslicing system:
-		- requires a timer configuration setting
-		- requires communication with the trains (selecting the right ID information)
-		- asynchronous events are posted: they are not immediately executed
-		- interrupts are prevented from occurring by different methods:
-			- Interrupt disabling
-			- Callback flag control from main loop scheduler (design pattern), >ISR only operates on flags based on comparisons made by ISRs
-			- Everything falls into a neatly organized time system. 
-			
-		- Interrupt priority is introduced conceptually. A strobe light makes all of the lights perform a pattern when 
-		->stupid attempt: try to make a while loop that delays between strobes, and never responds to switch information
-		-> fix the code: allow the sensors to interrupt the annoying strobes
-		-> new problem: allow the strobes to continue during sensor handlers with systick instead of delay loops
-		-> additional problem: write a debouncing software circuit using the timer/PWM module (hardware support for channels)
-		-> put critical update functions in systick handler: send/receive pings by setting situational ping flags for rx/tx channels
-		-> detect sensory information from environment with a signal acquisition system (analog to digitial converter)
-			-o measure the signal from a potentiometer and generate discrete voltage states with ADC
-			-o each voltage state marks a different pattern of behavior for the microcontroller
-			-o the voltage states are stored in a set number of loci. These determine the situationally branching decisions of the main questioning loop.
-			-o the queries made by this main loop determine important questions such as:
-			 -- is there a brownout
-		-> implement user thread handler
-		-> 
-		
-		
-		
-	
-	*/
-}
 int main(int argc, char* argv[]) {
 /*
 	 This project transforms midi files into guitar tabs.
@@ -241,9 +216,9 @@ argv: 0	      1					2				  3				 4
 	}
 	string note_deltas = argv[1]; //name of input file
 	int note_offset=24-atoi(argv[2]); //pitch shifts of 24 are so common 
-	int align=atoi(argv[4]);
-	
-	vector<Bar*> score = score_maker(note_deltas,note_offset,align);
+	char abcd=atoi(argv[4]);
+	//set_tuning(tuning);
+	vector<Bar*> score = score_maker(note_deltas,note_offset,0);
 	
 	RotateVisitor* thefixer = new RotateVisitor();
 	PrintVisitor* theprinter = new PrintVisitor();

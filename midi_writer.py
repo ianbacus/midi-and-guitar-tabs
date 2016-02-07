@@ -17,6 +17,17 @@ delta_offsets = (00,00,00,00) #in ticks?
 #
 #condition = "count in [1]"
 
+'''
+Trill detection: 
+- two notes that are within four pitches
+- played (more rapidly than other notes, by std dev?) at least 2 times: "abab" patterns
+
+Trill patterns should be replaced by halved trills (for now), later they should be notated as well for the print visitor (like triples)
+
+
+
+
+'''
 
 DELTA_VAL = 8.0
 

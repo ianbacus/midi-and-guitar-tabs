@@ -14,9 +14,64 @@ import subprocess
 
 #global_offset=0
 
+class Tab_buffer:
+	def __init__(self, filename):
+		'''
+		Initialize the main_buffer with a text file containing the guitar tab
+		Measures start every 7 lines starting from an initial offset on the first line
+	
+		Main_queue holds 7-line equivalent entries in a single string 
+		'''
+		main_buffer = []
+		
+		line_list_index = 1
+		filestring = open(filename).read()
+		FRAME_SIZE = 4 #this value will determine how many measures should be shown vertically
+		LINES_PER_MEASURE = 7 #n+1 for an n-stringed instrument
+		
+		line_list = filestring.split('\n');
+		for(queue_index in round(range(line_list.__len__())/7))) #iterate through every measure
+			line_list_index += LINES_PER_MEASURE
+			for line in line_list[line_list_index:(line_list_index+7)] ]
+				queue_string += line+'\n'
+			main_buffer[queue_index] = queue_string
+			queue_string = ''
+			
+	
+	def get_two_frames(index):
+		'''
+		Use an index to grab two frames worth of text (returned as a pair of strings). Index refers
+		to the first item's index (ie an index of 1 will return frames 1 and 2)
+		IOW an accessor for the queue object
+		'''
+		if (index > 0) and (index < main_buffer.__len__()):
+			return (main_buffer[index],main_buffer[index+1])
+	
+	def refresh_tabfile():
+		'''
+		Just a repeat of the init function for now
+		'''
+		main_buffer = []
+		
+		line_list_index = 1
+		filestring = open(filename).read()
+		FRAME_SIZE = 4 #this value will determine how many measures should be shown vertically
+		LINES_PER_MEASURE = 7 #n+1 for an n-stringed instrument
+		
+		line_list = filestring.split('\n');
+		for(queue_index in round(range(line_list.__len__())/7)) #iterate through every measure
+			line_list_index += LINES_PER_MEASURE
+			for line in line_list[line_list_index:(line_list_index+7)] ]
+				queue_string += line+'\n'
+			main_buffer[queue_index] = queue_string
+			queue_string = ''
+	
+
 class App:
 	def __init__(self, master,filename,global_offset):
 		frame = Frame(master,width=10000, height=200)
+		tab_buffer = Tab_buffer('testoutput.txt')
+		
 		#toolbar = Frame(frame,width=500,height=60)
 		#toolbar.pack()
 		#frame.config(width=10000)
@@ -31,18 +86,26 @@ class App:
 		
 		#creation
 		
+		'''
+		Allocate buttons
+		'''
 		self.button = Button(frame, text="QUIT", command=frame.quit).pack(side=BOTTOM)
 		self.rewind_btn = Button(frame, text="<<", command=self.rewind).pack(side=BOTTOM)
 		self.pause_btn = Button(frame, text="||", command=self.pause).pack(side=BOTTOM)
 		master.bind("<space>", self.pause)
+
 		self.play_btn = Button(frame, text=">>", command=self.play).pack(side=BOTTOM)
-		
 		self.slow_btn = Button(frame, text="slower", command=self.downspeed).pack(side=BOTTOM)
 		self.speed_btn = Button(frame, text="faster", command=self.upspeed).pack(side=BOTTOM)
-		
+
 		self.downshift_btn = Button(frame, text="-", command=self.downshift).pack(side=BOTTOM)
 		self.upshift_btn = Button(frame, text="+", command=self.upshift).pack(side=BOTTOM)
 		#self.tempo=textfield
+		
+		'''
+		Instantiate frame with text
+		'''
+		
 		frameID = self.frametext = Text(frame, wrap=NONE, width=1000, font=("Courier", 12))
 		self.frametext.grid(row=0)
 		currentscroll = Scrollbar(frame,orient=HORIZONTAL)
@@ -59,10 +122,21 @@ class App:
 		
 		self.autoscroll()
 	def upspeed(self):
-		self.speedctl += 1
+		#self.speedctl += 1
+		
+		self.frametext.delete(0.0,END)
+		tab_buffer_index += 1
+		frame1_text,frame2_text = get_two_frames(tab_buffer_index))
+		self.frametext.insert(END,tab_buffer.frame1_text)
 	def downspeed(self):
-		if self.speedctl != 0:
-			self.speedctl -= 1
+		#if self.speedctl != 0:
+		#	self.speedctl -= 1
+			
+		self.frametext.delete(0.0,END)
+		tab_buffer_index += 1
+		frame1_text,frame2_text = get_two_frames(tab_buffer_index))
+		self.frametext.insert(END,tab_buffer.frame1_text)
+		
 	def upshift(self):
 		self.pause()
 		self.global_offset-=1
@@ -86,8 +160,12 @@ class App:
 		self.framerate=100
 		self.dir=-self.speedctl
 	def play(self):
-		self.framerate=100
-		self.dir=self.speedctl
+		
+		
+		#self.framerate=100
+		#self.dir=self.speedctl
+		
+		
 	def set_scrollspeed(self,n):
 		self.speedctl=n
 	def autoscroll(self):
@@ -116,7 +194,7 @@ if __name__ == "__main__":
 			global_offset = int(sys.argv[2])
 			root = tk.Tk()
 			app = App(root,file_name,global_offset)
-			generate_pitch_delta(newfile="pitch_deltas/"+file_name+".txt", infile="midi_files/"+file_name+".mid")
+			generate_pitch_delta(newfile="pitch_deltas/"+file_name+".txt", infile="midi_files/"+file_name+".mid",condition="True")
 			spstring= ['./a', 'pitch_deltas/'+file_name+'.txt', str(global_offset), '3', '0',]
 			subprocess.call(spstring)#join this as a thread
 			root.wm_title(file_name)
@@ -127,7 +205,17 @@ if __name__ == "__main__":
 		print 'Enter the name of the midifile without a file extension and a global offset for pitch values'
 		
 		
-		
+	
+	
+	#TODO: generate a buffer of fixed-line-number frames holding the tablature
+	# use (arrow keys?) to "scroll" through the buffer and display it on two output windows
+	# use the output windows as a "pipeline"
+	
+	
+	
+	
+	
+	
 		
 		
 		
