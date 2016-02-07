@@ -28,6 +28,25 @@ intra-chunk processing.
 	
 */
 
+char tuning[] = {28, 33, 38, 43, 47, 52};
+char ptuning[] = "eadgbe";
+
+
+//CODY BASS TAB
+//char tuning[] = {16, 21, 26, 31};
+//char ptuning[] = "eadg";
+
+//8STRING TAB
+//char tuning[] = {76, 81, 86, 91, 95, 100};
+//char ptuning[] = "Fbeadfgbe";
+
+
+//goldberg variations tuning
+//char tuning[] = {26, 31, 38, 43, 47, 52};
+//char ptuning[] = "dgdgbe";
+
+
+const int SIZEOF_TUNING = sizeof(tuning)/sizeof(tuning[0]);
 
 
 using namespace std;
@@ -209,7 +228,7 @@ void clean_input(){
 int main(int argc, char* argv[]) {
 /*
 	 This project transforms midi files into guitar tabs.
-	 ./a <note_deltas.txt> <noteoffset=20> <bar_formatting=1> <align=0>
+	 ./a <note_deltas.txt> <noteoffset=24> <bar_formatting=1> <align=0>
 argv: 0	      1					2				  3				 4
 */
 	if(argc != 5){
@@ -221,7 +240,7 @@ argv: 0	      1					2				  3				 4
 		return 0;
 	}
 	string note_deltas = argv[1]; //name of input file
-	int note_offset=atoi(argv[2]);
+	int note_offset=24-atoi(argv[2]); //pitch shifts of 24 are so common 
 	int align=atoi(argv[4]);
 	
 	vector<Bar*> score = score_maker(note_deltas,note_offset,align);

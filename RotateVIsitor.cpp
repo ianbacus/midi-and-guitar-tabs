@@ -1,9 +1,9 @@
 #include "RotateVisitor.h"
-#define ALLOWABLE  4
+#define ALLOWABLE  3
 
 //This will recursively check and reconfigure all of the elements of the tree
 
-//This algorithm is terribly inefficient right now, it does a brute force check through permutations. I kept tweaking it until it worked.
+//This algorithm is terribly inefficient right now, it does a brute force check through permutations
 //If chunk configurations were configured in terms of adjacent chunks, then analysis would be simpler. 
 
 //Possibly...
@@ -13,22 +13,35 @@
 
 void RotateVisitor::visitBar(Bar* b) 
 {
-//cout << "Bar" << endl;
+
+  //Go through all of the chunks in a given bar and descend down into them
   for(int i=0; i < b->get_children_size(); i++)
   {
   	recursion_lock=0;
   	clear_cache();
 
+	
     b->get_child(i)->accept(this);
     _chunk_count++;
+    
+    /*
+    //idea for re-optimizing chunks based on standard deviation of notes
+    while(range_of_frets > 4 || havent_done_this_too_many_times)
+    {
+    	 b->get_child(i)->accept(this);
+    	 //add this configuration to a vector of possible valid configurations
+    	 
+    }
+    _chunk_count++;
+    */
   }
 
 }
   //Algorithm idea: 
-  // Increment through vector of notes. If a candidate compares nicely with the current stack of accepted notes,
+  // Increment through vector of notes. If a candidate note compares nicely with the current stack of accepted notes,
   // add it to the stack and continue to the next candidate. If it does not work with the rest of the note coordinates,
-  // go back to the previous candidate and increment its index. The current best candidate is cached, and all future candidates
-  // are compared with this candidate.
+  // go back to the previous candidate and increment its index. The current best candidate is put on the stack, and all 
+  // future candidates are compared with this candidate note.
 
  //the items are essentially being moved from the vector tree into a stack for comparison purpose, element by element.
  // the counter_index allows the iterative testing of permutations. If the maximum allowable failure count is reached,
@@ -43,6 +56,7 @@ void RotateVisitor::visitBar(Bar* b)
 
 void RotateVisitor::visitChunk(Chunk* c) 
 {
+	//Visit a chunk, and re-arrange all of its notes until they meet the bare requirements specified in the  "compare_with_stack" function
   empty_stack();
   int counter_index=0,fail_count=0,super_fail=0;
 //  push_stack(c->get_note_at(++j)); //only if this increments after evaluating
@@ -198,26 +212,40 @@ int RotateVisitor::compare_with_stack(Note* n){
 	  Note* current = stack_copy.top();
 	  
 	  if(n->get_pitch() == current->get_pitch())
+	  {
+	  	//erase duplicate notes. This can happen after an octave shift
 	  	return DISCARD;
-
-	  if(n->get_string() == current->get_string())//string overlaps
+	  }
+	  if(n->get_string() == current->get_string())
+	  {
+	  	//Reshuffle for string overlaps
 	  	return BAD;
-	  
-	  
+	  }
 	  /*
 	  if((n->get_pitch() - current->get_pitch()) > 28) {
 	  	if( !(n->get_fret() == 0 || current->get_fret() == 0))
 		    current->decrement_octave();
-		    cout << "niggers" << endl;
 	  }*/
 	  
-	  if(n->get_fret() == 0 || current->get_fret() == 0)//open frets are fine
+	  if(n->get_fret() == 0 || current->get_fret() == 0)
+	  {
+	  	//open frets will not cause conflicts
 	  	stack_copy.pop();//GOOD
+	  }
 
-	  else if(abs((n->get_fret() - current->get_fret())) > ALLOWABLE){
-	  // check if the fret position for the candidate note would fit with the current portion of the note stack
+	  else if(abs((n->get_fret() - current->get_fret())) <= 3)
+	  {
+	  	// check if the fret position for the candidate note would fit with the current portion of the note stack
+	  	//don't bother evaluating this for open strings
+	  	return GOOD;
+	  }
+	  else if(abs((n->get_fret() - current->get_fret())) > 3)
+	  {
+	  	// check if the fret position for the candidate note would fit with the current portion of the note stack
+	  	//don't bother evaluating this for open strings
 	  	return BAD;
 	  }
+	  
 	  
 	  else
 	  	stack_copy.pop();//GOOD

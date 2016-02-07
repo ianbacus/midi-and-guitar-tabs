@@ -1,9 +1,21 @@
-import midi, collections, sys
+import midi, collections, sys, os
 #from sortedcontainers import SortedDict
 
-offsets = (00,00,00,00,00,00,12,00,00,00,00,00,00)
+#Indexed by track to perform selective "filtered" modifications
+note_offsets = (00,00,00,00,00,00,00,00,00,00,00,00,00,00) #in pitches, bitches
+delta_offsets = (00,00,00,00) #in ticks?
+
+
+
+
 #		  (00,01,02,03,04,05,06,07,08,09,10)
-condition = "True"#count in [0,1]"
+
+#condition used to filter out tracks. tracks are enumerated. a condition should be ideally used 
+#to introduce the maximum amount of playable voices in a contrapuntal piece while maintaining
+#a good balance of ornamentation and functional harmony. note doublings, non-functional melodic
+# continuation. 
+#
+#condition = "count in [1]"
 
 
 DELTA_VAL = 8.0
@@ -13,7 +25,28 @@ max = 0
 def float_eq( a, b, eps=0.0001 ):
     return abs(a - b) <= eps
     
-def make(newfile,infile):
+    
+def forward_test():
+	'''
+	Test inputting a file and re-rendering it into a new file to see if VishnuBob's project is the source of the midi errors
+	Forwarding a file in to out works fine.
+	'''
+	inp = midi.read_midifile("midi_files/988-v01.mid")
+	out = midi.containers.Pattern()
+	
+	for count, track in enumerate(inp):
+		out.append(midi.containers.Track())
+		print(count)
+		for event in track:
+			if type(event) not in [midi.events.ProgramChangeEvent, midi.events.ControlChangeEvent]:
+				out[count].append(event)
+			else:
+				print("EVENT")
+	
+	midi.write_midifile("test.mid",out)
+	
+    
+def make(newfile,infile,condition):
 	'''
 	Uses the midi parser provided by Vishnubob's github project
 	
@@ -37,38 +70,52 @@ def make(newfile,infile):
 #	tempor = {}
 	instlist = {}
 	mintick = 100000000000000
-	print "FAGGOTISH"
-	print DELTA_VAL, p.resolution
+	#print DELTA_VAL, p.resolution
+	
 	rhythm_map = {(1*DELTA_VAL/p.resolution)}
+	
 	for count,track in enumerate(p):
+		
 		if eval(condition): #insert logic here to filter tracks
+			trackname = ""
 			lowest = 200
 			max = 0
 			instant = 0
 			note_count = 0
 			note_sum =1
-			for obj in track:
-				##print obj
-				
+			try:
+				instant += (delta_offsets[count]*DELTA_VAL/p.resolution)
+			except:
+				pass
+			for obj in track:					
 				if type(obj) is midi.events.TimeSignatureEvent:
 					instlist[instant] = obj.get_numerator(),obj.get_denominator()
+				if type(obj) is midi.events.TrackNameEvent:
+					trackname = obj.text
 				
+				try:
+					instant += (obj.tick*DELTA_VAL/p.resolution)
+				except:
+					pass
 				#Note events: update the ticks of the pitch-delta map, add in note on event pitches at the instant
-				elif  type(obj) is midi.events.NoteOnEvent or midi.events.NoteOffEvent:
+				if type(obj) in [midi.events.NoteOnEvent,midi.events.NoteOffEvent]:
 				
-					if obj.name == 'Note Off':	
+					#if (obj.name == 'Note Off') or (float_eq(obj.get_velocity(),0.0)):	
 						#tempor[instant] = {pitch} #use last pitch
-						instant += (obj.tick*DELTA_VAL/p.resolution)
-					elif obj.name == 'Note On':# and not (float_eq(obj.get_velocity(),0.0)):
+
+					#elif obj.name == 'Note On' and type(obj) is midi.events.NoteOnEvent:# and not (float_eq(obj.get_velocity(),0.0)):
+					if (type(obj) is midi.events.NoteOnEvent) and not (float_eq(obj.get_velocity(),0.0)):
 						'''
 						if note_count == 0:
 							instant = obj.tick*DELTA_VAL/p.resolution
 						#elif obj.tick != 0:
 						else:#what was this for?
 						'''
+						
+						
 						pitch = obj.get_pitch()
 						try:
-							pitch += offsets[count]
+							pitch += note_offsets[count]
 						except:
 							pass
 						note_sum+=pitch
@@ -89,41 +136,24 @@ def make(newfile,infile):
 							'''
 						except KeyError:
 							tempor[instant] = {pitch}
-						instant += (obj.tick*DELTA_VAL/p.resolution)
 						note_count +=1
-					#elif obj.name== 'Note Off':
-					else:	
-						#tempor[instant] = {pitch} #use last pitch
-						instant += (obj.tick*DELTA_VAL/p.resolution)
-					#else:
-					#	print obj.name, str(obj.get_velocity())
-				else:
-					try:
-						print type(obj)
-						print obj.tick, obj.pitch	
-					except:
-						print "fucking dickn uts"
-						pass			
-			print count, lowest, max
 			try:
-				print "track "+str(count) +" average pitch: " +str(note_sum/note_count)
+				#pass
+				print "track "+str(count) +" average pitch: " +str(note_sum/note_count)+"["+str(lowest)+","+str(max)+"]: "+ trackname
 			except:
 				pass			
 			note_sum=0
 			
 	#each instant will have an associated group of notes. the first of these should have a delta relative to the previous instant,
 	# and the other chunk/set members should have a delta of 0
-	
 	#test to see first few objects of each track
-	for track in p:
-		instant = 0
-		#print "\nTRACK ---------------------\n"
-		for count,obj in enumerate(track):
-			if (count < 250) and type(obj) is midi.events.NoteEvent and obj.tick != 0:
-				pass
-				
-				##print obj.name, obj
-				
+	for set in tempor.values():
+		try:
+			while len(set)> 5:
+				set.pop()
+		except:
+			pass		
+
 	with open(newfile, 'w') as outfile:
 		prev_instant = 0
 #		tempor = SortedDict(tempor)
@@ -163,9 +193,23 @@ def make(newfile,infile):
 			prev_instant = instant
 	
 if __name__ == "__main__":
-
-	file_name = sys.argv[1]
-	make(newfile="pitch_deltas/"+file_name+".txt", infile="midi_files/"+file_name+".mid")
+	if len(sys.argv) == 1:
+		forward_test()
+	else:
+		condition = sys.argv[2]
+		file_name = sys.argv[1]
+		
+		'''
+		#MASS TRANSLATE
+		for file in os.listdir(file_name):
+			if '.mid' in file:
+				try:
+					make(newfile="pitch_deltas/"+file_name+".txt", infile="midi_files/"+file, condition="True")
+				except:
+					print "error parsing " + str(file_name)
+		'''
+		make(newfile="pitch_deltas/"+file_name+".txt", infile="midi_files/"+file_name+".mid",condition=condition)
+		#make(newfile="pitch_deltas/"+file_name+".txt", infile=file_name,condition=condition)
 
 #	outstring = str(obj.data[0]) + ',' + str(obj.data[1])
 #	outfile.write(outstring+'\n')
