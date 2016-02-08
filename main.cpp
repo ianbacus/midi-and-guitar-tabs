@@ -7,7 +7,7 @@
 #include "Printvisitor.h"
 #include "RotateVisitor.h"
 
-
+#include <thread>
 #include <ctype.h>
 #include <string.h>
 #include <stdio.h>
@@ -227,14 +227,28 @@ argv: 0	      1					2				  3				 4
 	int format_count = barset;
 	int inform_count = 0;
 	cout << "working ..." << endl;
+	
+	int INDEX = 0;
+     vector<std::thread> threads;
+     for (std::vector< Bar* >::iterator it = score.begin() ; it != score.end(); ++it)
+     {
+             INDEX++;
+             cout << "abcdefg" << endl;
+             (*it)->accept(thefixer);
+             //std::thread th(&Bar::accept,(*it), thefixer);
+             //threads.push_back( std::thread(&Bar::accept,(*it), thefixer) );
+     }
+     std::cout << "Threads dispatched\n";
+     for (auto& th : threads) th.join();
+	
+     std::cout << "Threads complete\n";
 	for (std::vector< Bar* >::iterator it = score.begin() ; it != score.end(); ++it){
 		//cout << inform_count ++ << endl;
 		if(format_count == barset){
 		   theprinter->newlines();
 		   format_count = 0;
 		}
-		//cout << "shity" << endl;
-		(*it)->accept(thefixer);
+		//(*it)->accept(thefixer);
 		(*it)->accept(theprinter);
 		
 		format_count++;
