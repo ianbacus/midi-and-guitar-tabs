@@ -84,7 +84,7 @@ vector<Bar*> score_maker(std::string infile, int shift,int align) {
 			if( std::getline( iss, num , ',') && std::getline( iss, denom )) {
 				cout << num << " " << denom << endl;
 				beat_overflow = ((std::stoi(num)) * (beat_value[std::stoi(denom)]) );
-				cout << "BO is " << beat_overflow << endl;
+				//cout << "BO is " << beat_overflow << endl;
 			}
 		}	
         std::string p,d;

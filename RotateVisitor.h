@@ -4,28 +4,26 @@
 #include "visitor.h"
 #include "base.h"
 #include <math.h>
+#include <mutex>
 
 class RotateVisitor : public Visitor
 {
 
   private:
-    stack<Note*> _comparison_stack;
+    
     vector<pair<int, int> > _optima;
     vector< vector<pair<int, int> > > _cache;
-    
+
     int _chunk_count;
-    int recursion_lock;
+    //int recursion_lock;
+    
+    std::mutex mtx_compstack, mtx_optima, mtx_cache;
     //int strings_occupied[6];
   public:
   	virtual ~RotateVisitor() {
-  		empty_stack();
   		}
   	void print_chunk_count() { cout << _chunk_count; }
-    void empty_stack();
-    void pop_stack() { _comparison_stack.pop();}
-    void push_stack(Note* n) {_comparison_stack.push(n); }
-    void print_stack();
-    int compare_with_stack(Note*);
+    
     void compare_chunks(vector<pair<int, int> >);
     virtual void visitNote(Note*);
     virtual void visitBar(Bar*);
@@ -58,8 +56,4 @@ class RotateVisitor : public Visitor
     }
 
 };
-enum {
-BAD, DISCARD, GOOD,
-};
-
 #endif

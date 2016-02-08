@@ -25,8 +25,15 @@ class Bar : public Base
 		Chunk* get_child(int i) {return _bar_chunks[i];}
 		Chunk* get_child() {return _bar_chunks.back();}
 		
-		virtual void accept(Visitor*v) {v->visitBar(this);}
+		virtual void accept(Visitor*v) {
+			std::cout << "B" << std::endl;
+			v->visitBar(this);
+			}
 		virtual int get_children_size() const {return _bar_chunks.size();}
 };
+
+
+//Implement stack comparison function here
+
 
 #endif

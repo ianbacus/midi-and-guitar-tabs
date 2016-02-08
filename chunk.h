@@ -10,7 +10,8 @@ class Chunk : public Base
 	private:
 		int delta;
 		vector<Note*> _chunk_notes;
-		
+		stack<Note*> _comparison_stack;
+		int _recursion_lock;
 	public:
 		
 		void add_note(Note* n) {_chunk_notes.push_back(n);} //this should automatically enforce good fingering with the tuning matrix
@@ -35,10 +36,28 @@ class Chunk : public Base
 		//vector<Note*> * get_chunk_notes_vector() {return &_chunk_notes;}
 		
 		virtual void accept(Visitor* v) {v->visitChunk(this);}
-	//	virtual void reconfigure(); //removed parameter Base*
+		
+		void empty_stack();
+		void pop_stack() 
+		{ 
+			_comparison_stack.pop();
+		}
+		void push_stack(Note* n) 
+		{ 
+			_comparison_stack.push(n); 
+		}
+		void print_stack();
+		int compare_with_stack(Note*);
+		int get_recursion_lock() {return _recursion_lock;}
+		void set_recursion_lock(int n) {_recursion_lock = n;cout<<"RECLOCK_SET:"<<_recursion_lock <<endl;}
+		void inc_recursion_lock() {_recursion_lock++; cout<<"RECLOCK++"<<_recursion_lock <<endl;}
+		
+		
 		bool compare_chunks(Chunk*);
-		Chunk(int d=0) : delta(d) {}
+		Chunk(int d=0) : delta(d), _recursion_lock(0) {}
 		virtual ~Chunk(){
+			
+	  		empty_stack();
 			for (std::vector< Note* >::iterator it = _chunk_notes.begin() ; it != _chunk_notes.end(); ++it)
   				delete (*it);
   			_chunk_notes.clear();
@@ -46,6 +65,11 @@ class Chunk : public Base
 		}
 	
 	
+};
+
+
+enum {
+BAD, DISCARD, GOOD,
 };
 
 

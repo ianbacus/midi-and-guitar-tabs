@@ -1,5 +1,9 @@
 #include "RotateVisitor.h"
+
+
 #define ALLOWABLE  3
+
+//std::mutex mtx_compstack, mtx_optima, mtx_cache;
 
 //This will recursively check and reconfigure all of the elements of the tree
 
@@ -15,26 +19,21 @@ void RotateVisitor::visitBar(Bar* b)
 {
 
   //Go through all of the chunks in a given bar and descend down into them
+  //Threads should be used here so that each bar can be analyzed with a thread
+  //All of the chunks are already allocated, they are just reconfigured here in place
+  
+  std::cout << "?";
   for(int i=0; i < b->get_children_size(); i++)
   {
-  	recursion_lock=0;
+  	//recursion_lock=0;
   	clear_cache();
-
+	std::cout << i;
 	
     b->get_child(i)->accept(this);
+    cout << i << "!" << endl;
     _chunk_count++;
-    
-    /*
-    //idea for re-optimizing chunks based on standard deviation of notes
-    while(range_of_frets > 4 || havent_done_this_too_many_times)
-    {
-    	 b->get_child(i)->accept(this);
-    	 //add this configuration to a vector of possible valid configurations
-    	 
     }
-    _chunk_count++;
-    */
-  }
+  std::cout << "666" << std::endl;
 
 }
 /*
@@ -58,31 +57,36 @@ Two levels of "failure":
 void RotateVisitor::visitChunk(Chunk* c) 
 {
 	//Visit a chunk, and re-arrange all of its notes until they meet the bare requirements specified in the  "compare_with_stack" function
-  empty_stack();
+  //c->empty_stack();
   int counter_index=0,fail_count=0,super_fail=0;
-	  while(counter_index < c->get_children_size()){
+	  while(counter_index < c->get_children_size())
+	  {
+	  	cout << "ci:" << counter_index << "cc:" << _chunk_count << "fc:" << fail_count << "sfc:" << super_fail << "rc:" << c->get_recursion_lock() << endl;
 	  	if(super_fail > pow(3,(c->get_children_size() ))  ) 
+	  	{
 			break;
+	  	}
 	  	if(fail_count == c->get_note_at(counter_index)->get_children_size()){
 	  	//A note has only so many fret/string positions, indicated by "get_children_size()". after exhausting all tries, go back one step on the stack
-	  		pop_stack();
+	  		c->pop_stack();
 	  		counter_index--;
 	  		c->get_note_at(counter_index)->accept(this);
 	  		fail_count=0;
 	  		super_fail++;
 	  	}
-	  	else if(int test = compare_with_stack(c->get_note_at(counter_index))){
+	  	else if(int test = c->compare_with_stack(c->get_note_at(counter_index)))
+	  	{
 	  		switch(test){
 				case DISCARD: //discard note: duplicate
 					c->remove_note(c->get_note_at(counter_index));
 					break;
 				case GOOD: //if the note to be added is compatible with the rest of the stack, continue on to the next note
-					push_stack(c->get_note_at(counter_index));
+					c->push_stack(c->get_note_at(counter_index)); 
 					counter_index++;
+					cout << "RESET" << endl;
 					fail_count=0;
 					break;
-				case BAD:
-					cout << "THIS WILL NEVER HAPPEN " << endl;		
+				case BAD:	
 					break;	  		
 		  	};
 		}
@@ -93,9 +97,10 @@ void RotateVisitor::visitChunk(Chunk* c)
 	  		fail_count++;
 	  	}
 	  }
-
-	  recursion_lock++;
-	  if (recursion_lock < pow(3,(c->get_children_size() ))) {//c->get_children_size()){
+	  cout << "break?" << endl;
+	  c->inc_recursion_lock();
+	  if (c->get_recursion_lock() < pow(3,(c->get_children_size() ))) 
+	  {
 	 	 compare_chunks(c->get_note_indices());
 			/*
 			cout << "current optima["<< _optima.size() << "] <";
@@ -107,8 +112,8 @@ void RotateVisitor::visitChunk(Chunk* c)
 			
 			for(int i=0;i< (c->get_children_size());i++){
 				for(int i2=0;i2<3;i2++){
-					if(!in_cache( c->get_note_indices() ) )
-						break;
+					
+					if(!in_cache( c->get_note_indices() ) ){ break; }
 					c->get_note_at(i)->accept(this);
 				}
 			}//could this be done with a callback
@@ -117,26 +122,8 @@ void RotateVisitor::visitChunk(Chunk* c)
 	  else{
 	  	 force_chunk_note_indices(_optima,c);
 	  	 clear_cache();
-	  	 empty_stack();
+	  	 c->empty_stack();
 	  }
-}
-void RotateVisitor::empty_stack()
-{
-	while(!_comparison_stack.empty()){
-		pop_stack();
-	}
-}
-
-void RotateVisitor::print_stack() {
-//TODO: add more templates
-	stack<Note*> stack_copy = _comparison_stack; 
-	cout << "<";
-	while(!stack_copy.empty()){
-		int fretn = stack_copy.top()->get_fret();
-		cout << fretn << ",";
-		stack_copy.pop();
-	}
-	cout << ">" << endl;
 }
 
 void RotateVisitor::compare_chunks(vector<pair <int, int> > current_indices) {
@@ -187,68 +174,15 @@ void RotateVisitor::compare_chunks(vector<pair <int, int> > current_indices) {
 
 
 void RotateVisitor::force_chunk_note_indices( vector<pair<int, int> > indices, Chunk* c ){
+	cout << "forcing it in" << endl;
 	if (indices.size() == c->get_children_size()){
 		for(int i=0; i<c->get_children_size(); i++)
 			c->get_note_at(i)->set_note_index(indices[i].first);
 	}
+	cout << "PENETRATE" << endl;
 }
 
 
-int RotateVisitor::compare_with_stack(Note* n){
-// Return true if the note is addable. This method will copy the stack of notes 
-    //return false if the note should perform a rotation to a new fret/string
-	//bad(0) message: not compatible with chunk
-    //discard(1) message: permanently remove note
-    //good(2) message: this note works with the current chunk
-
-	stack<Note*> stack_copy = _comparison_stack;
-
-	while(!stack_copy.empty())
-	{
-	  Note* current = stack_copy.top();
-	  
-	  if(n->get_pitch() == current->get_pitch())
-	  {
-	  	//erase duplicate notes. This can happen after an octave shift
-	  	return DISCARD;
-	  }
-	  if(n->get_string() == current->get_string())
-	  {
-	  	//Reshuffle for string overlaps
-	  	return BAD;
-	  }
-	  /*
-	  if((n->get_pitch() - current->get_pitch()) > 28) {
-	  	if( !(n->get_fret() == 0 || current->get_fret() == 0))
-		    current->decrement_octave();
-	  }*/
-	  
-	  if(n->get_fret() == 0 || current->get_fret() == 0)
-	  {
-	  	//open frets will not cause conflicts, so their frets do not need to be checked against other notes
-	  	stack_copy.pop();//GOOD
-	  }
-
-	  else if(abs((n->get_fret() - current->get_fret())) <= 3)
-	  {
-	  	// check if the fret position for the candidate note would fit with the current portion of the note stack
-	  	return GOOD;
-	  }
-	  else if(abs((n->get_fret() - current->get_fret())) > 3)
-	  {
-	  	// check if the fret position for the candidate note would fit with the current portion of the note stack
-	  	//don't bother evaluating this for open strings
-	  	return BAD;
-	  }
-	  
-	  
-	  else
-	  	stack_copy.pop();//GOOD
-	  
-	}
-	return GOOD;
-	
-}
 
 void RotateVisitor::visitNote(Note* n) 
 {

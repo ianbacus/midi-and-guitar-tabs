@@ -8,12 +8,16 @@
 #include "RotateVisitor.h"
 
 
+
 #include <ctype.h>
 #include <string.h>
 #include <stdio.h>
 #include <iostream>
 #include <vector>
 #include <iostream>
+
+#include <thread>         // std::thread
+using std::thread;
 
 /*
 
@@ -226,17 +230,29 @@ argv: 0	      1					2				  3				 4
 	int barset = atoi(argv[3]);
 	int format_count = barset;
 	int inform_count = 0;
-	cout << "working ..." << endl;
-	for (std::vector< Bar* >::iterator it = score.begin() ; it != score.end(); ++it){
-		//cout << inform_count ++ << endl;
+	//cout << "working ..." << endl;
+	int INDEX = 0;
+	vector<std::thread> threads = {};
+	for (std::vector< Bar* >::iterator it = score.begin() ; it != score.end(); ++it)
+	{
+		cout << "BEGINNNININNNNNGGG THE BARRRRRR" << INDEX << endl;
+		INDEX++;
+		(*it)->accept(thefixer);
+
+		//std::thread th(&Bar::accept,(*it), thefixer);
+		//threads.push_back( move(th) );
+		//th.join();
+		
+	}
+	std::cout << "HHHHHHHH\n";
+  	for (auto& th : threads) th.join();
+	for (std::vector< Bar* >::iterator it = score.begin() ; it != score.end(); ++it)
+	{
 		if(format_count == barset){
 		   theprinter->newlines();
 		   format_count = 0;
 		}
-		//cout << "shity" << endl;
-		(*it)->accept(thefixer);
 		(*it)->accept(theprinter);
-		
 		format_count++;
 	}
 	
