@@ -33,7 +33,7 @@ class RotateVisitor : public Visitor
     	//Print cache:
 		//cout << "<";for(auto e : input)cout << Note::get_fret_at(e.first, e.second) << " ";cout << ">" << endl;
     	bool ret = false;
-    	//cout << "search ";
+    	cout << "";
     	mtx_cache.lock();
     	for(auto entry : _cache){
     	// cout << "~<"; for(auto en : entry) cout<< Note::get_fret_at(en.first, en.second) << " "; cout << ">" << endl;

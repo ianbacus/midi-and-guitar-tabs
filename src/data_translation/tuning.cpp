@@ -21,8 +21,9 @@ char ptuning[] = "eadgbe";
 //char ptuning[] = "eadg";
 
 //8STRING TAB
-//char tuning[] = {76, 81, 86, 91, 95, 100};
-//char ptuning[] = "Fbeadfgbe";
+
+//char tuning[] = {18,23,28, 33, 38, 43, 47, 52};
+//char ptuning[] = "Fbeadgbe";
 
 
 //goldberg variations tuning

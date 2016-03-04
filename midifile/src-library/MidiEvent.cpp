@@ -1,35 +1,48 @@
-#include "Reader.h"
+//
+// Programmer:    Craig Stuart Sapp <craig@ccrma.stanford.edu>
+// Creation Date: Sat Feb 14 21:40:14 PST 2015
+// Last Modified: Sat Feb 14 23:33:51 PST 2015
+// Filename:      midifile/src/MidiEvent.cpp
+// Website:       http://midifile.sapp.org
+// Syntax:        C++11
+// vim:           ts=3 expandtab
+//
+// Description:   A class which stores a MidiMessage and a timestamp
+//                for the MidiFile class.
+//
+
+#include "MidiEvent.h"
 
 using namespace std;
 
 
 //////////////////////////////
 //
-// Reader::Reader -- Constructor classes
+// MidiEvent::MidiEvent -- Constructor classes
 //
 
-Reader::Reader(void) : MidiMessage() {
+MidiEvent::MidiEvent(void) : MidiMessage() {
    clearVariables();
 }
 
 
-Reader::Reader(int command) : MidiMessage(command)  {
+MidiEvent::MidiEvent(int command) : MidiMessage(command)  {
    clearVariables();
 }
 
 
-Reader::Reader(int command, int p1) : MidiMessage(command, p1) {
+MidiEvent::MidiEvent(int command, int p1) : MidiMessage(command, p1) {
    clearVariables();
 }
 
 
-Reader::Reader(int command, int p1, int p2) 
+MidiEvent::MidiEvent(int command, int p1, int p2) 
       : MidiMessage(command, p1, p2) {
    clearVariables();
 }
 
 
-Reader::Reader(int aTime, int aTrack, vector<uchar>& message)
+MidiEvent::MidiEvent(int aTime, int aTrack, vector<uchar>& message)
       : MidiMessage(message) {
    tick  = aTime;
    track = aTrack;
@@ -37,7 +50,7 @@ Reader::Reader(int aTime, int aTrack, vector<uchar>& message)
 }
 
 
-Reader::Reader(const Reader& mfevent) {
+MidiEvent::MidiEvent(const MidiEvent& mfevent) {
    tick  = mfevent.tick;
    track = mfevent.track;
    eventlink = NULL;
@@ -51,10 +64,10 @@ Reader::Reader(const Reader& mfevent) {
 
 //////////////////////////////
 //
-// Reader::~Reader -- MidiFile Event destructor
+// MidiEvent::~MidiEvent -- MidiFile Event destructor
 //
 
-Reader::~Reader() {
+MidiEvent::~MidiEvent() {
    tick  = -1;
    track = -1;
    this->resize(0);
@@ -64,10 +77,10 @@ Reader::~Reader() {
 
 //////////////////////////////
 //
-// Reader::clearVariables --  Clear everything except MidiMessage data.
+// MidiEvent::clearVariables --  Clear everything except MidiMessage data.
 //
 
-void Reader::clearVariables(void) {
+void MidiEvent::clearVariables(void) {
    tick  = 0;
    track = 0;
    seconds = 0.0;
@@ -77,10 +90,10 @@ void Reader::clearVariables(void) {
 
 //////////////////////////////
 //
-// Reader::operator= -- Copy the contents of another Reader.
+// MidiEvent::operator= -- Copy the contents of another MidiEvent.
 //
 
-Reader& Reader::operator=(Reader& mfevent) {
+MidiEvent& MidiEvent::operator=(MidiEvent& mfevent) {
    if (this == &mfevent) {
       return *this;
    }
@@ -95,7 +108,7 @@ Reader& Reader::operator=(Reader& mfevent) {
 }
 
 
-Reader& Reader::operator=(MidiMessage& message) {
+MidiEvent& MidiEvent::operator=(MidiMessage& message) {
    if (this == &message) {
       return *this;
    }
@@ -108,7 +121,7 @@ Reader& Reader::operator=(MidiMessage& message) {
 }
 
 
-Reader& Reader::operator=(vector<uchar>& bytes) {
+MidiEvent& MidiEvent::operator=(vector<uchar>& bytes) {
    clearVariables();
    this->resize(bytes.size());
    for (int i=0; i<this->size(); i++) {
@@ -118,14 +131,14 @@ Reader& Reader::operator=(vector<uchar>& bytes) {
 }
 
 
-Reader& Reader::operator=(vector<char>& bytes) {
+MidiEvent& MidiEvent::operator=(vector<char>& bytes) {
    clearVariables();
    setMessage(bytes);
    return *this;
 }
 
 
-Reader& Reader::operator=(vector<int>& bytes) {
+MidiEvent& MidiEvent::operator=(vector<int>& bytes) {
    clearVariables();
    setMessage(bytes);
    return *this;
@@ -135,15 +148,15 @@ Reader& Reader::operator=(vector<int>& bytes) {
 
 //////////////////////////////
 //
-// Reader::unlinkEvent -- Disassociate this event with another.
+// MidiEvent::unlinkEvent -- Disassociate this event with another.
 //   Also tell the other event to disassociate from this event.
 //
 
-void Reader::unlinkEvent(void) { 
+void MidiEvent::unlinkEvent(void) { 
    if (eventlink == NULL) {
       return;
    }
-   Reader* mev = eventlink;
+   MidiEvent* mev = eventlink;
    eventlink = NULL;
    mev->unlinkEvent();
 }
@@ -152,11 +165,11 @@ void Reader::unlinkEvent(void) {
 
 //////////////////////////////
 //
-// Reader::linkEvent -- Make a link between two messages.  
+// MidiEvent::linkEvent -- Make a link between two messages.  
 //   Unlinking
 //
 
-void Reader::linkEvent(Reader* mev) { 
+void MidiEvent::linkEvent(MidiEvent* mev) { 
    if (mev->eventlink != NULL) {
       // unlink other event if it is linked to something else;
       mev->unlinkEvent();
@@ -172,7 +185,7 @@ void Reader::linkEvent(Reader* mev) {
 }
 
 
-void Reader::linkEvent(Reader& mev) { 
+void MidiEvent::linkEvent(MidiEvent& mev) { 
    linkEvent(&mev);
 }
 
@@ -180,12 +193,12 @@ void Reader::linkEvent(Reader& mev) {
 
 //////////////////////////////
 //
-// Reader::getLinkedEvent -- Returns a linked event.  Usually
+// MidiEvent::getLinkedEvent -- Returns a linked event.  Usually
 //   this is the note-off message for a note-on message and vice-versa.
 //   Returns null if there are no links.
 //
 
-Reader* Reader::getLinkedEvent(void) {
+MidiEvent* MidiEvent::getLinkedEvent(void) {
    return eventlink;
 }
 
@@ -193,11 +206,11 @@ Reader* Reader::getLinkedEvent(void) {
 
 //////////////////////////////
 //
-// Reader::isLinked -- Returns true if there is an event which is not
+// MidiEvent::isLinked -- Returns true if there is an event which is not
 //   NULL.  This function is similar to getLinkedEvent().
 //
 
-int Reader::isLinked(void) {
+int MidiEvent::isLinked(void) {
    return eventlink == NULL ? 0 : 1;
 }
 
@@ -205,14 +218,14 @@ int Reader::isLinked(void) {
 
 //////////////////////////////
 //
-// Reader::getTickDuration --  For linked events (note-ons and note-offs),
+// MidiEvent::getTickDuration --  For linked events (note-ons and note-offs),
 //    return the absolute tick time difference between the two events.
 //    The tick values are presumed to be in absolute tick mode rather than
 //    delta tick mode.  Returns 0 if not linked.
 // 
 
-int Reader::getTickDuration(void) {
-   Reader* mev = getLinkedEvent();
+int MidiEvent::getTickDuration(void) {
+   MidiEvent* mev = getLinkedEvent();
    if (mev == NULL) {
       return 0;
    }
@@ -228,14 +241,14 @@ int Reader::getTickDuration(void) {
 
 //////////////////////////////
 //
-// Reader::getDurationInSeconds -- For linked events (note-ons and 
+// MidiEvent::getDurationInSeconds -- For linked events (note-ons and 
 //     note-offs), return the duration of the note in seconds.  The
 //     seconds analysis must be done first; otherwise the duration will be
 //     reported as zero.
 //
 
-double Reader::getDurationInSeconds(void) {
-   Reader* mev = getLinkedEvent();
+double MidiEvent::getDurationInSeconds(void) {
+   MidiEvent* mev = getLinkedEvent();
    if (mev == NULL) {
       return 0;
    }
@@ -246,4 +259,6 @@ double Reader::getDurationInSeconds(void) {
       return seconds - seconds2;
    }
 }
+
+
 

@@ -12,7 +12,7 @@
 
 void RotateVisitor::visitBar(Bar* b) 
 {
-//clear_cache();
+  //clear_cache();
   //Go through all of the chunks in a given bar and descend down into them
   for(int i=0; i < b->get_children_size(); i++)
   {
@@ -92,7 +92,7 @@ void RotateVisitor::visitChunk(Chunk* c)
 	  }
 	  else{
 	  	 c->force_chunk_note_indices();
-	  	 //clear_cache();
+	  	 clear_cache();
 	  	 c->empty_stack();
 	  }
 }

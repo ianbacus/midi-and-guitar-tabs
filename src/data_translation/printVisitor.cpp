@@ -71,7 +71,7 @@ void PrintVisitor::visitChunk(Chunk* c){
 	else {
 	//triplets
 		tripled = true;
-		string_buffer.back()[SIZEOF_TUNING] += ' t';
+		string_buffer.back()[SIZEOF_TUNING] += " t";
 		string_buffer.back()[string_print_index] +=  result;
 	}
 
