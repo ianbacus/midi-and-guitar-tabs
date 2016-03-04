@@ -1,9 +1,14 @@
-import time, sys
+import time, sys, os
 
 from midi_writer import make as generate_pitch_delta
 import subprocess
 
 if __name__ == "__main__":
+	try: 
+		os.makedirs("./data/intermediates")
+	except OSError:
+		if not os.path.isdir("./data/intermediates"):
+			raise
 	try:
 		if len(sys.argv) == 6:
 			fileName = sys.argv[1]
@@ -28,3 +33,4 @@ if __name__ == "__main__":
 		print 'Enter the name of the midifile without a file extension and a global offset for pitch values'
 	except IOError:
 		print 'Bad file name: "' + fileName + '.mid"'
+	
