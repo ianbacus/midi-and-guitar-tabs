@@ -49,29 +49,28 @@ vector<Bar*> score_maker(std::string infile, int shift,int align) {
     
 	align = align*(beat_overflow/(2*(beat_per_measure)));
 	bartime += align;
-    while( std::getline( file, line ) ) {
-      //get newline separated lines from file
-      
+    while( std::getline( file, line ) ) 
+    {
         std::istringstream iss( line );
 		if(line == "SIGEVENT"){
 			std::getline(file, line);
 			std::istringstream iss( line );
 			std::string num,denom;
-			if( std::getline( iss, num , ',') && std::getline( iss, denom )) {
-				cout << num << " " << denom << endl;
+			if( std::getline( iss, num , ',') && std::getline( iss, denom )) 
+			{
 				beat_overflow = ((std::stoi(num)) * (beat_value[std::stoi(denom)]) );
 			}
 		}	
         std::string p,d;
-		if( std::getline( iss, p , ',') && std::getline( iss, d )) {
+		if( std::getline( iss, p , ',') && std::getline( iss, d )) 
+		{
 			//delimiting character inside each line
 			counter++;
 			float delta = stof(d); 
 			int pitch = stoi(p);
-			//if(counter == 1) bartime += delta;
-			if(counter == 1) cout << pitch << "," << delta << endl;
 			bartime += abs(delta);
-			if(bartime >= beat_overflow && delta != 0){
+			if(bartime >= beat_overflow && delta != 0)
+			{
 				//Case 1: the bar is full, create a new one with an empty initial chunk
 				score.push_back(new Bar());	
 			    score.back()->add_chunk(new Chunk());

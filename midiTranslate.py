@@ -24,11 +24,10 @@ if __name__ == "__main__":
 			noteOffset, columnsPerRow, startMeasure, endMeasure]
 			subprocess.call(spstring)
 			
-			#note_offset, columns/row, start_measure, end_measure(-1=max)
-			
-
 		else:
 			raise ValueError
+	except OSError:
+		print 'No executable found. Build the midi translator first (type "make")'
 	except ValueError:
 		print 'Enter the name of the midifile without a file extension and a global offset for pitch values'
 	except IOError:

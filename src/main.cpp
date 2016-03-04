@@ -20,20 +20,10 @@
  
 int main(int argc, char* argv[]) 
 {
-	/*
 
-	 This project transforms midi files into guitar tabs.
-	input:	./a <inputFile.txt> <noteoffset=24> <bar_formatting=1> <lowerbound=0> <upperbound=-1>
-	argv: 	 0 	      1					2				  3				   4			  5
-
-	*/
 	if(argc != 7)
 	{
-		cout << "Invalid entry. use the following format:\n>> ./a inputFile.txt, #noteoffset=20, #bar_formatting=1, #align=0" << endl;
-		cout << "Note deltas is a text file with a simple format. One row is for note pitches, and one is for time deltas. See midi_writer.py for more info." << endl;
-		cout <<"Note offset can be used to change the key of a song. It just offsets all of the notes by a set amount." << endl;
-		cout <<"Bar formatting sets how many bars will show up per 'row' on the output text file with the tabs."<<endl;
-		cout <<"Align sets how many eighth notes should appear before the first note." <<endl;
+		cout << "Invalid entry. use the following format:\n>> ./gen <inputFile> <outputFile> <pitchShift#>, <measuresPerRow#> <startMeasure#> <endMeasure#>" << endl;
 		return 0;
 	}
 	
@@ -74,8 +64,7 @@ int main(int argc, char* argv[])
 	
 	measureIndex=0;	
 	for (std::vector< Bar* >::iterator it = score.begin() ; it < score.end(); it++,measureIndex++)
-	{
-		
+	{	
 		if(format_count == barset){
 		   theprinter->newlines();
 		   format_count = 0;
