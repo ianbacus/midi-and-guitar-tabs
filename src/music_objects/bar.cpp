@@ -1,18 +1,38 @@
 #include "base.h"
 
-/*
-void Bar::reconfigure(Base*)
+
+Bar::~Bar()
 {
-	//possibly implement using visitor pattern, recursively search nonterminal nodes.. run a comparison on every set of 3 Chunks
-	//every Note will have multiple locations. the goal of this algorithm is to make sure that no two Notes are more than 5 frets away, not counting 0 fret Notes
-	
-	//iterative solution for now
-	for (auto Chunk_it = Bar_Chunks.begin() ; Chunk_it != Bar_Chunks.end()-2; ++Chunk_it)
-	{
-		if(!((*Chunk_it)->compare_chunks(*(Chunk_it+1) )) ) //return false for bad comparison
-		{
-//			rotate();
-		}
-		
-	}
-}*/
+	for (std::vector< Chunk* >::iterator it = _bar_chunks.begin() ; it != _bar_chunks.end(); ++it)
+		delete (*it);
+	_bar_chunks.clear();
+}
+
+void Bar::add_chunk(Chunk* c) 
+{
+	_bar_chunks.push_back(c);
+}
+void Bar::remove_chunk(Chunk* c) 
+{ 
+	_bar_chunks.erase(std::find(_bar_chunks.begin(),_bar_chunks.end(),c)); 
+}
+
+Chunk* Bar::get_child(int i) 
+{
+	return _bar_chunks[i];
+}
+
+Chunk* Bar::get_child() 
+{
+	return _bar_chunks.back();
+}
+
+void Bar::accept(Visitor*v) 
+{
+	v->visitBar(this);
+}
+
+int Bar::get_children_size() const 
+{
+	return _bar_chunks.size();
+}

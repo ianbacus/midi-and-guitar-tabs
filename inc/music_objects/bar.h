@@ -4,29 +4,20 @@
 #include "Chunk.h"
 
 class Bar : public Base
-//linked list implementation might make most sense here
 {
-	//not sure if this class will be used. 
-	// - absorb this class into Chunk, treat that like a nonterminal node
 	private:
-		vector<Chunk*> _bar_chunks; //Chunks are children of Bar	
+		vector<Chunk*> _bar_chunks;
 
 	public:
-		virtual ~Bar() {
-			for (std::vector< Chunk* >::iterator it = _bar_chunks.begin() ; it != _bar_chunks.end(); ++it)
-  				delete (*it);
-  			_bar_chunks.clear();
-		}
+		virtual ~Bar();
 		
-		void add_chunk(Chunk* c) {_bar_chunks.push_back(c);}
-		void remove_chunk(Chunk* c) { _bar_chunks.erase(std::find(_bar_chunks.begin(),_bar_chunks.end(),c)); }
-		//operator [] for accessing Chunks
-		//virtual void reconfigure();
-		Chunk* get_child(int i) {return _bar_chunks[i];}
-		Chunk* get_child() {return _bar_chunks.back();}
+		void add_chunk(Chunk* c);
+		void remove_chunk(Chunk* c);
+		Chunk* get_child(int i);
+		Chunk* get_child();
 		
-		virtual void accept(Visitor*v) {v->visitBar(this);}
-		virtual int get_children_size() const {return _bar_chunks.size();}
+		virtual void accept(Visitor*v);
+		virtual int get_children_size() const;
 };
 
 #endif

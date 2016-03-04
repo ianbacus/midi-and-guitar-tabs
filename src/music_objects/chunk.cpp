@@ -1,24 +1,73 @@
 #include "base.h"
 #define ALLOWABLE  3
 
+Chunk::Chunk(int d) : delta(d), _recursion_lock(0) {}
 
+Chunk::~Chunk()
+{		
+	empty_stack();
+	for (std::vector< Note* >::iterator it = _chunk_notes.begin() ; it != _chunk_notes.end(); ++it)
+		delete (*it);
+	_chunk_notes.clear();
 
-void Chunk::force_chunk_note_indices(  ){
+}
+
+int Chunk::get_children_size() const 
+{
+	return _chunk_notes.size();
+}
+
+vector<pair<int, int> > Chunk::get_note_indices()
+{
+	vector<pair<int, int> > indices;
+	for(int i=0; i<get_children_size(); i++){
+		indices.push_back(pair<int,int>( get_note_at(i)->get_current_note_index(), get_note_at(i)->get_pitch()));
+	}
+	return indices;
+}
+
+void Chunk::accept(Visitor* v) 
+{
+	v->visitChunk(this);
+}
+		
+void Chunk::add_note(Note* n) 
+{
+	_chunk_notes.push_back(n);
+}
+
+void Chunk::remove_note(Note* n) 
+{
+	_chunk_notes.erase(std::remove(_chunk_notes.begin(), _chunk_notes.end(), n), _chunk_notes.end()); 
+}
+
+void Chunk::force_chunk_note_indices(void)
+{
 	if (_optima.size() == get_children_size()){
 		for(int i=0; i<get_children_size(); i++)
 			get_note_at(i)->set_note_index(_optima[i].first);
 	}
 }
 
-void Chunk::empty_stack()
+void Chunk::pop_stack(void) 
+{
+	_comparison_stack.pop();
+}
+
+void Chunk::push_stack(Note* n) 
+{
+	_comparison_stack.push(n); 
+}
+
+void Chunk::empty_stack(void)
 {
 	while(!_comparison_stack.empty()){
 		pop_stack();
 	}
 }
 
-void Chunk::print_stack() {
-//TODO: add more templates
+void Chunk::print_stack(void) 
+{
 	stack<Note*> stack_copy = _comparison_stack; 
 	cout << "<";
 	while(!stack_copy.empty()){
@@ -54,16 +103,11 @@ int Chunk::compare_with_stack(Note* n){
 	  	//Reshuffle for string overlaps
 	  	return BAD;
 	  }
-	  /*
-	  if((n->get_pitch() - current->get_pitch()) > 28) {
-	  	if( !(n->get_fret() == 0 || current->get_fret() == 0))
-		    current->decrement_octave();
-	  }*/
 	  
 	  if(n->get_fret() == 0 || current->get_fret() == 0)
 	  {
 	  	//open frets will not cause conflicts
-	  	stack_copy.pop();//GOOD
+	  	stack_copy.pop();
 	  }
 
 	  else if(abs((n->get_fret() - current->get_fret())) <= ALLOWABLE)
@@ -81,65 +125,50 @@ int Chunk::compare_with_stack(Note* n){
 	  
 	  
 	  else
-	  	stack_copy.pop();//GOOD
+	  	stack_copy.pop();
 	  
 	}
 	return GOOD;
 	
 }
 
-
-
-
-
-//The iterators point to pointers, so they must be dereferenced twice 
-/*
-void Chunk::rotate()
-{
-
-	//for each note in a chunk, hold a root "string"
-	
-	//iterate through each note of the chunk.
-	for(auto root_ix=Chunk_Notes.begin(); root_ix<Chunk_Notes.end(); root_ix++)
-	{	
-		//iterate through other notes, circular
-		auto alt_ix = root_ix+1;
-		while(alt_ix != root_ix)
-		{
-			alt_ix++;
-			if(alt_ix == Chunk_Notes.end() ) //iterate circularly
-				alt_ix = Chunk_Notes.begin();
-			
-			//for each possible fingering of this note, compare it to the root
-			if((*root_ix)->compare(*alt_ix))
-			{
-				int pitch = (*root_ix)->get_pitch();
-				for(int note_ix=0; note_ix < (*root_ix)->get_pitch_to_frets_entry_size(pitch); note_ix++)
-				{
-					(*alt_ix)->increment_note_index();
-				}
-			}
-		}
-	}
-	//creates a different 
+int Chunk::get_optima_size(void) 
+{ 
+	return _optima.size(); 
 }
-*/
-///////////////////
-// Compare function used by visitor. Shouldn't move anything around...
-// just inspect the notes separation? This function might be unneeded/unwanted here
 
-/*
-bool Chunk::compare_chunks(Chunk* chunk2)
+void Chunk::set_optima(vector<pair <int, int> > set) 
 {
-//only passed other chunks, polymorphism here used lazily
-	vector<Note*> * chunk2_vector = chunk2->get_chunk_notes_vector();
-	for(auto itx=Chunk_Notes.begin();itx!=Chunk_Notes.end();itx++)
-	{
-		for(auto ity=chunk2_vector->begin();ity!=chunk2_vector->end();ity++)
-		{
-			(*itx)->compare(*ity);
-		}
-	}
-
+	_optima = set;
 }
-*/
+
+void Chunk::inc_lock()
+{
+	_recursion_lock++;
+}
+
+int Chunk::get_lock_val()
+{
+	return _recursion_lock;
+}
+
+void Chunk::set_lock_val(int n) 
+{
+	_recursion_lock = n;
+}
+
+Note* Chunk::get_note_at(int i) 
+{
+	return _chunk_notes[i];
+}
+
+Note* Chunk::get_note_at(void) 
+{
+	return _chunk_notes.back();
+}
+
+int Chunk::get_delta() const 
+{
+	return delta;
+}
+		

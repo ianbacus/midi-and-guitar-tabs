@@ -3,11 +3,9 @@
 #define ACCEPTABLE  5
 //Note should have a vector of possible string positions (which depend on the tuning in the tab matrix) by default
 // hold an index to tabmatrix, update by incrementing 
-//
 
 Note::PitchMap config()
 {
-//PitchMap is std::map <int, vector< pair<int,int> >  > 
     Note::PitchMap initmap;
 
     int value;
@@ -23,11 +21,7 @@ Note::PitchMap config()
                 initmap[value].push_back(map_point); 
                 
                 //add note to (note : location on fretboard) pitch_to_frets. 
-                //this will help for determining how many placements there are for a note, 
-                //and quickly indexing them (is this any faster than indexing the array? TODO)
-  
-                //cout << "gridmap: inserting note " << value << " at coordinate string " << geetarstring[string_ind] <<", fret " << fret_ind << endl;
-                //tab_matrix[string_ind][fret_ind] = value;
+                //this will help for determining how many placements there are for a note
                 	
             }
             
@@ -35,6 +29,16 @@ Note::PitchMap config()
     }
     return initmap;
 }
+
+Note::Note(int p, int d) : pitch(p), delta(d), current_note_index(0) 
+		{
+			//Negative delta values are used to represent triples
+			PitchMap::iterator it = (pitch_to_frets_map.find(p));
+			if(it == pitch_to_frets_map.end()) 
+			{
+				noteslost++;
+			}
+		}
 
 int Note::get_string() 
 {
@@ -51,7 +55,8 @@ int Note::get_string()
 	}
 }
 
-int Note::get_fret_at(int n_index, int pitch){
+int Note::get_fret_at(int n_index, int pitch)
+{
 	int ret,n=0;
 	while(1) {
 		try {
@@ -64,22 +69,27 @@ int Note::get_fret_at(int n_index, int pitch){
 		}
 	}
 }
-void Note::decrement_octave(){
+
+void Note::decrement_octave()
+{
   pitch-=12;
   octave_refcount--;
 }
 
-void Note::increment_octave(){
+void Note::increment_octave()
+{
   pitch+=12;
   octave_refcount++;
 }
-void Note::rebalance_note(){
+
+void Note::rebalance_note()
+{
   pitch += octave_refcount*12;
   octave_refcount = 0;
 }
 		
-int Note::get_fret() {
-//TODO: make this method static and replace it elsewhere in code
+int Note::get_fret() 
+{
 	int ret,n=0;
 	while(1) {
 		try {
@@ -96,7 +106,6 @@ int Note::get_fret() {
 void Note::increment_note_index()
 {
 	int sizetemp = get_children_size();
-//	cout << get_children_size() << " alternates, at " << current_note_index << ", "<< (current_note_index+sizetemp+1)%sizetemp  << " is next." << endl;
 	current_note_index = (current_note_index+1)%(sizetemp);
 }
 
@@ -113,19 +122,6 @@ bool Note::compare(Note* note) {
 	}
 }
 
-/*	//compare Notes by index in the tabmatrix
-	for(int s=0;s<=5;s++)
-	{
-		for(int fret=0;fret<=20;fret++)
-		{
-			//inefficient, but the matrix is a fixed size so this runs in O(1) time
-			if(tab_matrix[i][j] == pitch)
-			{
-				
-			}
-		}
-	}
-	*/
 int Note::get_children_size() const
 {
 	int ret,n=0;
@@ -141,6 +137,43 @@ int Note::get_children_size() const
 	}
 }
 	
+int Note::get_noteslost() const 
+{
+	return noteslost;
+}
 
+void Note::set_note_index(int n) 
+{
+	current_note_index = n;
+}
+
+int Note::get_current_note_index() const 
+{
+	return current_note_index;
+}
+		
+int Note::get_pitch() const 
+{
+	return pitch;
+}
+
+void Note::alter_pitch(int n)
+{
+	pitch +=n; 
+}
+
+int Note::get_delta()  const
+{
+	return delta;
+}
+
+void Note::accept(Visitor* v) 
+{
+	v->visitNote(this);
+}
+
+
+//At compile time: generate the pitch to fret mapping
 Note::PitchMap Note::pitch_to_frets_map = config();
 int Note::noteslost = 0;
+

@@ -1,13 +1,3 @@
-//
-//  tabber.h
-//
-//  Created by Ian Bacus on 3/5/15.
-//
-//
-
-
-
-
 #ifndef __BASE__
 #define __BASE__
 
@@ -24,38 +14,12 @@ class Visitor;
 
 class Base
 {
-	private:
-  	 // 	int tuning[6];
-	 //  	int tab_matrix [6][20];
-    public:
-	 //    	typedef std::map <int, vector< pair<int,int> * >  > PitchMap;
-	 //	 	static PitchMap pitch_to_frets_map;
-	 //   	static PitchMap config();
-			Base() {}
-			virtual ~Base() {}
-		
-		//This structure is a bit unwieldy. Referencing the pair pointers inside the vector takes several
-		// layers of indirection. Map's find function preserves constness, but it returns iterators which add even more indirection
-		// - Accessing vector:     (*map.find(pitch))                      returns a vector< pair<int, int> *>
-		// - Accessing the pair:   (*map.find(pitch)[vec_index] 	   returns a pair<int,int>*
-		// - Accessing the fret:   (*map.find(pitch)[vec_index]->first 	   returns an int
-		// - Accessing the string: (*map.find(pitch)[vec_index]->second    returns an int
 
-		//accessors
-		
-		//retrieve string and fret information from the fret map with modulo addressing (circular vector)
-	//	friend struct Base_structs;
-//		int get_string_pos(int,int) const; 
-//		int get_fret_pos(int,int) const;
-//		int get_pitch_to_frets_entry_size(int pitch) const;
-		
-		//int set_tuning(string);
-		
+    public:
+		Base() {}
+		virtual ~Base() {}
 		virtual void accept(Visitor*)=0;
-		virtual int get_children_size() const=0;
-//		virtual void reconfigure()=0; //removed parameter Base*
-		//virtual bool compare(Base*);
-		
+		virtual int get_children_size() const=0;		
 };
 
 #include "visitor.h"

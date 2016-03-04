@@ -61,7 +61,6 @@ void RotateVisitor::visitChunk(Chunk* c)
 					break;
 				case GOOD: //if the note to be added is compatible with the rest of the stack, continue on to the next note
 					c->push_stack(c->get_note_at(counter_index));
-//cout << "good'ed:";print_stack();
 					counter_index++;
 					fail_count=0;
 					break;
@@ -96,8 +95,8 @@ void RotateVisitor::visitChunk(Chunk* c)
 	  	 c->empty_stack();
 	  }
 }
-void RotateVisitor::compare_chunks(Chunk *c, vector<pair <int, int> > current_indices) {
-	//TODO: make this less sloppy and hacky
+void RotateVisitor::compare_chunks(Chunk *c, vector<pair <int, int> > current_indices) 
+{
 	//Test max fret spacing, determine which chunk is better between valid configurations
 	//the Optima is specific to the chunk
 
@@ -122,14 +121,12 @@ void RotateVisitor::compare_chunks(Chunk *c, vector<pair <int, int> > current_in
 			//Inspect the candidate chunk and determine its fret range
 			for(auto i : current_indices){
 				fret = Note::get_fret_at(i.first, i.second);
-				//cout << fret << " ";
 				if (fret > fmax_candidate)
 					fmax_candidate = fret;
 				if (fret < fmin)
 					fmin = fret;	
 			}
 			candidate_spacing=fmax_candidate-fmin;
-			//cout << "compared s1, s2: " << optima_spacing << " " << candidate_spacing << endl;
 			
 			//If candidate spacing is wider than the current spacing by 2 frets
 			if (((optima_spacing < candidate_spacing) && ((candidate_spacing - optima_spacing) > 3)) \
@@ -137,19 +134,38 @@ void RotateVisitor::compare_chunks(Chunk *c, vector<pair <int, int> > current_in
 				return;
 		}
 		c->set_optima(current_indices);
-	}
-	
+	}	
 }
-
-
-
 
 void RotateVisitor::visitNote(Note* n) 
 {
-//  cout << "incrementing note: " << n->get_string() << " " << n->get_fret() <<"to";
   n->increment_note_index();
-//  cout <<  n->get_string() << " " << n->get_fret() << endl;
 }
 
+void RotateVisitor::print_chunk_count(void) 
+{
+	std::cout << _chunk_count << std::endl; 
+}
+
+bool RotateVisitor::in_cache(vector<pair<int, int> > input)
+{
+	bool ret = false;
+	mtx_cache.lock();
+	for(auto entry : _cache){
+		if(entry == input) 
+		{
+			ret = true;
+		}
+	}
+	mtx_cache.unlock();
+	return ret;
+}
+
+void RotateVisitor::clear_cache(void)
+{
+	mtx_cache.lock();
+	_cache.clear();
+	mtx_cache.unlock();
+}
 
 

@@ -12,13 +12,10 @@ using namespace std;
 
 class Visitor
 {
-
   public:
     virtual void visitNote(Note*)=0;
     virtual void visitBar(Bar*)=0;
     virtual void visitChunk(Chunk*)=0;
-    
-    
 };
 
 
