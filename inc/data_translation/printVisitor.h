@@ -11,8 +11,6 @@
 #include <math.h>
 using namespace std;
 
-#define OUTFILE "data/outputTab.txt"
-
 class PrintVisitor : public Visitor
 {
   private:
@@ -20,10 +18,12 @@ class PrintVisitor : public Visitor
     int string_print_index;
     int bar_ticks;
     bool tripled;
-    bool strings_closed; //this is used to 
+    bool strings_closed;
+    std::string outfile;
+    
   public:
   	
-  	PrintVisitor(void);
+  	PrintVisitor(string);
   	virtual ~PrintVisitor(void) {}
     virtual void visitNote(Note*);
     virtual void visitBar(Bar*);

@@ -2,7 +2,7 @@
 
 
 
-PrintVisitor::PrintVisitor() : string_print_index(0), strings_closed(false), tripled(false)
+PrintVisitor::PrintVisitor(std::string ofile) : string_print_index(0), strings_closed(false), tripled(false), outfile(ofile)
 {
 	string_buffer.push_back(vector<string>(SIZEOF_TUNING+2));
 }
@@ -116,7 +116,7 @@ void PrintVisitor::visitNote(Note* n)
 void PrintVisitor::print_out(void)
 {
 	ofstream ofile;
-	ofile.open(OUTFILE);
+	ofile.open(outfile);
 	stringstream ss;
 	for(std::vector< vector<string> >::iterator it = string_buffer.begin() ; it != string_buffer.end(); ++it) 
 	{
