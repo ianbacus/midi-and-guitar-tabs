@@ -8,6 +8,15 @@ lBeep = True # If true it will play through the built in speaker.
 			  # One file per note needed
 cSoundsFolder = 'Guitar/'
 
+note_indices = []
+
+'''
+TODO: 
+	draw all of the notes on a separate layer from the tab lines, 
+	erase them and r-render the next set of bars after a tempo-dependent sleep time elapses
+'''
+
+
 class TabNote:
 	'''
 	Class for storing information about the position of a note on the fretboard, and information about how to playback the note
@@ -30,7 +39,8 @@ class TabNote:
 			nStartTime = time()
 			PlaySound(self.cSound, SND_FILENAME + SND_ASYNC)
 			sleep(nI + nStartTime - time())	  # seconds
-	def drawNote(self, canvas, nStart, aLines):	
+	def drawNote(self, canvas, nStart, aLines):
+		
 		canvas.create_rectangle(nStart - 5, aLines[self.nString - 1] - 5, nStart + 5, aLines[self.nString - 1] + 5, width = 0,fill = 'white')
 		canvas.create_text(nStart, aLines[self.nString - 1], text = str(self.nFret))
 		
@@ -49,19 +59,40 @@ class TabPause:
 		
 
 class TabView:
-	def __init__(self, strings,tempo,nBarsPerLine):
+	def __init__(self, strings,tempo,nBarsPerLine,score):
 		self.numCourses = len(strings)
 		self.nBarsPerLine = nBarsPerLine
 		self.barsCount = nBarsPerLine
-		self.nW = 1400
+		self.cW = 1400
 		self.nH = 800
+		self.nW = 0.75* self.cW
 		self.app = Tk()
-		self.canvas = Canvas(self.app, width = self.nW, height = self.nH, bg = 'white')
+		self.canvas = Canvas(self.app, width = self.cW, height = self.nH, bg = 'white')
 		self.canvas.pack(expand = YES, fill = BOTH)
 		self.aBoxes = []
 		self.debug_count = 0
-		
+		self.button_erase = Button(self.app, text="E_test", command=self.eraseCallback)
+		self.button_render = Button(self.app, text="R_test", command=self.renderCallback)
 
+		self.button_erase.pack()
+		self.button_render.pack()
+		self.score = score
+		self.scroll_index = 1000000000
+		self.scroll_guy = 0
+		self.index = 0
+	def eraseCallback(self):
+		self.running = 0
+		self.index = 0
+		self.flag = 1
+		self.canvas.delete("all")
+		#self.aBoxes = []
+		pass
+	def renderCallback(self):
+		self.running = 1
+		self.canvas.delete("all")
+		self.aBoxes = []
+		self.Render()
+		self.move_scroller()
 	def PlayNote(aB, nI):
 		nDelta = 0
 		if isinstance(aB, type(aListType)):
@@ -74,11 +105,50 @@ class TabView:
 					nDelta = 0
 		else:
 			aB.play(nI)
+	def move_scroller(self):
+		if(self.scroll_index >= 100000):
+			self.scroll_index = 0#self.nW * 0.1 + 100
+			self.Step_fwd()
+		else:
+			self.scroll_index += 1
+		current_x = note_indices[self.scroll_index]
+		nLineStep = self.nH * 0.8 / 5
+		nUp = (nLineStep * 0  + 100)
+		nLineH = self.nH * (0.8 / 5)*0 + 100
+		nLineUp = nLineH * 0.75 / self.numCourses
+		y1 = nUp + 0 * nLineUp + nLineUp
+		y2 = nUp + 5* nLineUp + nLineUp
+		
+		print(current_x, y1,y2)
+		self.canvas.delete(self.scroll_guy)
+		self.scroll_guy = self.canvas.create_line(current_x, y1, current_x, y2)
+		if(self.running):
+			self.app.after(500,self.move_scroller)
+	def Step_fwd(self):
+		#self.index = 0
+		note_indices = []
+		self.flag = 0
+		#while(1):
+		if self.flag == 1:
+			return
+		#print(index1,index2)
+		index1 = self.index
+		self.index = self.index + self.nBarsPerLine
+		index2 = self.index
+		try:
+			self.PlaceParts(self.score[index1:index2])
+		except:
+			print("end of score")
+		#print(self.aBoxes)
+		#self.index = self.index + self.nBarsPerLine
+		pass
+
 	def Render(self):
 		'''
 		
 		'''
-		self.nW = self.nW * 0.75
+		#self.nW = self.nW * 0.75
+		tempnW = self.nW * 0.75
 		nLines = 1#(len(aFirstPart) + 0.0) / self.nBarsPerLine
 		if int(nLines) != nLines:
 			nLines = int(nLines + 1)
@@ -103,7 +173,7 @@ class TabView:
 
 	def DrawLines(self, nUp, nLineH, nLineNo): 
 		nStartX = self.nW * 0.1
-		nStopX  = self.nW * 0.1 * self.barsCount
+		nStopX  = self.nW * 0.5 * self.barsCount
 		nLineUp = nLineH * 0.75 / self.numCourses # six strings
 		nStartY = nUp + nLineUp
 		nStopY  = nUp + self.numCourses * nLineUp
@@ -111,6 +181,7 @@ class TabView:
 		aLineBox = []
 		aBarBox = []
 		for i in range(self.numCourses):
+			print(nStartX, nUp + i * nLineUp + nLineUp, nStopX, nUp + i * nLineUp + nLineUp)
 			self.canvas.create_line(nStartX, nUp + i * nLineUp + nLineUp, nStopX, nUp + i * nLineUp + nLineUp)
 			aLineBox.append( nUp + i * nLineUp + nLineUp)
 
@@ -128,8 +199,10 @@ class TabView:
 
 	def PlaceNote(self, aB, nI, nStart, aLines):
 		#recurse through a bar
+		
 		if isinstance(aB, list):
 			for i in aB: #for chunk/note
+				
 				if isinstance(i, list):
 					for j in i:
 						j.drawNote(self.canvas, nStart, aLines)
@@ -137,6 +210,7 @@ class TabView:
 					i.drawNote(self.canvas, nStart, aLines)
 					#self.PlaceNote(i, nI / len(aB), nStart, aLines)
 				nStart += nI / len(aB)
+				note_indices.append(nStart)
 		else:
 			pass#aB.drawNote(self.canvas, nStart, aLines)
 			
@@ -145,17 +219,19 @@ class TabView:
 		for i in self.aBoxes:
 			aLines = i[0]
 			for j in range(self.nBarsPerLine):
-				if len(aPart) <= nBarStep:
-					for k in aB:
-						pass#nStart += nDuration/ len(aB)
-					return
+				#if len(aPart) <= nBarStep:
+					#for k in aB:
+						#pass#nStart += nDuration/ len(aB)
+					#return
+				print(nBarStep)
 				aB = aPart[nBarStep]
 				nBarStep = nBarStep + 1
 				nDuration = i[ 1][ j][ 1] * .9 #0.95 
 				nStart	= i[1][ j][ 0] + nDuration * 0.1
-				for k in aB:
-					self.PlaceNote(k, nDuration/ len(aB), nStart, aLines)
-					#nStart += nDuration/ len(aB)
+				if isinstance(aB,list):
+					for k in aB:
+						self.PlaceNote(k, nDuration/ len(aB), nStart, aLines)
+						#nStart += nDuration/ len(aB)
 
 # EADGBE tuning
 

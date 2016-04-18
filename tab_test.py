@@ -73,7 +73,7 @@ if not(lBeep):
         while t % 10 != 0:
                 t = int(time())
                 #print 'syncronising', t % 10
-fname = '988-v01.txt'
+fname = '988-v03.txt'
 
 score_string = ""
 with open(fname) as f:
@@ -84,10 +84,14 @@ f.close()
 #print(score_string)
 score = eval(str(score_string))
 #print(score)
-myTab = TabView("eadgbe",1,100)
 
-myTab.Render()
-myTab.PlaceParts(score)
+#print(score[0:20])
+#print(score[0])
+
+myTab = TabView("eadgbe",1,3,score[0:20])
+
+#myTab.Render()
+#myTab.PlaceParts(score)
 
 myTab.app.mainloop()
 
