@@ -49,7 +49,7 @@ int Note::get_string()
 			return ret;
 		}
 		catch (const std::out_of_range& oor) {
-			if(pitch<28){ alter_pitch(12);}
+			if(pitch<tuning[0]){ alter_pitch(12);}
 			else{ alter_pitch(-12);}
 		}
 	}
@@ -64,7 +64,7 @@ int Note::get_fret_at(int n_index, int pitch)
 			return ret;
 		}
 		catch (const std::out_of_range& oor) {
-			if(pitch<28){n+=12;}
+			if(pitch<tuning[0]){n+=12;}
 			else{ n-=12;}
 		}
 	}
@@ -97,7 +97,7 @@ int Note::get_fret()
 			return ret;
 		}
 		catch (const std::out_of_range& oor) {
-			if(pitch<28){ alter_pitch(12);}
+			if(pitch<tuning[0]){ alter_pitch(12);}
 			else{ alter_pitch(-12);}
 		}
 	}
@@ -131,7 +131,7 @@ int Note::get_children_size() const
 			return ret;
 		}
 		catch (const std::out_of_range& oor) {
-			if(pitch<28){n +=12;}
+			if(pitch<tuning[0]){n +=12;}
 			else{ n -=12;	}
 		}
 	}

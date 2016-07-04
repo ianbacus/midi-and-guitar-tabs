@@ -10,7 +10,12 @@ if __name__ == "__main__":
 		if not os.path.isdir("./data/intermediates"):
 			raise
 	try:
-		if len(sys.argv) == 6:
+		if len(sys.argv) == 7:
+			print sys.argv[5]
+			condition = sys.argv[6]
+		else:
+			condition = "True"
+		if len(sys.argv) in [6,7]:
 			fileName = sys.argv[1]
 			noteOffset = sys.argv[2]
 			columnsPerRow = sys.argv[3]
@@ -18,9 +23,9 @@ if __name__ == "__main__":
 			endMeasure = sys.argv[5]
 			
 			generate_pitch_delta(newfile="data/intermediates/"+fileName+".txt", \
-			infile="data/input_files/"+fileName+".mid",condition="True")
+			infile="data/input_files/"+fileName+".mid",condition=condition)
 			
-			spstring= ['./gen', 'data/intermediates/'+fileName+'.txt', 'data/tabs/'+fileName+'.txt', \
+			spstring= ['./gen', 'data/intermediates/'+fileName+'.txt', 'data/outTab.txt',\
 			noteOffset, columnsPerRow, startMeasure, endMeasure]
 			subprocess.call(spstring)
 			

@@ -66,7 +66,21 @@ vector<Bar*> score_maker(std::string infile, int shift,int align) {
 		{
 			//delimiting character inside each line
 			counter++;
-			float delta = stof(d); 
+			float delta = stof(d);
+			
+			//INSERTING NEW CODE
+			/*
+			while(delta >= beat_overflow)
+			{
+				//whole note rest between two chunks: make it an eighth?
+				if(delta == beat_overflow) delta = (8);
+				else delta -= beat_overflow;
+				score.push_back(new Bar());	
+			    score.back()->add_chunk(new Chunk());
+			}
+			*/
+			//OK THAT IS ALL
+			
 			int pitch = stoi(p);
 			bartime += abs(delta);
 			if(bartime >= beat_overflow && delta != 0)

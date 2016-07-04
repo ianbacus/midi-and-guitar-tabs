@@ -3,9 +3,10 @@ from collections import Counter
 
 note_offsets = (00,00,00,00,00,00,00,00,00,00,00,00,00,00)
 delta_offsets = (00,00,00,00)
-
+maxChunkSize = 5
 
 DELTA_VAL = 8.0
+
 
 lowest = 0
 max = 0
@@ -109,7 +110,7 @@ def make(newfile,infile,condition):
 			chunk = tempor[instant]
 			chunk = list(set(chunk))
 			chunk.sort()
-			while len(chunk) > 4:
+			while len(chunk) > maxChunkSize:
 				lost_notes += 1
 				chunk.pop(len(chunk)/2) #remove internal voices if the texture is too thick :'(
 			if len(chunk) > 5:

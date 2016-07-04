@@ -11,9 +11,14 @@ int SIZEOF_TUNING = 6;
 */
 
 //STANDARD GUITAR
-
 char tuning[] = {28, 33, 38, 43, 47, 52};
 char ptuning[] = "eadgbe";
+
+
+//UKULELE
+//char tuning[] = {(43-12), (48-12), (52-12), (57-12) };
+//char tuning[] = {33, 38, 42, 47 };
+//char ptuning[] = "gcea";
 
 
 //CODY BASS TAB
