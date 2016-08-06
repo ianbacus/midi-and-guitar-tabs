@@ -55,7 +55,8 @@ void RotateVisitor::visitChunk(Chunk* c)
 	  	}
 	  	else if(int test = c->compare_with_stack((c->get_note_at(counter_index))))
 	  	{
-	  		switch(test){
+	  		switch(test)
+	  		{
 				case DISCARD: //discard note: duplicate
 					c->remove_note(c->get_note_at(counter_index));
 					break;
@@ -89,8 +90,15 @@ void RotateVisitor::visitChunk(Chunk* c)
 			}
 			visitChunk(c);
 	  }
+	  
 	  else{
-	  	 c->force_chunk_note_indices();
+	  	 c->force_chunk_note_indices();\
+	  	 //Get the strings that are occupied
+	  	 /*
+	  	 for note in c->get_notes():
+	  	 	if (note->delta) > x: //if the note is to be held
+	  	 		locked_strings[note->string] = note->delta;
+	  	 */
 	  	 clear_cache();
 	  	 c->empty_stack();
 	  }

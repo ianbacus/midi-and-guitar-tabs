@@ -15,7 +15,7 @@ class RotateVisitor : public Visitor
 
     
     vector< vector<pair<int, int> > > _cache;
-    
+    vector<int> locked_strings;
     std::mutex mtx_optima, mtx_cache;
     int _chunk_count;
   public:

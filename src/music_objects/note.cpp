@@ -30,15 +30,20 @@ Note::PitchMap config()
     return initmap;
 }
 
-Note::Note(int p, int d) : pitch(p), delta(d), current_note_index(0) 
-		{
-			//Negative delta values are used to represent triples
-			PitchMap::iterator it = (pitch_to_frets_map.find(p));
-			if(it == pitch_to_frets_map.end()) 
-			{
-				noteslost++;
-			}
-		}
+Note::Note(int p, int d, int tn) : pitch(p), delta(d), track_num(tn), current_note_index(0) 
+{
+	//Negative delta values are used to represent triples
+	PitchMap::iterator it = (pitch_to_frets_map.find(p));
+	if(it == pitch_to_frets_map.end()) 
+	{
+		noteslost++;
+	}
+}
+
+int Note::get_track_num() const
+{
+	return track_num;
+}
 
 int Note::get_string() 
 {
@@ -49,7 +54,7 @@ int Note::get_string()
 			return ret;
 		}
 		catch (const std::out_of_range& oor) {
-			if(pitch<tuning[0]){ alter_pitch(12);}
+			if(pitch<28){ alter_pitch(12);}
 			else{ alter_pitch(-12);}
 		}
 	}
@@ -64,7 +69,7 @@ int Note::get_fret_at(int n_index, int pitch)
 			return ret;
 		}
 		catch (const std::out_of_range& oor) {
-			if(pitch<tuning[0]){n+=12;}
+			if(pitch<28){n+=12;}
 			else{ n-=12;}
 		}
 	}
@@ -97,7 +102,7 @@ int Note::get_fret()
 			return ret;
 		}
 		catch (const std::out_of_range& oor) {
-			if(pitch<tuning[0]){ alter_pitch(12);}
+			if(pitch<28){ alter_pitch(12);}
 			else{ alter_pitch(-12);}
 		}
 	}
@@ -131,7 +136,7 @@ int Note::get_children_size() const
 			return ret;
 		}
 		catch (const std::out_of_range& oor) {
-			if(pitch<tuning[0]){n +=12;}
+			if(pitch<28){n +=12;}
 			else{ n -=12;	}
 		}
 	}

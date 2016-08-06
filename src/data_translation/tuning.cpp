@@ -11,8 +11,8 @@ int SIZEOF_TUNING = 6;
 */
 
 //STANDARD GUITAR
-char tuning[] = {28, 33, 38, 43, 47, 52};
-char ptuning[] = "eadgbe";
+char tuning[] = {28, 33, 38, 43, 47,52 };
+char ptuning[] = "EADGBe";
 
 
 //UKULELE

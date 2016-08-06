@@ -21,7 +21,7 @@
 int main(int argc, char* argv[]) 
 {
 
-	if(argc != 7)
+	if(argc != 8)
 	{
 		cout << "Invalid entry. use the following format:\n>> ./gen <inputFile> <outputFile> <pitchShift#>, <measuresPerRow#> <startMeasure#> <endMeasure#>" << endl;
 		return 0;
@@ -35,8 +35,9 @@ int main(int argc, char* argv[])
 	int format_count = barset;
 	int lowerBound=atoi(argv[5]);
 	unsigned int upperBound=atoi(argv[6]);
-	
-	vector<Bar*> score = score_maker(inputFile,noteOffset,0);
+	unsigned int align=atoi(argv[7]);
+	std::cout << align << std::endl;
+	vector<Bar*> score = score_maker(inputFile,noteOffset,align);
 	
 	//Fix inputs
 	if (noteOffset < -127) 

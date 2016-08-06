@@ -10,11 +10,18 @@ if __name__ == "__main__":
 		if not os.path.isdir("./data/intermediates"):
 			raise
 	try:
+		'''
 		if len(sys.argv) == 7:
 			print sys.argv[5]
 			condition = sys.argv[6]
 		else:
 			condition = "True"
+		'''
+		condition = "True"
+		if len(sys.argv) == 7:
+			align = sys.argv[6]
+		else:
+			align = "0"
 		if len(sys.argv) in [6,7]:
 			fileName = sys.argv[1]
 			noteOffset = sys.argv[2]
@@ -22,11 +29,16 @@ if __name__ == "__main__":
 			startMeasure = sys.argv[4]
 			endMeasure = sys.argv[5]
 			
+			#midiwriter (midi to intermediate: extract note start and stop events)
 			generate_pitch_delta(newfile="data/intermediates/"+fileName+".txt", \
 			infile="data/input_files/"+fileName+".mid",condition=condition)
 			
+			#rotation_tabber
+				#midi2melody (intermediate file converted to composite tree of score)
+				#rotate visitor (composite tree re-arranged internally based on fretting rules)
+				#print visitor (renders output in various formats: ascii, scrolling ui, piano tablature)
 			spstring= ['./gen', 'data/intermediates/'+fileName+'.txt', 'data/outTab.txt',\
-			noteOffset, columnsPerRow, startMeasure, endMeasure]
+			noteOffset, columnsPerRow, startMeasure, endMeasure, align]
 			subprocess.call(spstring)
 			
 		else:

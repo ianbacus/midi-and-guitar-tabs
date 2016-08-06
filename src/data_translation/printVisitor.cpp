@@ -1,7 +1,11 @@
 #include "printvisitor.h"
 
+map<int,int> beat_value = {{1,32},{2,16},{4,8},{8,4},{16,2},{32,1}};
 
-
+std::map<int,string> quaver_map = 
+{
+  {2," T"},{4, " s"},{6,".s"},{8," e"},{14,".e"},{16, " Q"},{24, ".Q"},{32," H"},{56,".H"},{64, " W"},
+};
 PrintVisitor::PrintVisitor(std::string ofile) : string_print_index(0), strings_closed(false), tripled(false), outfile(ofile)
 {
 	string_buffer.push_back(vector<string>(SIZEOF_TUNING+2));
@@ -11,17 +15,60 @@ void PrintVisitor::visitBar(Bar* b)
 {
     for(string_print_index=SIZEOF_TUNING; string_print_index>= 0; string_print_index--){
     	if(string_print_index == SIZEOF_TUNING) {
-    		string_buffer.back()[SIZEOF_TUNING] += "   ";
+    		string_buffer.back()[SIZEOF_TUNING] += "  ";
     		continue;
     		
     	}
     	(string_buffer.back())[string_print_index] += "|";
-		for(int j=0; j<b->get_children_size(); j++){
+		for(int j=0; j<b->get_children_size(); j++)
+		{
 
 			b->get_child(j)->accept(this);
+			int delta=0;
+			Chunk*  Nextchunk;
+		
+			if(j<(b->get_children_size()-1))
+			{
+				Nextchunk = b->get_child(j+1);
+				
+				int nextchunksize = Nextchunk->get_children_size();
+				if(nextchunksize == 0)
+					continue;
+				for(int j=0; j<nextchunksize; j++)
+				{
+					delta+= Nextchunk->get_note_at(j)->get_delta();;
+				}
+				if(string_print_index == 0)
+				{
+					if(!tripled)
+					{ 
+						if(quaver_map.find(delta) != quaver_map.end()) //item is in our map
+						{
+							string_buffer.back()[SIZEOF_TUNING] += quaver_map[delta]+ std::string(delta,' ');
+						}
+						else
+						{
+							int extra_delta=0;
+							//split the delta, render enough empty spaces 
+							while(quaver_map.find(delta) == quaver_map.end())
+							{
+								delta--;
+								extra_delta++;
+							}
+							
+							string_buffer.back()[SIZEOF_TUNING] += quaver_map[delta]+ std::string(delta,' ');
+							string_buffer.back()[SIZEOF_TUNING] += quaver_map[extra_delta]+ std::string(extra_delta,' ');
+							
+						}
+						
+					}
+					else if(string_print_index == 0) string_buffer.back()[SIZEOF_TUNING] += " t";
+				}
 			}
+		}
 		(string_buffer.back())[string_print_index] += "-";
-		if(!tripled) string_buffer.back()[SIZEOF_TUNING] += "   ";
+		
+		
 		tripled = false;
 	}
 }
@@ -92,13 +139,13 @@ void PrintVisitor::visitChunk(Chunk* c)
 	//This is where the padding takes place for notes based on their note duration
 	if(delta >= 0){
 		
-		string_buffer.back()[string_print_index] += std::string(delta,'-') + result;
+		string_buffer.back()[string_print_index] += result+ std::string(delta,'-');
 	}
 	else 
 	{
 		//triplets case
 		tripled = true;
-		string_buffer.back()[SIZEOF_TUNING] += " t";
+		
 		string_buffer.back()[string_print_index] +=  result;
 	}
 
@@ -124,6 +171,7 @@ void PrintVisitor::print_out(void)
 		{
 			ss << (*it)[i] << '\n';
 		}
+		ss << '\n';
 	}
 	ofile << ss.rdbuf();
 	ofile.close();

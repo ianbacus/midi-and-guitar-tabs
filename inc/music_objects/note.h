@@ -7,7 +7,7 @@
 class Note : public Base 
 {
 	private:
-
+		int track_num;
 		int pitch;
 		int delta;
 		int current_note_index;
@@ -17,7 +17,7 @@ class Note : public Base
 	 	static PitchMap pitch_to_frets_map;
 		static int noteslost;
 		
-		Note(int p, int d); 
+		Note(int p, int d, int tn); 
 		virtual ~Note() {}
 		int get_fret() ;
 		
@@ -33,6 +33,7 @@ class Note : public Base
 		void increment_octave();
 		void rebalance_note();
 		
+		int get_track_num() const;
 		int get_pitch() const ;
 		void alter_pitch(int n);
 		int get_delta()  const;
