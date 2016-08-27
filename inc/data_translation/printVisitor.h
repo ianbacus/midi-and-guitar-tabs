@@ -30,7 +30,7 @@ class PrintVisitor : public Visitor
     virtual void visitChunk(Chunk*);
     void bar_ticks_reset();
     void bar_ticks_increment(int d);
-    void newlines(void) ;
+    void newlines(bool) ;
     void print_out(void);
 };
 

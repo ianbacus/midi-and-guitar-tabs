@@ -67,7 +67,7 @@ int main(int argc, char* argv[])
 	for (std::vector< Bar* >::iterator it = score.begin() ; it < score.end(); it++,measureIndex++)
 	{	
 		if(format_count == barset){
-		   theprinter->newlines();
+		   theprinter->newlines((it==score.begin()));
 		   format_count = 0;
 		}
 		if((lowerBound <= measureIndex) && (measureIndex <= upperBound))
@@ -77,6 +77,7 @@ int main(int argc, char* argv[])
 			format_count++;
 		}
 	}
+	
 	theprinter->print_out();
 	std::cout << "done. " << std::endl;
   

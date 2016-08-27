@@ -86,9 +86,12 @@ int Chunk::compare_with_stack(Note* n){
 	//bad(0) message: not compatible with chunk
     //discard(1) message: permanently remove note
     //good(2) message: this note works with the current chunk
-
+	if(n->get_pitch() < 0 )
+	{
+		return GOOD;
+	}
 	stack<Note*> stack_copy = _comparison_stack;
-
+	
 	while(!stack_copy.empty())
 	{
 	  Note* current = stack_copy.top();

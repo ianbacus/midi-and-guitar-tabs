@@ -41,7 +41,7 @@ vector<Bar*> score_maker(std::string infile, int shift,int align) {
     map<int,int> beat_value = {{1,32},{2,16},{4,8},{8,4},{16,2},{32,1}};
     float bartime = 0;
     int counter = 0;
-    int beat_overflow=36;
+    float beat_overflow=36;
 	vector<Bar*> score;
 	
     score.push_back(new Bar());
@@ -60,8 +60,9 @@ vector<Bar*> score_maker(std::string infile, int shift,int align) {
 			std::string num,denom;
 			if( std::getline( iss, num , ',') && std::getline( iss, denom )) 
 			{
-				std::cout << num << "/" << denom << std::endl;
-				beat_overflow = ((std::stoi(num)) * (beat_value[std::stoi(denom)]) );
+				std::cout << "TS: " << num << "/" << denom << std::endl;
+				//beat_overflow = (std::stof(num)*(beat_value[std::stoi(denom)]) );
+				beat_overflow = (std::stof(num)/std::stof(denom)) * std::stof(denom) * 8; //(beat_value[std::stoi(denom)]) );
 			}
 		}	
         std::string p,d,tn;
@@ -78,10 +79,11 @@ vector<Bar*> score_maker(std::string infile, int shift,int align) {
 				//Case 1: the bar is full, create a new one with an empty initial chunk
 				score.push_back(new Bar());	
 			    score.back()->add_chunk(new Chunk());
-				bartime = bartime - beat_overflow;
+				while(bartime >= beat_overflow) bartime -= beat_overflow;
 				
 			}
 			bartime += abs(delta);
+			pitch = (pitch<0) ? pitch : pitch-shift;
 			
 			if(delta == 0){
 			  //Case 2: this note must be added to the current chunk in the current bar
@@ -90,14 +92,14 @@ vector<Bar*> score_maker(std::string infile, int shift,int align) {
 			  //since the member vectors are inaccessible, using the "back()" function on the vector is not viable
 			  
 			  last = score.back()->get_children_size() - 1;
-			  score.back()->get_child(last)->add_note(new Note(pitch-shift,delta,track_num));
+			  score.back()->get_child(last)->add_note(new Note(pitch,delta,track_num));
 			}
 			else{
 			  //Case 3: a new chunk in the current bar is needed
 			  
 			  score.back()->add_chunk(new Chunk(delta));
 			  last =  score.back()->get_children_size() - 1;
-			  score.back()->get_child(last)->add_note(new Note(pitch-shift,delta,track_num));
+			  score.back()->get_child(last)->add_note(new Note(pitch,delta,track_num));
 			}	
 
 		}

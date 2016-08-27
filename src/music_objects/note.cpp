@@ -33,8 +33,13 @@ Note::PitchMap config()
 Note::Note(int p, int d, int tn) : pitch(p), delta(d), track_num(tn), current_note_index(0) 
 {
 	//Negative delta values are used to represent triples
-	PitchMap::iterator it = (pitch_to_frets_map.find(p));
-	if(it == pitch_to_frets_map.end()) 
+	//Negative pitch values represent rests
+	if(p < 0)
+	{
+		
+	}
+//	PitchMap::iterator it = (pitch_to_frets_map.find(p));if(it == pitch_to_frets_map.end()) 
+	else if ((pitch_to_frets_map.find(p)) == pitch_to_frets_map.end()) 
 	{
 		noteslost++;
 	}
@@ -48,6 +53,7 @@ int Note::get_track_num() const
 int Note::get_string() 
 {
 	int ret,n=0;
+	if(pitch<0) return -1;
 	while(1) {
 		try {
 			ret = pitch_to_frets_map.at(pitch+n)[current_note_index].first;
@@ -63,6 +69,7 @@ int Note::get_string()
 int Note::get_fret_at(int n_index, int pitch)
 {
 	int ret,n=0;
+	if(pitch<0) return -1;
 	while(1) {
 		try {
 			ret = pitch_to_frets_map.at(pitch+n)[n_index].second;
@@ -96,6 +103,7 @@ void Note::rebalance_note()
 int Note::get_fret() 
 {
 	int ret,n=0;
+	if(pitch<0) return -1;
 	while(1) {
 		try {
 			ret = pitch_to_frets_map.at(pitch)[current_note_index].second;
@@ -130,6 +138,7 @@ bool Note::compare(Note* note) {
 int Note::get_children_size() const
 {
 	int ret,n=0;
+	if(pitch<0) return 0;
 	while(1) {
 		try {
 			ret = pitch_to_frets_map.at(pitch+n).size();

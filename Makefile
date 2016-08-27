@@ -16,5 +16,8 @@ INC_PATH = -I midifile/include/                         \
 all: $(EXE)
 $(EXE): $(SOURCES)
 	g++ $(CFLAGS) -std=c++11 $(INC_PATH) $(SOURCES) $(LIB_PATH) -o $(EXE)
+DEBUG: $(SOURCES)
+	g++ $(CFLAGS) -std=c++11 $(INC_PATH) $(SOURCES) $(LIB_PATH) -g -o $(EXE)
+	
 clean:
 	rm -rf *.o $(EXE)

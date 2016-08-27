@@ -3,6 +3,11 @@ import time, sys, os
 from midi_writer import make as generate_pitch_delta
 import subprocess
 
+def join(seq, sep=','):
+    return sep.join(str(i) for i in seq)
+
+
+
 if __name__ == "__main__":
 	try: 
 		os.makedirs("./data/intermediates")
@@ -39,6 +44,7 @@ if __name__ == "__main__":
 				#print visitor (renders output in various formats: ascii, scrolling ui, piano tablature)
 			spstring= ['./gen', 'data/intermediates/'+fileName+'.txt', 'data/outTab.txt',\
 			noteOffset, columnsPerRow, startMeasure, endMeasure, align]
+			print ' '.join(spstring)
 			subprocess.call(spstring)
 			
 		else:

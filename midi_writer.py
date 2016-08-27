@@ -6,7 +6,20 @@ from collections import Counter
 note_offsets = (00,00,00,00,00,00,00,00,00,00,00,00,00,00)
 delta_offsets = (00,00,00,00)
 
+'''
+DELTA_VAL is extremely important for the c++ tab generator. It determines how spacing is interpreted
+when rendering the tab. 
 
+Setting DELTA_VAL to 8 sets the "instant tick" value for any 32nd note to 1 (32nd note resolution, see below for more mappings). 
+This will affect the smallest note size that can be detected before notes are merged, and to create deltas for the output file. 
+These deltas are used to determine the number of padding dashes in tabs.
+
+	16 - 64th note resolution
+	8 - 32nd note resolution
+	4 - 16th note resolution
+	2 - 8th note resolution
+	1 - 4th note resolution
+'''
 DELTA_VAL = 8.0
 
 lowest = 0
@@ -17,21 +30,19 @@ def float_eq( a, b, eps=0.0001 ):
 
 #translate midi to intermediate format (list of musical events, newline separated)
 
+a = {'value': True}
+def set_onetime_delta(val):
+	if a['value'] is True:
+		a['value'] = val
+		
 def make(newfile,infile,condition):
 	'''
-	Uses the midi parser provided by Vishnubob's github project
+	Converts a midi file to an intermediate plaintext list of triples (note, duration, track no.), writes them to a file.
+	Each triple represents a "note press," deltas indicate absolute "ticks," 0 and -1 are reserved for chords (0) and triplets (-1) for deltas
+	Notes values are the same as midi pitch values. Track numbers are preserved to allow track-specific filtering in other applications
 	
-	DELTA_VAL is extremely important for the c++ tab generator. It determines how spacing is interpreted
-	when rendering the tab. 
-		Setting it to 8 sets the "instant tick" value for any 32nd note to 1. This instant tick amount
-		will be relative to the resolution of the midi file itself. It will be used to logarithmically
-		describe the number of padding dashes to put between notes.
-		
-		16 - 64th note resolution
-		8 - 32nd note resolution
-		4 - 16th note resolution
-		2 - 8th note resolution
-		1 - 4th note resolution
+	
+	
 	
 	'''
 	if(False):
@@ -43,6 +54,7 @@ def make(newfile,infile,condition):
 	
 	#tempor: {t:[note, delta, duration]}
 	tempor = collections.OrderedDict()
+	
 	instlist = {}
 	mintick = 100000000000000
 	rhythm_map = {(1*DELTA_VAL/p.resolution)}
@@ -87,7 +99,7 @@ def make(newfile,infile,condition):
 							instant = obj.tick*DELTA_VAL/p.resolution
 						#elif obj.tick != 0:
 						'''
-	
+						set_onetime_delta(instant)
 						active_notes[pitch] = [True, instant]
 						note_sum+=pitch
 						if pitch < lowest:
@@ -127,7 +139,9 @@ def make(newfile,infile,condition):
 	with open(newfile, 'w') as outfile:
 		lost_notes = 0
 		prev_instant = 0
-		for i,pair in instlist.items():#instant list
+		
+		#insert time signature change
+		for i,pair in instlist.items():
 				if i == 0:
 					outfile.write("SIGEVENT\n")
 					outfile.write( (str(pair[0]) + ',' + (str(pair[1]))+ '\n' ))
@@ -150,6 +164,9 @@ def make(newfile,infile,condition):
 				delta = sorted_times[(instant_index+1)] - instant
 			except:
 				delta = 4
+			if a['value'] != 0:
+				#outfile.write('28,{},0\n'.format(a['value']))
+				a['value'] = 0
 			for note,track_num in chunk:
 				#write the notes to a file
 				

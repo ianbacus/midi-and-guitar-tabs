@@ -40,16 +40,22 @@ void RotateVisitor::visitBar(Bar* b)
 void RotateVisitor::visitChunk(Chunk* c) 
 {
 	//Visit a chunk, and re-arrange all of its notes until they meet the bare requirements specified in the  "c->compare_with_stack()" function
+
   c->empty_stack();
   int counter_index=0,fail_count=0,super_fail=0;
-	  while(counter_index < c->get_children_size()){//cout << counter_index << "<" << c->get_children_size() << ", failcount = " << fail_count <<  endl;
+	  while(counter_index < c->get_children_size())
+	  {//cout << counter_index << "<" << c->get_children_size() << ", failcount = " << fail_count <<  endl;
+	    
 	  	if(super_fail > pow(3,(c->get_children_size() ))  ) //cout << "rotation error: max rotation limit" << endl;
 			break;
+
 	  	if(fail_count == c->get_note_at(counter_index)->get_children_size()){
 	  	//A note has only so many fret/string positions, indicated by "get_children_size()". after exhausting all tries, go back one step on the stack
+	  		
 	  		c->pop_stack();
 	  		counter_index--;
 	  		c->get_note_at(counter_index)->accept(this);
+	  		
 	  		fail_count=0;
 	  		super_fail++;
 	  	}
@@ -66,12 +72,12 @@ void RotateVisitor::visitChunk(Chunk* c)
 					fail_count=0;
 					break;
 				case BAD:
-					cout << "THIS WILL NEVER HAPPEN " << endl;		
 					break;	  		
 		  	};
 		}
 	  	else{ //should only be these three cases
 	  		//if the note is incompatible, begin reconfiguring the candidate note
+
 	  		c->get_note_at(counter_index)->accept(this);
 	  		fail_count++;
 	  	}
@@ -92,7 +98,7 @@ void RotateVisitor::visitChunk(Chunk* c)
 	  }
 	  
 	  else{
-	  	 c->force_chunk_note_indices();\
+	  	 c->force_chunk_note_indices();
 	  	 //Get the strings that are occupied
 	  	 /*
 	  	 for note in c->get_notes():
