@@ -29,7 +29,8 @@ class RotateVisitor : public Visitor
     virtual void visitChunk(Chunk*);
     bool in_cache(vector<pair<int, int> > input);
     void clear_cache(void);
-
+    void recursivePermutationCompare(Chunk* c);
+	void conditionallyAddToStack(comparisonResult, Chunk*, int&, int&);
 };
 
 #endif

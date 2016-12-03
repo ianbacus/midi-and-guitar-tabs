@@ -58,6 +58,7 @@ int main(int argc, char* argv[])
 	}
 	if(( -1 == upperBound) || upperBound > score.size())	upperBound = score.size();
 	
+	std::cout << outputFile << std::endl;
 	RotateVisitor* thefixer = new RotateVisitor();
 	PrintVisitor* theprinter = new PrintVisitor(outputFile);
 	cout << "tabbing " << (upperBound - lowerBound) <<  " measures from " << lowerBound << " to " << upperBound << "..." << endl;
@@ -75,7 +76,10 @@ int main(int argc, char* argv[])
 			(*it)->accept(theprinter);
 			format_count++;
 		}
+		
 	}
+	theprinter->print_out();
+	theprinter->set_outfile("data/outTab.txt");
 	theprinter->print_out();
 	std::cout << "done. " << std::endl;
   

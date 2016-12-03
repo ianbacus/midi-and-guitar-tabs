@@ -14,6 +14,7 @@ def float_eq( a, b, eps=0.0001 ):
     
     
 def make(newfile,infile,condition):
+	#condition = "count in range(3)"
 	'''
 	Uses the midi parser provided by Vishnubob's github project
 	
@@ -107,11 +108,13 @@ def make(newfile,infile,condition):
 					outfile.write("SIGEVENT\n")
 					outfile.write( (str(pair[0]) + ',' + (str(pair[1])) )+'\n' )
 			chunk = tempor[instant]
-			chunk = list(set(chunk))
+			chunk = list(set(chunk)) #remove redundant notes (exact copies only)
 			chunk.sort()
-			while len(chunk) > 4:
+			
+			while len(chunk) > 6:
 				lost_notes += 1
 				chunk.pop(len(chunk)/2) #remove internal voices if the texture is too thick :'(
+			
 			if len(chunk) > 5:
 				print chunk
 			delta = instant - prev_instant

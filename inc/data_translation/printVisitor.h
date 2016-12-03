@@ -32,6 +32,7 @@ class PrintVisitor : public Visitor
     void bar_ticks_increment(int d);
     void newlines(void) ;
     void print_out(void);
+    void set_outfile(string of) { outfile = of; } 
 };
 
 #endif

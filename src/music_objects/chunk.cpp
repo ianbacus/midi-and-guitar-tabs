@@ -33,7 +33,11 @@ void Chunk::accept(Visitor* v)
 		
 void Chunk::add_note(Note* n) 
 {
-	_chunk_notes.push_back(n);
+	_chunk_notes.insert(std::upper_bound( _chunk_notes.begin(), _chunk_notes.end(), n, \
+    [](Note *a, Note*b) \
+    { return a->get_children_size() < b->get_children_size(); }),n ); //sorted by number of entries in the pitch map table
+    
+	//_chunk_notes.push_back(n);
 }
 
 void Chunk::remove_note(Note* n) 
@@ -80,7 +84,7 @@ void Chunk::print_stack(void)
 
 
 
-int Chunk::compare_with_stack(Note* n){
+comparisonResult Chunk::compare_with_stack(Note* n){
 // Return true if the note is addable. This method will copy the stack of notes 
     //return false if the note should perform a rotation to a new fret/string
 	//bad(0) message: not compatible with chunk

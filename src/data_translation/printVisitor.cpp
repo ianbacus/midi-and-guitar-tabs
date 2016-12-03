@@ -13,17 +13,16 @@ void PrintVisitor::visitBar(Bar* b)
     	if(string_print_index == SIZEOF_TUNING) {
     		string_buffer.back()[SIZEOF_TUNING] += "   ";
     		continue;
-    		
     	}
     	(string_buffer.back())[string_print_index] += "|";
 		for(int j=0; j<b->get_children_size(); j++){
-
 			b->get_child(j)->accept(this);
-			}
+		}
 		(string_buffer.back())[string_print_index] += "-";
 		if(!tripled) string_buffer.back()[SIZEOF_TUNING] += "   ";
 		tripled = false;
 	}
+	
 }
 
 void PrintVisitor::bar_ticks_reset(void) 
@@ -39,14 +38,16 @@ void PrintVisitor::bar_ticks_increment(int d)
 void PrintVisitor::newlines(void) 
 { 
 	for(string_print_index=SIZEOF_TUNING+1; string_print_index>= 0; string_print_index--){
-		if(string_print_index>=SIZEOF_TUNING) string_buffer.back()[string_print_index] += " ";
+		if(string_print_index>=SIZEOF_TUNING) 
+			string_buffer.back()[string_print_index] += " ";
 		else
 			string_buffer.back()[string_print_index] += "|";
 	}
 	string_buffer.push_back(vector<string>(SIZEOF_TUNING+2) );
 	
 	for(string_print_index=SIZEOF_TUNING+1; string_print_index>= 0; string_print_index--){
-		if(string_print_index>=SIZEOF_TUNING) string_buffer.back()[string_print_index] += " ";
+		if(string_print_index>=SIZEOF_TUNING) 
+			string_buffer.back()[string_print_index] += " ";
 		else{
 			string_buffer.back()[string_print_index] += "|";
 			string_buffer.back()[string_print_index].push_back(ptuning[(string_print_index)]);
@@ -72,6 +73,7 @@ void PrintVisitor::visitChunk(Chunk* c)
 		return;
 	for(int j=0; j<c->get_children_size(); j++)
 	{
+		
 		current_note = c->get_note_at(j);
 		if(!strings_closed)
 			current_note->accept(this);
@@ -82,7 +84,7 @@ void PrintVisitor::visitChunk(Chunk* c)
 			else
 				result = std::to_string(fret);		
 			locked = true;
-			}
+		}
 			
 		delta += current_note->get_delta();
 	}
@@ -98,7 +100,7 @@ void PrintVisitor::visitChunk(Chunk* c)
 	{
 		//triplets case
 		tripled = true;
-		string_buffer.back()[SIZEOF_TUNING] += " t";
+		//string_buffer.back()[SIZEOF_TUNING] += " t";
 		string_buffer.back()[string_print_index] +=  result;
 	}
 
