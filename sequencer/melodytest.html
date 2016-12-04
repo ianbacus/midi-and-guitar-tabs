@@ -50,7 +50,8 @@ function buttonHandler(button) {
 $( function() {
 	var cursorP = { x: -1, y: -1 };
 	var currentObj = null;
-	
+	var snapX = 20,snapY=20;
+	var widthMode = 40;
     $(document).mousemove(function(event) 
     {
     	//Move preview object to follow cursor, make it snappable
@@ -59,14 +60,23 @@ $( function() {
         cursorP.y = event.pageY-offset.top;
         
         if (currentObj) {
-        	var x = (Math.ceil(cursorP.x / 20)*20)-20;
-        	var y = (Math.ceil(cursorP.y / 20)*20)-20;
+        	var x = (Math.ceil(cursorP.x / snapX)*snapX)-snapX;
+        	var y = (Math.ceil(cursorP.y / snapY)*snapY)-snapY;
         	currentObj.css({'top':y, 'left':x});
     	}
     });
-
+	$('#gridbox').click(function()
+	{
+		currentObj.clone(true).appendTo("#gridbox");
+		console.log('a');
+	});
+	
 	$('#gridbox').hover(function()
 	{
+		var previewStyle = "background: purple; opacity:0.5; \
+						width:"+widthMode+"px; height:"+snapY+"px; \
+						top:"+snapY+"px;left:"+snapX+"px; \
+						position:absolute;";
 		//When cursor enters the gridbox, draw an opaque preview div block
         $(this).css({'border':'solid black 1px'})
         var node = document.createElement('div');
@@ -74,10 +84,10 @@ $( function() {
         
         $(node).draggable({
 			containment: "parent",
-			grid: [ 20, 20 ]
+			grid: [ snapX, snapY ]
 		});
 		
-		$(node).attr('style',"background: purple; opacity:0.5; width:40px; height:20px;top:20px;left:20px;position:absolute;");
+		$(node).attr('style',previewStyle);
 		currentObj = $(node);
 	},
     function()
