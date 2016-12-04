@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf‐8">
+<title> Hello web audio </title> 
+
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+<link rel="stylesheet" href="/resources/demos/style.css">
+<link rel="stylesheet" href="css/example.css">
+
+<script src="js/jquery.min.js"> </script>
+<script src="js/jquery-ui.js"> </script>
+<script src="js/jquery.mobile.min.js"> </script>
+
+<script type="text/javascript" src="js/nexusUI.js" ></script>
+<script type="text/javascript" src="js/Tone.js" ></script>
+
+<script>
+
+
+function buttonHandler(button) {
+	
+	switch(button.id)
+	{
+		case 'editBtn':
+			$('.draggable')
+			//.removeClass('selectable').addClass('draggable')
+			.draggable( 'enable' );
+			
+			//bindSymbolBehavior();
+			break;
+		case 'selectBtn':
+			$('.draggable')
+			//.removeClass('draggable').addClass('selectable')
+			.draggable( 'disable' );
+			//bindSymbolBehavior();
+			break;
+		case 'deleteBtn':
+			//get selected item, then delete it
+			gridBox.removeChild(div);
+			break;
+		case 'createBtn':
+			//add new div to array
+			
+			break;
+	}
+}
+
+
+$( function() {
+	var cursorP = { x: -1, y: -1 };
+	var currentObj = null;
+	
+    $(document).mousemove(function(event) 
+    {
+    	//Move preview object to follow cursor, make it snappable
+    	var offset = $("#gridbox").offset();
+        cursorP.x = event.pageX-offset.left;
+        cursorP.y = event.pageY-offset.top;
+        
+        if (currentObj) {
+        	var x = (Math.ceil(cursorP.x / 20)*20)-20;
+        	var y = (Math.ceil(cursorP.y / 20)*20)-20;
+        	currentObj.css({'top':y, 'left':x});
+    	}
+    });
+
+	$('#gridbox').hover(function()
+	{
+		//When cursor enters the gridbox, draw an opaque preview div block
+        $(this).css({'border':'solid black 1px'})
+        var node = document.createElement('div');
+        $("#gridbox").append(node);
+        
+        $(node).draggable({
+			containment: "parent",
+			grid: [ 20, 20 ]
+		});
+		
+		$(node).attr('style',"background: purple; opacity:0.5; width:40px; height:20px;top:20px;left:20px;position:absolute;");
+		currentObj = $(node);
+	},
+    function()
+    {
+    	//When cursor leaves the gridbox
+        $(this).css({'border':'solid red 1px'});
+        currentObj.remove();
+        currentObj=null;
+    });
+
+	/*
+    window.isHovering = function (selector) {
+        return $(selector).data('hover')?true:false; //check element for hover property
+    }
+    */
+    
+} );
+
+  
+</script>
+      
+<script>
+	
+	/*
+	var audioCtx = new (window.AudioContext || window.webkitAudioContext);
+	var sinea = audioCtx.createOscillator();
+	sinea.frequency.value = 440;
+	sinea.type = "sine";
+	
+	var sampler = new Tone.Player("samples/pluck.wav", function() {
+		console.log("samples loaded");
+	});
+	*/
+	var synth = new Tone.PolySynth(4, Tone.MonoSynth, {
+	"oscillator" : {
+				"partials" : [0, 2, 3, 4],
+			}
+		}).toMaster();
+	synth.set({
+		"envelope" : {
+			"attack" : 0.1
+		}
+	});
+	
+	
+	var notes = 
+	["b3" ,"c3" ,"c-3" ,"d3" ,"d-3" ,"e3" ,"f3" ,"f-3" ,"g3" ,"g-3" ,
+	 "b4" ,"c4" ,"c-4" ,"d4" ,"d-4" ,"e4" ,"f4" ,"f-4" ,"g4" ,"g-4" ,
+	 "b5" ,"c5" ,"c-5" ,"d5" ,"d-5" ,"e5" ,"f5" ,"f-5" ,"g5" ,"g-5" ];
+	var notesPaths = {
+			"b3" : "./samples/b3.mp3",
+			"c3" : "./samples/c3.mp3",
+			"c-3" : "./samples/c-3.mp3",
+			"d3" : "./samples/d3.mp3",
+			"d-3" : "./samples/d-3.mp3",
+			"e3" : "./samples/e3.mp3",
+			"f3" : "./samples/f3.mp3",
+			"f-3" : "./samples/f-3.mp3",
+			"g3" : "./samples/g3.mp3",
+			"g-3" : "./samples/g-3.mp3",
+			"b4" : "./samples/b4.mp3",
+			"c4" : "./samples/c4.mp3",
+			"c-4" : "./samples/c-4.mp3",
+			"d4" : "./samples/d4.mp3",
+			"d-4" : "./samples/d-4.mp3",
+			"e4" : "./samples/e4.mp3",
+			"f4" : "./samples/f4.mp3",
+			"f-4" : "./samples/f-4.mp3",
+			"g4" : "./samples/g4.mp3",
+			"g-4" : "./samples/g-4.mp3",
+			"b5" : "./samples/b5.mp3",
+			"c5" : "./samples/c5.mp3",
+			"c-5" : "./samples/c-5.mp3",
+			"d5" : "./samples/d5.mp3",
+			"d-5" : "./samples/d-5.mp3",
+			"e5" : "./samples/e5.mp3",
+			"f5" : "./samples/f5.mp3",
+			"f-5" : "./samples/f-5.mp3",
+			"g5" : "./samples/g5.mp3",
+			"g-5" : "./samples/g-5.mp3",
+		};
+	//sampler.toMaster();
+	
+	var keys = new Tone.MultiPlayer({
+		urls : notesPaths,
+		volume : -10,
+		fadeOut : 0.1,
+    }).toMaster();
+	
+	var sequence = new Tone.Sequence(function(time, col){
+    	
+		//keys.start(notes[5], time, 0, "16n", 0, 2);
+	}, ["a3","b3","c3","d3"]);
+	Tone.Transport.start();
+	nx.onload = function() {
+		button1.on('*',function(data) {
+			console.log("button pressed!");
+			sequence.start();
+			//keys.start(notes[5], time, 0, "32n", 0, vel);
+			//sampler.start();
+		});
+	}
+</script>
+
+</head>
+<body>
+	<canvas nx="button"></canvas>
+	<div id="gridbox"></div>
+</body>
+	
+</html>
