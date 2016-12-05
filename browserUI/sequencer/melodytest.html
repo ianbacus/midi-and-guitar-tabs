@@ -32,32 +32,85 @@
 <script>
 
 
-var colorKey = ['red','#CC0099','yellow','#669999','#003399','#990000',  
-				'#000099','#ff6600','#660066','#006600','#669999','#003399'];
+//var colorKey = ['red','#CC0099','yellow','#669999','#003399','#990000',  
+//				'#000099','#ff6600','#660066','#006600','#669999','#003399'];
+				
+var colorKey = ['gray','gray','gray','gray','gray','gray','gray','gray','gray','gray','gray','gray'];
 
 
 $( function() {
 	var hoveringOverGrid = 0;
 	var cursorP = { x: -1, y: -1 };
+	var selectP = { x: 0, y: 0};
 	var currentObj = null;
 	var snapX = 20,snapY=20;
 	var widthMode = 40;
 	var claimedSpots = [];
+	var previewStyle = "opacity:0.5; \
+							height:"+snapY+"px; \
+							position:absolute;";
+	
+	function checkOverlap(rect1,rect2)
+	{
+		//See if Rect1 bounds rect2
+		/*
+		var overlap = !(rect1.css('right') < rect2.css(' left') || 
+						rect1.css( 'left') > rect2.css('right'));
+		*/
+		var R1L=parseInt(rect1.css('left'),10),R1T=parseInt(rect1.css('top'),10);
+		R1R=(R1L+parseInt(rect1.css('width'),10)),R1B=(R1T+parseInt(rect1.css('height'),10));
+		
+		var R2L=parseInt(rect2.css('left'),10),R2T=parseInt(rect2.css('top'),10);
+		R2R=(R2L+parseInt(rect2.css('width'),10)),R2B=(R2T+parseInt(rect2.css('height'),10));
+		
+		var xcond = (R1L < R2L) && (R1R > R2R);
+		var ycond = (R1T < R2T) && (R1B > R2B);
+		
+		return (xcond && ycond);
+	}
+	
+	function deleteCurrentObj()
+	{
+		if($(currentObj))
+		{
+			$(currentObj).remove();
+    		currentObj=null;
+    	}
+    	else console.log("error");
+	}
 	
 	function createPreview()
 	{
 		if(!currentObj)
 		{
-			var previewStyle = "background: purple; opacity:0.5; \
-							width:"+widthMode+"px; height:"+snapY+"px; \
-							top:"+cursorP.y+"px;left:"+cursorP.x+"px; \
-							position:absolute;";
+			
 			var node = document.createElement('div');
+			var ix = (cursorP.y/20) % 12;
 			$("#gridbox").append(node);
 			$(node).attr('style',previewStyle);
+			
+        	$(node).css({'top':cursorP.y, 'left':cursorP.x, 'background':colorKey[ix], 'width':widthMode});
 			currentObj = $(node);
 		}
 	}
+	
+	function createSelectRectangle()
+	{
+		if(!currentObj)
+		{
+			var node = document.createElement('div');
+			$("#gridbox").append(node);
+
+			selectP.x = cursorP.x;
+			selectP.y = cursorP.y;
+						console.log(cursorP.y,cursorP.x,selectP.x,selectP.y);
+			$(node).css({'top':cursorP.y, 'left':cursorP.x, 
+						 'border':'solid black 1px', 'position':'absolute',
+						 'width':'0px','height':'0px'});
+			currentObj = $(node);
+		}
+	}
+	
 	function bindDragging(selector)
 	{
 		$(selector).mousedown(function() 
@@ -71,35 +124,89 @@ $( function() {
 		{
 			currentObj = null;
 			console.log("splopped");
-			claimedSpots.push({'position':[cursorP.x,cursorP.y],'width':widthMode});
+			//claimedSpots.push({'position':[cursorP.x,cursorP.y],'width':widthMode});
 		});
 	}
+	
 	function unbindDragging(selector)
 	{
-		$(selector).unbind(mousedown);
-		$(selector).unbind(mouseup);
+		$(selector).unbind("mousedown");
+		$(selector).unbind("mouseup");
 	}
-	function bindSelection(selector)
-	{
 	
+	function unbindSelection(selector)
+	{
+		
 	}
+	
+	function selectClickDownCallback()
+	{
+		createSelectRectangle();
+	}
+	
+	function selectClickUpCallback()
+	{
+		$(".note").each(function() {
+			if(checkOverlap($(currentObj),$(this)))
+				console.log("sunk ur battleship");
+		});
+		deleteCurrentObj();
+	}
+	
+	function selectHoverOnCallback()
+	{
+		hoveringOverGrid = true;
+        $(this).css({'border':'solid blue 1px'})
+	}
+	
+	function selectHoverOffCallback()
+	{
+		hoveringOverGrid = false;
+        $(this).css({'border':'solid black 1px'});
+	    deleteCurrentObj();
+	}
+	
+	function selectCursorCallback(event)
+    {
+    	if (currentObj) {
+    		var y = (cursorP.y)-selectP.y;
+    		var x = (cursorP.x)-selectP.x;
+        	//currentObj.css({'height':cursorP.y-topOffset, 'width':cursorP.x-leftOffset});
+        	//console.log(cursorP.y,cursorP.x,selectP.x,selectP.y);
+        				
+        	if(x < 0) currentObj.css({'width':-1-x,'left':cursorP.x});
+        	else if(x==0) currentObj.css({'width':0,'left':selectP.x});
+        	else currentObj.css({'width':x-1});
+        	
+        	if(y < 0) currentObj.css({'height':-1-y,'top':cursorP.y});
+        	else if(y==0) currentObj.css({'height':0,'top':selectP.y});
+        	else currentObj.css({'height':y-1});
+        	
+        	 
+    	}
+    }
+	
 	function editClickDownCallback()
 	{
+		//Instantiate object
 		if(currentObj)
 		{
 			$(currentObj).css({'opacity':'1'});
+			$(currentObj).addClass('note');
 			bindDragging(currentObj);
 		}
 	}
+	
 	function editClickUpCallback()
 	{
 		createPreview();
 	}
+	
 	function editHoverOnCallback() {
 		//When cursor enters the gridbox
 		hoveringOverGrid = true;
 		createPreview();
-        $(this).css({'border':'solid black 1px'})
+        $(this).css({'border':'solid orange 1px'})
         
 	}
 	
@@ -107,56 +214,73 @@ $( function() {
     {
     	//When cursor leaves the gridbox
     	hoveringOverGrid = false;
-        $(this).css({'border':'solid red 1px'});
-        if(currentObj)
-        {
-	        currentObj.remove();
-    	    currentObj=null;
-    	}
+        $(this).css({'border':'solid black 1px'});
+	    deleteCurrentObj();
+	    
     }
-    function editCursorCallback(event) 
+
+    function mainCursorCallback(event) 
     {
     	//Move preview object to follow cursor, make it snappable
     	var offset = $("#gridbox").offset();
         cursorP.x = (Math.ceil((event.pageX-offset.left) / snapX)*snapX)-snapX;
         cursorP.y = (Math.ceil(((event.pageY-offset.top)) / snapY)*snapY)-snapY;
-        
-        if (currentObj) {
+    }
+    
+    function editCursorCallback(event)
+    {
+    	if (currentObj) {
         	var ix = cursorP.y/20;
         	ix = ix % 12;
         	currentObj.css({'top':cursorP.y, 'left':cursorP.x, 'background':colorKey[ix]});
     	}
     }
+    
+    
+
     function setEditMode()
     {
+    	bindDragging($(".note"));
+    	
     	$('#gridbox').mousedown(editClickDownCallback)
     				 .mouseup(editClickUpCallback)
-					 .hover(editHoverOnCallback,editHoverOffCallback);
-		$(document).mousemove(editCursorCallback);
+					 .hover(editHoverOnCallback,editHoverOffCallback)
+					 .mousemove(editCursorCallback)
+					 .css({'border':'solid orange 1px'});
+		createPreview();
     }
+
     function exitEditMode()
     {
-    	$('#gridbox').unbind("mousedown",editClickDownCallback)
-    				 .unbind("mouseup",editClickUpCallback)
-    				 .unbind("hover",editHoverOnCallback,editHoverOffCallback);
-		$(document).unbind("mousemove",editCursorCallback);
+    	deleteCurrentObj();
+    	unbindDragging($(".note"));
+    	$('#gridbox').off();	
     }
+
     function setSelectMode()
     {
-    	var dragSelector = $(".ui-draggable");
-    	dragSelector.selectable();
-    	dragSelector.draggable( "destroy" );
+    	//bindSelection($(".note"));
+    	$('#gridbox').mousedown(selectClickDownCallback)
+    				 .mouseup(selectClickUpCallback)
+					 .hover(selectHoverOnCallback,selectHoverOffCallback)
+					 .mousemove(selectCursorCallback)
+					 .css({'border':'solid blue 1px'});
     }
+
+    function exitSelectMode()
+    {
+    	deleteCurrentObj();
+    	//unbindSelection($(".note"));
+    	$('#gridbox').off();
+    }
+    
 	$(document).keyup(function(e) {
 		
 			switch(e.keyCode)
 			{
 				case 81: //"q" key
-					if(hoveringOverGrid && currentObj)
-					{
-						currentObj.remove();
-						currentObj=null;
-					}
+					console.log("cancel");
+					deleteCurrentObj();
 					break;
 				case 87: //"w" key
 					if(widthMode < 8*snapX)
@@ -171,15 +295,20 @@ $( function() {
 						currentObj.css({'width':widthMode});	
 					break;
 				case 90: //"z" key"
+					exitSelectMode();
+					console.log("edit mode (drag)");
 					setEditMode();
 					break;
 				case 88: //"x" key"
+					exitEditMode();
+					console.log("select mode");
 					setSelectMode();
 					break;
 				case 67: //"c" key"
 					break;
 			}
 	});
+	$(document).mousemove(mainCursorCallback);
 	setEditMode();
     
 } );
@@ -223,7 +352,7 @@ $( function() {
 			"d-3" : "./samples/d-3.mp3",
 			"e3" : "./samples/e3.mp3",
 			"f3" : "./samples/f3.mp3",
-			"f-3" : "./samples/f-3.mp3",
+			//"f-3" : "./samples/f-3.mp3",
 			"g3" : "./samples/g3.mp3",
 			"g-3" : "./samples/g-3.mp3",
 			"b4" : "./samples/b4.mp3",
@@ -233,7 +362,7 @@ $( function() {
 			"d-4" : "./samples/d-4.mp3",
 			"e4" : "./samples/e4.mp3",
 			"f4" : "./samples/f4.mp3",
-			"f-4" : "./samples/f-4.mp3",
+			//"f-4" : "./samples/f-4.mp3",
 			"g4" : "./samples/g4.mp3",
 			"g-4" : "./samples/g-4.mp3",
 			"b5" : "./samples/b5.mp3",
@@ -249,6 +378,19 @@ $( function() {
 		};
 	//sampler.toMaster();
 	
+	var data = {
+		urls : notesPaths,
+		volume : -10,
+		fadeOut : 0.1,
+    };
+	var sampler = new Tone.Player('./samples/pluck.wav',function(){
+        console.log("samples loaded");
+      });
+      sampler.retrigger=true;
+      sampler.toMaster();
+      
+    
+    /*
 	var keys = new Tone.MultiPlayer({
 		urls : notesPaths,
 		volume : -10,
@@ -268,15 +410,19 @@ $( function() {
 	var pianoPart = new Tone.Part(function(time, chord){
 		piano.triggerAttackRelease(chord, "8n", time);
 	}, [["0:0:0", cChord], ["1:0:0", dChord],]).start("0");
-
+*/
 	Tone.Transport.bpm.value = 90;
 	//Tone.Transport.start();
-	nx.onload = function() {
-		button1.on('*',function(data) {
-			console.log("button pressed!");
-			//sequence.start();
-			//keys.start(notes[5], time, 0, "32n", 0, vel);
-			//sampler.start();
+	
+	nx.onload = function() 
+	{
+		var counter = 0;
+		button1.on('*',function(data) 
+		{
+			console.log("button pressed!",counter);
+			counter = counter+ 1;
+			sampler.start();
+			
 		});
 	}
 </script>

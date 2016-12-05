@@ -1,19 +1,22 @@
 canvas {
     margin-top: 3px;
-    }
-	
-	.selectable { width: 80px; height: 80px; padding: 0.5em; border-style: dotted; } 
-	.selectable .ui-selecting { background: #FECA40; }
-	.selectable .ui-selected { background: #F39814; color: white; }
-	#gridbox {
-		border:solid red 1px;
-		width:600px;
-		height:300px;
-		position:relative;
-		background:whitesmoke url('https://s3.amazonaws.com/com.appgrinders.test/images/grid_20.png') repeat;
-		overflow-x:scroll;
-	}
+}
 
+.selectable { width: 80px; height: 80px; padding: 0.5em; border-style: dotted; } 
+.selectable .ui-selecting { background: #FECA40; }
+.selectable .ui-selected { background: #F39814; color: white; }
+#gridbox {
+	border:solid red 1px;
+	width:600px;
+	height:300px;
+	position:relative;
+	background:whitesmoke url('https://s3.amazonaws.com/com.appgrinders.test/images/grid_20.png') repeat;
+	overflow-x:scroll;
+}
+
+#feedback { font-size: 1.4em; }
+#selectable .ui-selecting { background: #FECA40; }
+#selectable .ui-selected { background: #F39814; color: white; }
 
 
 
