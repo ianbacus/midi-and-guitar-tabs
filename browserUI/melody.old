@@ -1,0 +1,225 @@
+
+<!DOCTYPE html>
+<html lang="en" ng-app="ngAppStrict" ng-strict-di="false">
+
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta property="og:image" content="https://musiclab.chromeexperiments.com/static/share.jpg">
+<meta property="og:url" content="https://musiclab.chromeexperiments.com">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Chrome Music Lab">
+<meta property="og:description" content="Music is for everyone. Play with simple experiments that let anyone, of any age, explore how music works.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Chrome Music Lab">
+<meta name="twitter:description" content="Music is for everyone. Play with simple experiments that let anyone, of any age, explore how music works.">
+<meta name="twitter:image" content="https://musiclab.chromeexperiments.com/static/share.jpg">
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.14/angular.min.js">
+</script>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.14/angular-route.js">
+</script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.3.15/angular-sanitize.js">
+</script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/angular-translate/2.8.1/angular-translate.js">
+</script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/angular-translate-storage-local/2.8.1/angular-translate-storage-local.js">
+</script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/angular-translate-loader-static-files/2.8.1/angular-translate-loader-static-files.js">
+</script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/angulartics/1.0.3/angulartics.min.js">
+</script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/angulartics-google-analytics/0.1.4/angulartics-google-analytics.min.js">
+</script>
+<link rel="stylesheet" href="/css/screen.css">
+<link rel="shortcut icon" href="/static/MusicBox_16_2.ico" type="image/x-icon">
+<link rel="shortcut icon" type="image/png" href="/static/MusicBox_16_2.ico.png">
+<link rel="shortcut icon" type="image/png" href="/static/MusicBox_32.ico.png">
+<title>Chrome Music Lab
+</title>
+</head>
+<body ng-controller="MainCtrl" detect-scroll>
+<base href="/">
+<div id="templateLoader" class="music-box__blank-modal">
+</div>
+<header id="mainHeader" ng-controller="NavigationCntrl" data-hamburger-visible="false" ng-class="{ 'music-box__main-navigation--visible': hamburgerVisible, 'music-box__main-navigation--not-visible': !hamburgerVisible}" class="music-box__header">
+<div id="ErrorMessageOops" class="music-box___modal__error hide">
+<img src="img/music_lab_3x3_grid_1000x1000.jpg" class="music-box__browser-error-img">
+<div class="music-box___modal__error__copy">Thanks for checking out Chrome Music Lab. Unfortunately, your browser doesn’t support the technology that makes these experiments work. For the best experience, 
+<a href="https://www.google.com/chrome/browser/desktop/" analytics-on="click" analytics-event="chrome-download-clicked" analytics-category="error" analytics-label="Non-capable browser chrome link clicked">view it on Chrome.
+</a>
+</div>
+</div>
+<div id="sub-header" ng-class="{ 'hide': !isLanding, 'hide': isLanding}" class="music-box__sub__header">
+<a href="Experiments" analytics-on="click" analytics-event="back-from-experiment" analytics-category="page-actions" analytics-label="Backbutton clicked from experiment" class="music-box__sub__header__back-button">
+</a>
+<div id="project-title" ng-bind="currentExperiment.title  | translate" class="music-box__sub__header__title">Project Title
+</div>
+<div show-info analytics-on="click" analytics-event="open-about" analytics-category="page-actions" analytics-label="About experiment view opened" class="music-box__sub__header__info-button">?
+</div>
+</div>
+<div id="landing-header" ng-show="isLanding" class="music-box__landing__header">
+<div class="music-box__header__logo">{[{ 'Website_Name.message' | translate }]} 
+</div>
+<div toggle-hamburger class="music-box__main-navigation__hamburger">
+<img src="/img/svg/svg_hamburger_menu.svg">
+</div>
+<div toggle-hamburger class="music-box__main-navigation__background">
+</div>
+<nav id="navigation" class="music-box__main-navigation hide">
+<div class="music-box__main-navigation__title">{[{ 'Website_Name.message' | translate }]}
+</div>
+<div class="music-box__main-navigation__item">
+<a href="Experiments" goto-main-section toggle-hamburger>{[{ 'Experiments_Title.message' | translate }]}
+</a>
+</div>
+<div class="music-box__main-navigation__item">
+<a href="About" goto-main-section toggle-hamburger>{[{ 'About_Title.message' | translate }]}
+</a>
+</div>
+<div class="music-box__main-navigation__item">
+<a href="Technology" goto-main-section toggle-hamburger>{[{ 'Technology_Title.message' | translate }]}
+</a>
+</div>
+<div class="music-box__menu__logo">
+<div class="music-box__google-logo">
+</div>
+</div>
+</nav>
+</div>
+</header>
+<div class="music-box__container">
+<div ng-show="isLanding == false" ng-include="templateUrl" class="music-box__experiment__container">
+</div>
+<div ng-show="isLanding" ng-controller="ExperimentsCntrl" class="music-box__section__container">
+<div id="experiments" class="music_box__section--experiments">
+<div ng-repeat="item in experiments" class="music_box__experiments__item">
+<a href="/{[{item.key}]}" key="{[{item.key}]}" show-experiment data-info-visible="false">
+<div class="music_box__experiments__item__info">
+<h1>{[{item.title | translate}]}
+</h1>
+</div>
+<img ng-src="/img/experiments/{[{item.img}]}">
+</a>
+</div>
+</div>
+<div id="about" class="music_box__section--about">
+<div class="music_box__row">
+<div class="music_box__section__column--1">
+<h1>{[{ 'About_Title.message' | translate }]}
+</h1>
+<p>{[{ 'About_Copy.message' | translate }]}
+</p>
+</div>
+</div>
+</div>
+<div id="technology" class="music_box__section--technology">
+<div class="music_box__row">
+<div class="music_box__section__column--1">
+<h1>{[{ 'Technology_Title.message' | translate }]}
+</h1>
+<p>{[{ 'Technology_Copy.message' | translate }]}
+</p>
+</div>
+</div>
+<div class="music_box__row">
+<div class="music_box__section__column--2">
+<h2>{[{ 'Chrome_Title.message' | translate }]}
+</h2>
+<p> {[{ 'Chrome_Copy.message' | translate }]} 
+<a href="https://www.google.com/chrome/" target="_blank" analytics-on="click" analytics-event="click-chrome-learn-more" analytics-category="external-resources" analytics-label="Chrome learn more clicked">{[{ 'Learn more' | translate }]} .
+</a>
+</p>
+</div>
+<div class="music_box__section__column--2">
+<h2>{[{ 'Web_Audio_API_Title.message' | translate }]}
+</h2>
+<p>{[{ 'Web_Audio_API_Copy.message' | translate }]} 
+<a href="https://en.wikipedia.org/wiki/HTML5_Audio#Web_Audio_API_and_MediaStream_Processing_API" target="_blank" analytics-on="click" analytics-event="click-web-audio-api-learn-more" analytics-category="external-resources" analytics-label="Web Audio Api learn more clicked">{[{ 'Learn more' | translate }]} .
+</a>
+</p>
+</div>
+</div>
+<div class="music_box__row">
+<div class="music_box__section__column--2">
+<h2>{[{ 'WebGL_Title.message' | translate }]}
+</h2>
+<p>{[{ 'WebGL_Copy.message' | translate }]} 
+<a href="https://en.wikipedia.org/wiki/WebGL" target="_blank" analytics-on="click" analytics-event="click-web-gl-learn-more" analytics-category="external-resources" analytics-label="Web GL learn more clicked">{[{ 'Learn more' | translate }]} .
+</a>
+</p>
+</div>
+<div class="music_box__section__column--2">
+<h2>{[{ 'Microphone_Input_Title.message' | translate }]}
+</h2>
+<p>{[{ 'Microphone_Input_Copy.message' | translate }]} 
+<a href="https://en.wikipedia.org/wiki/WebRTC" target="_blank" analytics-on="click" analytics-event="click-mic-input-learn-more" analytics-category="external-resources" analytics-label="Mic input learn more clicked">{[{ 'Learn more' | translate }]} .
+</a>
+</p>
+</div>
+</div>
+<div class="music_box__row">
+<div class="music_box__section__column--2">
+<h2>{[{ 'Tone_JS_Title.message' | translate }]}
+</h2>
+<p>{[{ 'Tone_JS_Copy.message' | translate }]} 
+<a href="https://github.com/Tonejs/Tone.js" target="_blank" analytics-on="click" analytics-event="click-tonejs-learn-more" analytics-category="external-resources" analytics-label="Tonejs learn more clicked">{[{ 'Learn more' | translate }]} .
+</a>
+</p>
+</div>
+<div class="music_box__section__column--2">
+<h2>{[{ 'Pixi_JS_Title.message' | translate }]}
+</h2>
+<p> {[{ 'Pixi_JS_Copy.message' | translate }]} 
+<a href="http://www.pixijs.com/" target="_blank" analytics-on="click" analytics-event="click-pixijs-learn-more" analytics-category="external-resources" analytics-label="Pixijs learn more clicked">{[{ 'Learn more' | translate }]} .
+</a>
+</p>
+</div>
+</div>
+</div>
+<footer class="music-box__normal-footer">
+<div class="music_box__section music-box__normal-footer__container">
+<a href="//google.com" target="_blank" class="music-box__google-logo">
+</a>
+<div class="music-box__privacy__terms">
+<a href="https://www.google.com/intl/en/policies/privacy/" target="_blank" analytics-on="click" analytics-event="click-privacy" analytics-category="external-resources" analytics-label="Privacy Clicked">Privacy 
+</a>&amp; 
+<a href="https://www.google.com/intl/en/policies/terms/" target="_blank" analytics-on="click" analytics-event="click-terms" analytics-category="external-resources" analytics-label="Terms Clicked">Terms
+</a>
+</div>
+<ul class="music-box__share__menu">
+<li class="music-box__share__menu__item">
+<a social-share analytics-on="click" analytics-event="click-share-google" analytics-category="share" analytics-label="Google Plus share clicked" href="https://plus.google.com/share?url=musiclab.chromeexperiments.com&amp;Title=Chrome%20Music%20Lab" target="_blank" class="icon-svg_gplus">
+</a>
+</li>
+<li class="music-box__share__menu__item">
+<a social-share analytics-on="click" analytics-event="click-share-twitter" analytics-category="share" analytics-label="Twitter share clicked" href="http://twitter.com/share?text=%23ChromeMusicLab%2C%20simple%20experiments%20that%20use%20the%20web%20to%20let%20anyone%20explore%20how%20music%20works.%20https%3A%2F%2Fg.co%2Fmusiclab" target="_blank" class="icon-svg_twitter">
+</a>
+</li>
+<li class="music-box__share__menu__item">
+<a social-share analytics-on="click" analytics-event="click-share-facebook" analytics-category="share" analytics-label="Facebook share clicked" href="http://www.facebook.com/share.php?u=musiclab.chromeexperiments.com&amp;title=Chrome%20Music%20Lab" target="_blank" class="icon-svg_facebook">
+</a>
+</li>
+</ul>
+</div>
+<div ng-controller="PianoCntrl" play-tone analytics-on="click" analytics-event="play-piano" analytics-category="easter-egg" analytics-label="Piano was played" class="music-box__piano__container">
+<div index="{[{$index}]}" ng-repeat="n in ['#D6A245','#E4A93C','#F1B032','#FFB729','#FBC354','#F7D07E','#F3DCA9','#EFE8D3']" style="background-color:{[{n}]}" class="music-box__piano__key">
+</div>
+</div>
+</footer>
+</div>
+</div>
+<script type="text/javascript" src="/bin/lib/modernizr-custom.js">
+</script>
+<script type="text/javascript" src="https://gweb-musiclab-site.appspot.com/static/js/Tone.min.js">
+</script>
+<script type="text/javascript" src="/js/app.js">
+</script>
+<script> (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+ m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+	})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+ ga('create', 'UA-74066547-1', 'auto');
+</script>
+</body>
+</html>
