@@ -44,55 +44,63 @@ $( function() {
 	var widthMode = 40;
 	var claimedSpots = [];
 	
-	function bindDragging(node)
+	function createPreview()
 	{
-		/*
-		$(node).draggable({
-			obstacle: ".ui-draggable",
-			preventCollision: true,
-			containment: "parent",
-			grid: [ snapX, snapY ]
-		});
-		*/
-		$(node).mousedown(function(e) 
+		if(!currentObj)
 		{
-			if(!currentObj) {
+			var previewStyle = "background: purple; opacity:0.5; \
+							width:"+widthMode+"px; height:"+snapY+"px; \
+							top:"+cursorP.y+"px;left:"+cursorP.x+"px; \
+							position:absolute;";
+			var node = document.createElement('div');
+			$("#gridbox").append(node);
+			$(node).attr('style',previewStyle);
+			currentObj = $(node);
+		}
+	}
+	function bindDragging(selector)
+	{
+		$(selector).mousedown(function() 
+		{
+			if(!currentObj) 
+			{
 				currentObj = $(this);
 				console.log(currentObj);
 			}
 		}).mouseup(function() 
 		{
 			currentObj = null;
+			console.log("splopped");
+			claimedSpots.push({'position':[cursorP.x,cursorP.y],'width':widthMode});
 		});
 	}
-	function editClickCallback()
+	function unbindDragging(selector)
+	{
+		$(selector).unbind(mousedown);
+		$(selector).unbind(mouseup);
+	}
+	function bindSelection(selector)
+	{
+	
+	}
+	function editClickDownCallback()
 	{
 		if(currentObj)
 		{
-			var clone = currentObj.clone(true);
-			if(clone)
-			{
-				clone.appendTo("#gridbox");
-				claimedSpots.push({'position':[cursorP.x,cursorP.y],'width':widthMode});
-				$(clone).css({'opacity':'1'});
-				bindDragging(clone);
-			}
+			$(currentObj).css({'opacity':'1'});
+			bindDragging(currentObj);
 		}
+	}
+	function editClickUpCallback()
+	{
+		createPreview();
 	}
 	function editHoverOnCallback() {
 		//When cursor enters the gridbox
 		hoveringOverGrid = true;
-		//if($('.ui-draggable-dragging')) return;
-		var previewStyle = "background: purple; opacity:0.5; \
-						width:"+widthMode+"px; height:"+snapY+"px; \
-						top:"+snapY+"px;left:"+snapX+"px; \
-						position:absolute;";
-
+		createPreview();
         $(this).css({'border':'solid black 1px'})
-        var node = document.createElement('div');
-        $("#gridbox").append(node);
-		$(node).attr('style',previewStyle);
-		currentObj = $(node);
+        
 	}
 	
 	function editHoverOffCallback() 
@@ -110,35 +118,27 @@ $( function() {
     {
     	//Move preview object to follow cursor, make it snappable
     	var offset = $("#gridbox").offset();
-        cursorP.x = (Math.ceil((event.pageX-offset.left) / snapX)*snapX);
-        cursorP.y = (Math.ceil(((event.pageY-offset.top)) / snapY)*snapY);
+        cursorP.x = (Math.ceil((event.pageX-offset.left) / snapX)*snapX)-snapX;
+        cursorP.y = (Math.ceil(((event.pageY-offset.top)) / snapY)*snapY)-snapY;
         
         if (currentObj) {
         	var ix = cursorP.y/20;
         	ix = ix % 12;
-        	currentObj.css({'top':cursorP.y-snapY, 'left':cursorP.x-snapX, 'background':colorKey[ix]});
-    	}
-    	else if($('.iandrags-dragging'))
-    	{
-    		
-    		//console.log(event.pageY-offset.top);
-    		//var top = $('.ui-draggable-dragging').css('top')/20;
-			//console.log(top);
-    		//top = top % 12;
-
-    		//$('.ui-draggable-dragging').css({'background':colorKey[top]});
+        	currentObj.css({'top':cursorP.y, 'left':cursorP.x, 'background':colorKey[ix]});
     	}
     }
     function setEditMode()
     {
-    	$('#gridbox').click(editClickCallback);
-		$('#gridbox').hover(editHoverOnCallback,editHoverOffCallback);
+    	$('#gridbox').mousedown(editClickDownCallback)
+    				 .mouseup(editClickUpCallback)
+					 .hover(editHoverOnCallback,editHoverOffCallback);
 		$(document).mousemove(editCursorCallback);
     }
     function exitEditMode()
     {
-    	$('#gridbox').unbind("click",editClickCallback);
-		$('#gridbox').unbind("hover",editHoverOnCallback,editHoverOffCallback);
+    	$('#gridbox').unbind("mousedown",editClickDownCallback)
+    				 .unbind("mouseup",editClickUpCallback)
+    				 .unbind("hover",editHoverOnCallback,editHoverOffCallback);
 		$(document).unbind("mousemove",editCursorCallback);
     }
     function setSelectMode()
@@ -270,7 +270,7 @@ $( function() {
 	}, [["0:0:0", cChord], ["1:0:0", dChord],]).start("0");
 
 	Tone.Transport.bpm.value = 90;
-	Tone.Transport.start();
+	//Tone.Transport.start();
 	nx.onload = function() {
 		button1.on('*',function(data) {
 			console.log("button pressed!");
