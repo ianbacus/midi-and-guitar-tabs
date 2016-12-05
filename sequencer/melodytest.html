@@ -12,97 +12,157 @@
 <script src="js/jquery-ui.js"> </script>
 <script src="js/jquery.mobile.min.js"> </script>
 
+<!--
+<script src="jquery-1.8.3.min.js"></script>
+    <script src="ui/jquery.ui.core.js"></script>
+    <script src="ui/jquery.ui.widget.js"></script>
+    <script src="ui/jquery.ui.mouse.js"></script>
+    <script src="ui/jquery.ui.draggable.js"></script>
+    <script src="jquery-collision.min.js"></script>
+    <script src="jquery-ui-draggable-collision.min.js"></script>
+
+
+<script src="js/jquery.ui-draggable-collision.js"> </script>
+<script src="js/jquery-ui.js"> </script>
+<script src="js/jquery.mobile.min.js"> </script>
+-->
 <script type="text/javascript" src="js/nexusUI.js" ></script>
 <script type="text/javascript" src="js/Tone.js" ></script>
 
 <script>
 
 
-function buttonHandler(button) {
-	
-	switch(button.id)
-	{
-		case 'editBtn':
-			$('.draggable')
-			//.removeClass('selectable').addClass('draggable')
-			.draggable( 'enable' );
-			
-			//bindSymbolBehavior();
-			break;
-		case 'selectBtn':
-			$('.draggable')
-			//.removeClass('draggable').addClass('selectable')
-			.draggable( 'disable' );
-			//bindSymbolBehavior();
-			break;
-		case 'deleteBtn':
-			//get selected item, then delete it
-			gridBox.removeChild(div);
-			break;
-		case 'createBtn':
-			//add new div to array
-			
-			break;
-	}
-}
+var colorKey = ['red','#CC0099','yellow','#669999','#003399','#990000',  
+				'#000099','#ff6600','#660066','#006600','#669999','#003399'];
 
 
 $( function() {
+	var hoveringOverGrid = 0;
 	var cursorP = { x: -1, y: -1 };
 	var currentObj = null;
 	var snapX = 20,snapY=20;
 	var widthMode = 40;
-    $(document).mousemove(function(event) 
-    {
-    	//Move preview object to follow cursor, make it snappable
-    	var offset = $("#gridbox").offset();
-        cursorP.x = event.pageX-offset.left;
-        cursorP.y = event.pageY-offset.top;
-        
-        if (currentObj) {
-        	var x = (Math.ceil(cursorP.x / snapX)*snapX)-snapX;
-        	var y = (Math.ceil(cursorP.y / snapY)*snapY)-snapY;
-        	currentObj.css({'top':y, 'left':x});
-    	}
-    });
-	$('#gridbox').click(function()
-	{
-		currentObj.clone(true).appendTo("#gridbox");
-		console.log('a');
-	});
+	var claimedSpots = [];
 	
-	$('#gridbox').hover(function()
+	function bindDragging(node)
 	{
+		$(node).draggable({
+			obstacle: ".ui-draggable",
+			preventCollision: true,
+			containment: "parent",
+			grid: [ snapX, snapY ]
+		});
+	}
+	function editClickCallback()
+	{
+		if(currentObj)
+		{
+			var clone = currentObj.clone(true);
+			if(clone)
+			{
+				clone.appendTo("#gridbox");
+				claimedSpots.push({'position':[cursorP.x,cursorP.y],'width':widthMode});
+				$(clone).css({'opacity':'1'});
+				bindDragging(clone);
+			}
+		}
+	}
+	function editHoverOnCallback() {
+		//When cursor enters the gridbox
+		hoveringOverGrid = true;
+		if($('.ui-draggable-dragging')) return;
 		var previewStyle = "background: purple; opacity:0.5; \
 						width:"+widthMode+"px; height:"+snapY+"px; \
 						top:"+snapY+"px;left:"+snapX+"px; \
 						position:absolute;";
-		//When cursor enters the gridbox, draw an opaque preview div block
+
         $(this).css({'border':'solid black 1px'})
         var node = document.createElement('div');
         $("#gridbox").append(node);
-        
-        $(node).draggable({
-			containment: "parent",
-			grid: [ snapX, snapY ]
-		});
-		
 		$(node).attr('style',previewStyle);
 		currentObj = $(node);
-	},
-    function()
+	}
+	
+	function editHoverOffCallback() 
     {
     	//When cursor leaves the gridbox
+    	hoveringOverGrid = false;
         $(this).css({'border':'solid red 1px'});
-        currentObj.remove();
-        currentObj=null;
-    });
-
-	/*
-    window.isHovering = function (selector) {
-        return $(selector).data('hover')?true:false; //check element for hover property
+        if(currentObj)
+        {
+	        currentObj.remove();
+    	    currentObj=null;
+    	}
     }
-    */
+    function editCursorCallback(event) 
+    {
+    	//Move preview object to follow cursor, make it snappable
+    	var offset = $("#gridbox").offset();
+        cursorP.x = (Math.ceil((event.pageX-offset.left) / snapX)*snapX);
+        cursorP.y = (Math.ceil((event.pageY-offset.top) / snapY)*snapY);
+        var ix = cursorP.y/20;
+        ix = ix % 12;
+        if (currentObj) {
+        	
+        	currentObj.css({'top':cursorP.y-snapY, 'left':cursorP.x-snapX, 'background':colorKey[ix]});
+    	}
+    	else if($('.ui-draggable-dragging'))
+    	{
+    		$('.ui-draggable-dragging').css({'background':colorKey[ix]});
+    	}
+    }
+    function setEditMode()
+    {
+    	$('#gridbox').click(editClickCallback);
+		$('#gridbox').hover(editHoverOnCallback,editHoverOffCallback);
+		$(document).mousemove(editCursorCallback);
+    }
+    function exitEditMode()
+    {
+    	$('#gridbox').unbind("click",editClickCallback);
+		$('#gridbox').unbind("hover",editHoverOnCallback,editHoverOffCallback);
+		$(document).unbind("mousemove",editCursorCallback);
+    }
+    function setSelectMode()
+    {
+    	var dragSelector = $(".ui-draggable");
+    	dragSelector.selectable();
+    	dragSelector.draggable( "destroy" );
+    }
+	$(document).keyup(function(e) {
+		
+			switch(e.keyCode)
+			{
+				case 81: //"q" key
+					if(hoveringOverGrid && currentObj)
+					{
+						currentObj.remove();
+						currentObj=null;
+					}
+					break;
+				case 87: //"w" key
+					if(widthMode < 8*snapX)
+						widthMode = widthMode*2;
+					if(currentObj)
+						currentObj.css({'width':widthMode});
+					break;
+				case 69: //"e" key
+					if(widthMode > snapX)
+						widthMode = widthMode/2;
+					if(currentObj)
+						currentObj.css({'width':widthMode});	
+					break;
+				case 90: //"z" key"
+					setEditMode();
+					break;
+				case 88: //"x" key"
+					setSelectMode();
+					break;
+				case 67: //"c" key"
+					break;
+			}
+	});
+	setEditMode();
     
 } );
 
