@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf‐8">
-<title> Hello web audio </title> 
+<title> Browser Composer </title> 
 
 <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 <link rel="stylesheet" href="/resources/demos/style.css">
@@ -46,11 +46,23 @@ $( function() {
 	
 	function bindDragging(node)
 	{
+		/*
 		$(node).draggable({
 			obstacle: ".ui-draggable",
 			preventCollision: true,
 			containment: "parent",
 			grid: [ snapX, snapY ]
+		});
+		*/
+		$(node).mousedown(function(e) 
+		{
+			if(!currentObj) {
+				currentObj = $(this);
+				console.log(currentObj);
+			}
+		}).mouseup(function() 
+		{
+			currentObj = null;
 		});
 	}
 	function editClickCallback()
@@ -70,7 +82,7 @@ $( function() {
 	function editHoverOnCallback() {
 		//When cursor enters the gridbox
 		hoveringOverGrid = true;
-		if($('.ui-draggable-dragging')) return;
+		//if($('.ui-draggable-dragging')) return;
 		var previewStyle = "background: purple; opacity:0.5; \
 						width:"+widthMode+"px; height:"+snapY+"px; \
 						top:"+snapY+"px;left:"+snapX+"px; \
@@ -99,16 +111,22 @@ $( function() {
     	//Move preview object to follow cursor, make it snappable
     	var offset = $("#gridbox").offset();
         cursorP.x = (Math.ceil((event.pageX-offset.left) / snapX)*snapX);
-        cursorP.y = (Math.ceil((event.pageY-offset.top) / snapY)*snapY);
-        var ix = cursorP.y/20;
-        ix = ix % 12;
+        cursorP.y = (Math.ceil(((event.pageY-offset.top)) / snapY)*snapY);
+        
         if (currentObj) {
-        	
+        	var ix = cursorP.y/20;
+        	ix = ix % 12;
         	currentObj.css({'top':cursorP.y-snapY, 'left':cursorP.x-snapX, 'background':colorKey[ix]});
     	}
-    	else if($('.ui-draggable-dragging'))
+    	else if($('.iandrags-dragging'))
     	{
-    		$('.ui-draggable-dragging').css({'background':colorKey[ix]});
+    		
+    		//console.log(event.pageY-offset.top);
+    		//var top = $('.ui-draggable-dragging').css('top')/20;
+			//console.log(top);
+    		//top = top % 12;
+
+    		//$('.ui-draggable-dragging').css({'background':colorKey[top]});
     	}
     }
     function setEditMode()
@@ -237,15 +255,26 @@ $( function() {
 		fadeOut : 0.1,
     }).toMaster();
 	
-	var sequence = new Tone.Sequence(function(time, col){
-    	
-		//keys.start(notes[5], time, 0, "16n", 0, 2);
-	}, ["a3","b3","c3","d3"]);
+	var piano = new Tone.PolySynth(4, Tone.Synth, {
+		"volume" : -8,
+		"oscillator" : {
+			"partials" : [1, 2, 1],
+		},
+		"portamento" : 0.05
+	}).toMaster();
+	var cChord = ["C4"];
+	var dChord = ["D4"];
+	var gChord = ["E4"];
+	var pianoPart = new Tone.Part(function(time, chord){
+		piano.triggerAttackRelease(chord, "8n", time);
+	}, [["0:0:0", cChord], ["1:0:0", dChord],]).start("0");
+
+	Tone.Transport.bpm.value = 90;
 	Tone.Transport.start();
 	nx.onload = function() {
 		button1.on('*',function(data) {
 			console.log("button pressed!");
-			sequence.start();
+			//sequence.start();
 			//keys.start(notes[5], time, 0, "32n", 0, vel);
 			//sampler.start();
 		});
@@ -254,8 +283,9 @@ $( function() {
 
 </head>
 <body>
-	<canvas nx="button"></canvas>
+
 	<div id="gridbox"></div>
+	<canvas nx="button"></canvas>
 </body>
 	
 </html>

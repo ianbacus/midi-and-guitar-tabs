@@ -1,9 +1,6 @@
 canvas {
     margin-top: 3px;
     }
-  	.previewDraggable { opacity:50%}
-  	.ui-draggable { width: 80px; height: 18px; background:red;} 
-	.ui-draggable:hover {background:white;}
 	
 	.selectable { width: 80px; height: 80px; padding: 0.5em; border-style: dotted; } 
 	.selectable .ui-selecting { background: #FECA40; }
