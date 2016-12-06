@@ -13,6 +13,7 @@ canvas {
 	background:whitesmoke url('https://s3.amazonaws.com/com.appgrinders.test/images/grid_20.png') repeat;
 	overflow-x:scroll;
 }
+.selected {opacity:0.7;}
 
 #feedback { font-size: 1.4em; }
 #selectable .ui-selecting { background: #FECA40; }

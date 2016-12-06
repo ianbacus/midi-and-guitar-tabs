@@ -32,13 +32,20 @@
 <script>
 
 
-//var colorKey = ['red','#CC0099','yellow','#669999','#003399','#990000',  
-//				'#000099','#ff6600','#660066','#006600','#669999','#003399'];
+var colorKey = ['red','#CC0099','yellow','#669999','#003399','#990000',  
+				'#000099','#ff6600','#660066','#006600','#669999','#003399'];
 				
-var colorKey = ['gray','gray','gray','gray','gray','gray','gray','gray','gray','gray','gray','gray'];
+//var colorKey = ['gray','gray','gray','gray','gray','gray','gray','gray','gray','gray','gray','gray'];
 
 
 $( function() {
+	var ss = {
+		BEGIN: 1,
+		SELECTED: 2,
+		DRAG: 3	
+	}
+	var currentObjs = [];
+	var selectState = ss.BEGIN;
 	var hoveringOverGrid = 0;
 	var cursorP = { x: -1, y: -1 };
 	var selectP = { x: 0, y: 0};
@@ -46,9 +53,23 @@ $( function() {
 	var snapX = 20,snapY=20;
 	var widthMode = 40;
 	var claimedSpots = [];
-	var previewStyle = "opacity:0.5; \
-							height:"+snapY+"px; \
-							position:absolute;";
+	var previewStyle = "opacity:0.5; height:"+snapY+"px; position:absolute;";
+	
+	function makeSelected(selector)
+	{
+		
+		$(selector).addClass('selected');
+		$(selector).data( "init-position", { top: $(selector).css('top'), 
+											left: $(selector).css('left') } );
+		$(selector).css({'opacity':0.7});
+	}
+	
+	function unSelect(selector)
+	{	
+		$(selector).removeData("init-position");
+		$(selector).css({'opacity':1});
+		$(selector).removeClass('selected');
+	}
 	
 	function checkOverlap(rect1,rect2)
 	{
@@ -141,16 +162,79 @@ $( function() {
 	
 	function selectClickDownCallback()
 	{
-		createSelectRectangle();
+		
+		switch(selectState)
+		{
+			case ss.BEGIN:
+				console.log("cd begin");
+				unSelect($('.note'))
+				createSelectRectangle();
+				break;
+			case ss.SELECTED:
+				console.log("cd selected");
+				/*
+				if(! ($(document).has(".selected"))) selectState = ss.BEGIN;
+				*/
+				var cursorRect = $('<div>');
+				$(cursorRect).css({'top':cursorP.y, 'left':cursorP.x, 'height':1, 'width':1});
+				var overlapping = true;
+				$(".selected").each(function(){
+					var test1 = ($(this).css('top') == (cursorP.y+snapY));
+					var test2 = ($(this).css('left') == (cursorP.x+snapY));
+					if(test1 && test2)
+					{
+						console.log("REAL CLICK");
+						overlapping = true;
+						
+					}
+				});
+				if(overlapping == false) selectState = ss.BEGIN;
+				else 
+				{
+					console.log("click");
+					selectState = ss.DRAG;
+					selectP.x = cursorP.x;
+					selectP.y = cursorP.y;
+				}
+				break;
+			case ss.DRAG:
+				console.log("cd drag");
+				selectState = ss.BEGIN;
+				break;
+		}
+		
 	}
 	
 	function selectClickUpCallback()
 	{
-		$(".note").each(function() {
-			if(checkOverlap($(currentObj),$(this)))
-				console.log("sunk ur battleship");
-		});
-		deleteCurrentObj();
+		
+			switch(selectState)
+			{
+				case ss.BEGIN:
+					console.log("cu begin");
+					selectState = ss.BEGIN;
+					$(".note").each(function() 
+					{
+						if(checkOverlap($(currentObj),$(this)))
+						{
+							console.log("detected selection");
+							makeSelected($(this));
+							selectState = ss.SELECTED;
+						}
+					});
+					deleteCurrentObj(); //delete selection rectangle
+					
+					break;
+				case ss.SELECTED:
+					console.log("cu selected");
+					selectState = ss.BEGIN;
+					break;
+				case ss.DRAG:
+					console.log("cu drag");
+					selectState = ss.SELECTED;
+					break;
+			}
+		
 	}
 	
 	function selectHoverOnCallback()
@@ -181,8 +265,19 @@ $( function() {
         	if(y < 0) currentObj.css({'height':-1-y,'top':cursorP.y});
         	else if(y==0) currentObj.css({'height':0,'top':selectP.y});
         	else currentObj.css({'height':y-1});
-        	
-        	 
+	 
+    	}
+    	else if(selectState == ss.DRAG)
+    	{
+    		var y = (cursorP.y)-selectP.y;
+    		var x = (cursorP.x)-selectP.x;
+    		$(".selected").each(function(){
+				var thisY = (parseInt($(this).data( "init-position").top,10)+y);
+				var thisX = (parseInt($(this).data( "init-position").left,10)+x);
+				var ix = thisY/20;
+				ix = ix % 12;
+				$(this).css({'top':thisY, 'left':thisX, 'background':colorKey[ix]});
+			});	
     	}
     }
 	
@@ -260,11 +355,13 @@ $( function() {
     function setSelectMode()
     {
     	//bindSelection($(".note"));
+    	selectState = ss.BEGIN;
     	$('#gridbox').mousedown(selectClickDownCallback)
     				 .mouseup(selectClickUpCallback)
 					 .hover(selectHoverOnCallback,selectHoverOffCallback)
 					 .mousemove(selectCursorCallback)
 					 .css({'border':'solid blue 1px'});
+		console.log(selectState);
     }
 
     function exitSelectMode()
@@ -278,8 +375,19 @@ $( function() {
 		
 			switch(e.keyCode)
 			{
+				case 67: //"c" key"
+					break;
+				case 68: //"d" key
+					break;
+				case 69: //"e" key
+					if(widthMode > snapX)
+						widthMode = widthMode/2;
+					if(currentObj)
+						currentObj.css({'width':widthMode});	
+					break;
 				case 81: //"q" key
 					console.log("cancel");
+					unSelect($(".note"));
 					deleteCurrentObj();
 					break;
 				case 87: //"w" key
@@ -288,25 +396,19 @@ $( function() {
 					if(currentObj)
 						currentObj.css({'width':widthMode});
 					break;
-				case 69: //"e" key
-					if(widthMode > snapX)
-						widthMode = widthMode/2;
-					if(currentObj)
-						currentObj.css({'width':widthMode});	
-					break;
-				case 90: //"z" key"
-					exitSelectMode();
-					console.log("edit mode (drag)");
-					setEditMode();
-					break;
 				case 88: //"x" key"
 					exitEditMode();
 					console.log("select mode");
 					setSelectMode();
 					break;
-				case 67: //"c" key"
+				case 90: //"z" key"
+					exitSelectMode();
+					console.log("edit mode");
+					setEditMode();
 					break;
+				
 			}
+			
 	});
 	$(document).mousemove(mainCursorCallback);
 	setEditMode();
