@@ -32,21 +32,33 @@
 <script>
 
 
-var colorKey = ['red','#CC0099','yellow','#669999','#003399','#990000',  
-				'#000099','#ff6600','#660066','#006600','#669999','#003399'];
+//var colorKey = ['red','#CC0099','yellow','#669999','#003399','#990000',  
+//				'#000099','#ff6600','#660066','#006600','#669999','#003399'];
 				
-//var colorKey = ['gray','gray','gray','gray','gray','gray','gray','gray','gray','gray','gray','gray'];
+var colorKey = ['gray','gray','gray','gray','gray','gray','gray','gray','gray','gray','gray','gray'];
 
 
 $( function() {
-	var ss = {
+	var selectEnum = {
 		BEGIN: 1,
 		SELECTED: 2,
 		DRAG: 3	
 	}
+	var editEnum = {
+		PREVIEW: 1,
+		DRAG: 2,
+		OFF: 3
+	}
+	var em = {
+		EDIT: 0,
+		SELECT: 1,
+		DELETE: 2
+	}
+	var emColors = ['orange','blue','green']
 	var currentObjs = [];
-	var selectState = ss.BEGIN;
-	var hoveringOverGrid = 0;
+	var mainMode = em.EDIT;
+	var editState = editEnum.PREVIEW;
+	var selectState = selectEnum.BEGIN;
 	var cursorP = { x: -1, y: -1 };
 	var selectP = { x: 0, y: 0};
 	var currentObj = null;
@@ -55,21 +67,6 @@ $( function() {
 	var claimedSpots = [];
 	var previewStyle = "opacity:0.5; height:"+snapY+"px; position:absolute;";
 	
-	function makeSelected(selector)
-	{
-		
-		$(selector).addClass('selected');
-		$(selector).data( "init-position", { top: $(selector).css('top'), 
-											left: $(selector).css('left') } );
-		$(selector).css({'opacity':0.7});
-	}
-	
-	function unSelect(selector)
-	{	
-		$(selector).removeData("init-position");
-		$(selector).css({'opacity':1});
-		$(selector).removeClass('selected');
-	}
 	
 	function checkOverlap(rect1,rect2)
 	{
@@ -92,28 +89,52 @@ $( function() {
 	
 	function deleteCurrentObj()
 	{
-		if($(currentObj))
+		if(currentObj)
 		{
-			$(currentObj).remove();
-    		currentObj=null;
+			$(currentObj).remove();	
+    		currentObj=null;	
     	}
     	else console.log("error");
 	}
 	
-	function createPreview()
+	function wasClicked(selector)
 	{
-		if(!currentObj)
-		{
-			
-			var node = document.createElement('div');
-			var ix = (cursorP.y/20) % 12;
-			$("#gridbox").append(node);
-			$(node).attr('style',previewStyle);
-			
-        	$(node).css({'top':cursorP.y, 'left':cursorP.x, 'background':colorKey[ix], 'width':widthMode});
-			currentObj = $(node);
-		}
+		var cursorRect = $('<div>');
+		$(cursorRect).css({'top':cursorP.y, 'left':cursorP.x, 'height':1, 'width':1});
+		var overlapping = false;
+		$(selector).each(function(){
+			if(checkOverlap($(this),$(cursorRect)))
+			{
+				overlapping = true;
+			}
+		});
+		cursorRect = null;
+		return overlapping;
 	}
+	
+	
+	/* 
+		Select functions	
+	*/
+	
+	function makeSelected(selector)
+	{
+		$(selector).each(function(){
+			if(!($(this).hasClass('selected')))
+				$(this).addClass('selected');
+			$(this).data( "init-position", { top: $(this).css('top'), 
+												left: $(this).css('left') } );
+			$(this).css({'opacity':0.7});
+		});
+	}
+	
+	function unSelect(selector)
+	{	
+		$(selector).removeData("init-position");
+		$(selector).css({'opacity':1});
+		$(selector).removeClass('selected');
+	}
+	
 	
 	function createSelectRectangle()
 	{
@@ -132,26 +153,15 @@ $( function() {
 		}
 	}
 	
-	function bindDragging(selector)
+	function bindDeletion(selector)
 	{
-		$(selector).mousedown(function() 
+		$(selector).mouseup(function()
 		{
-			if(!currentObj) 
-			{
-				currentObj = $(this);
-				console.log(currentObj);
-			}
-		}).mouseup(function() 
-		{
-			currentObj = null;
-			console.log("splopped");
-			//claimedSpots.push({'position':[cursorP.x,cursorP.y],'width':widthMode});
+			$(this).remove();
 		});
 	}
-	
-	function unbindDragging(selector)
+	function unbindDeletion(selector)
 	{
-		$(selector).unbind("mousedown");
 		$(selector).unbind("mouseup");
 	}
 	
@@ -165,39 +175,29 @@ $( function() {
 		
 		switch(selectState)
 		{
-			
-			case ss.SELECTED:
+			case selectEnum.SELECTED:
 				console.log("cd selected");
-				var cursorRect = $('<div>');
-				$(cursorRect).css({'top':cursorP.y, 'left':cursorP.x, 'height':1, 'width':1});
-				var overlapping = false;
-				$(".selected").each(function(){
-					if(checkOverlap($(this),$(cursorRect)))
-					{
-						overlapping = true;
-						
-					}
-				});
-				cursorRect = null;
-				if(overlapping == false) 
+				
+				if(!wasClicked($(".selected")) )
 				{
-					selectState = ss.BEGIN;
+					selectState = selectEnum.BEGIN;
 				}
 				else 
 				{
-					selectState = ss.DRAG;
+					selectState = selectEnum.DRAG;
+					makeSelected($('.selected'));
 					selectP.x = cursorP.x;
 					selectP.y = cursorP.y;
 					break;
 				}
-			case ss.BEGIN:
+			case selectEnum.BEGIN:
 				console.log("cd begin");
 				unSelect($('.note'))
 				createSelectRectangle();
 				break;
-			case ss.DRAG:
+			case selectEnum.DRAG:
 				console.log("cd drag");
-				selectState = ss.SELECTED;
+				selectState = selectEnum.SELECTED;
 				break;
 		}
 		
@@ -205,47 +205,32 @@ $( function() {
 	
 	function selectClickUpCallback()
 	{
-		
+		console.log('clickup',selectState);
 			switch(selectState)
 			{
-				case ss.BEGIN:
-					//console.log("cu begin");
-					selectState = ss.BEGIN;
+				case selectEnum.BEGIN:
+					console.log("cu begin");
+					selectState = selectEnum.BEGIN;
 					$(".note").each(function() 
 					{
 						if(checkOverlap($(currentObj),$(this)))
 						{
 							console.log("detected selection");
 							makeSelected($(this));
-							selectState = ss.SELECTED;
+							selectState = selectEnum.SELECTED;
 						}
 					});
 					deleteCurrentObj(); //delete selection rectangle
 					
 					break;
-				case ss.SELECTED:
-					//console.log("cu selected");
-					//selectState = ss.BEGIN;
+				case selectEnum.SELECTED:
+					console.log("cu selected");
 					break;
-				case ss.DRAG:
-					//console.log("cu drag");
-					//selectState = ss.SELECTED;
+				case selectEnum.DRAG:
+					console.log("cu drag");
 					break;
 			}
 		
-	}
-	
-	function selectHoverOnCallback()
-	{
-		hoveringOverGrid = true;
-        $(this).css({'border':'solid blue 1px'})
-	}
-	
-	function selectHoverOffCallback()
-	{
-		hoveringOverGrid = false;
-        $(this).css({'border':'solid black 1px'});
-	    deleteCurrentObj();
 	}
 	
 	function selectCursorCallback(event)
@@ -265,7 +250,7 @@ $( function() {
         	else currentObj.css({'height':y-1});
 	 
     	}
-    	else if(selectState == ss.DRAG)
+    	else if(selectState == selectEnum.DRAG)
     	{
     		var y = (cursorP.y)-selectP.y;
     		var x = (cursorP.x)-selectP.x;
@@ -275,44 +260,99 @@ $( function() {
 				var ix = thisY/20;
 				ix = ix % 12;
 				$(this).css({'top':thisY, 'left':thisX, 'background':colorKey[ix]});
-			});	
+			});
     	}
     }
+	
+	/*
+		Edit functions
+	*/
+	
+	
+	function createPreview()
+	{
+		console.log("create preview");
+		if(!currentObj)
+		{
+			var node = document.createElement('div');
+			var ix = (cursorP.y/20) % 12;
+			$("#gridbox").append(node);
+			$(node).attr('style',previewStyle);
+			$(node).addClass("selected");
+        	$(node).css({'top':cursorP.y, 'left':cursorP.x, 'background':colorKey[ix], 'width':widthMode});
+			currentObj = $(node);
+		}
+	}
+	
+	function bindDragging(selector)
+	{
+		$(selector).mousedown(function() 
+		{
+			if(!currentObj) 
+			{
+				console.log("clicked a note");
+				currentObj = $(this);
+			}
+		}).mouseup(function() 
+		{
+			currentObj = null;
+			//claimedSpots.push({'position':[cursorP.x,cursorP.y],'width':widthMode});
+		});
+	}
+	
+	function unbindDragging(selector)
+	{
+		$(selector).unbind("mousedown");
+		$(selector).unbind("mouseup");
+	}
 	
 	function editClickDownCallback()
 	{
 		//Instantiate object
+		var clickedNote = wasClicked($(".note"));
+		
+		if(!clickedNote)
+		{
+			console.log("note wasn't clicked");
+		}
 		if(currentObj)
 		{
 			$(currentObj).css({'opacity':'1'});
 			$(currentObj).addClass('note');
+			$(currentObj).removeClass('selected');
 			bindDragging(currentObj);
-			currentObj = null;
 		}
 	}
 	
 	function editClickUpCallback()
 	{
+		//if(editState == editEnum.PREVIEW)
 		createPreview();
 	}
 	
 	function editHoverOnCallback() {
 		//When cursor enters the gridbox
 		hoveringOverGrid = true;
-		createPreview();
-        $(this).css({'border':'solid orange 1px'})
-        
+		console.log(editState);
+		//if(editState == editEnum.PREVIEW)
+		//{	console.log("creatin preview");
+			createPreview();
+		//}     
 	}
 	
-	function editHoverOffCallback() 
-    {
-    	//When cursor leaves the gridbox
-    	hoveringOverGrid = false;
-        $(this).css({'border':'solid black 1px'});
-	    deleteCurrentObj();
-	    
-    }
 
+    function editCursorCallback(event)
+    {
+    	//console.log(currentObj);
+    	
+    	//if ((editState = editEnum.DRAG) && (currentObj)) {
+    	if(currentObj) {
+        	var ix = cursorP.y/20;
+        	ix = ix % 12;
+        	currentObj.css({'top':cursorP.y, 'left':cursorP.x, 'background':colorKey[ix]});
+    	}
+    }
+    
     function mainCursorCallback(event) 
     {
     	//Move preview object to follow cursor, make it snappable
@@ -320,97 +360,172 @@ $( function() {
         cursorP.x = (Math.ceil((event.pageX-offset.left) / snapX)*snapX)-snapX;
         cursorP.y = (Math.ceil(((event.pageY-offset.top)) / snapY)*snapY)-snapY;
     }
-    
-    function editCursorCallback(event)
+	function mainHoverOnCallback(event)
+	{
+		$(this).css({'border':'solid '+emColors[mainMode]+' 1px'})
+	}
+	
+	function mainHoverOffCallback(event)
+	{
+		$(this).css({'border':'solid black 1px'});
+		deleteCurrentObj();
+	}
+	
+    function setmainMode()
     {
-    	if (currentObj) {
-        	var ix = cursorP.y/20;
-        	ix = ix % 12;
-        	currentObj.css({'top':cursorP.y, 'left':cursorP.x, 'background':colorKey[ix]});
-    	}
-    }
-    
-    
-
-    function setEditMode()
-    {
+    	editState = editEnum.PREVIEW;
+    	deleteCurrentObj();
     	bindDragging($(".note"));
     	
     	$('#gridbox').mousedown(editClickDownCallback)
     				 .mouseup(editClickUpCallback)
-					 .hover(editHoverOnCallback,editHoverOffCallback)
+					 .hover(editHoverOnCallback,function(){})
 					 .mousemove(editCursorCallback)
 					 .css({'border':'solid orange 1px'});
 		createPreview();
     }
 
-    function exitEditMode()
+    function exitmainMode()
     {
-    	deleteCurrentObj();
+    	editState = editEnum.OFF;
     	unbindDragging($(".note"));
-    	$('#gridbox').off();	
+    	$('#gridbox').off("mousedown",editClickDownCallback)
+    				 .off("mouseup",editClickUpCallback)
+					 .off("hover",editHoverOnCallback,function(){})
+					 .off("mousemove",editCursorCallback);
+		
     }
 
     function setSelectMode()
     {
-    	//bindSelection($(".note"));
-    	selectState = ss.BEGIN;
+    	deleteCurrentObj();
+    	selectState = selectEnum.BEGIN;
     	$('#gridbox').mousedown(selectClickDownCallback)
     				 .mouseup(selectClickUpCallback)
-					 .hover(selectHoverOnCallback,selectHoverOffCallback)
 					 .mousemove(selectCursorCallback)
 					 .css({'border':'solid blue 1px'});
-		console.log(selectState);
+					 //.hover(selectHoverOnCallback,selectHoverOffCallback)
     }
 
     function exitSelectMode()
     {
-    	deleteCurrentObj();
-    	//unbindSelection($(".note"));
-    	$('#gridbox').off();
+    	unSelect($(".note"));
+    	$('#gridbox').off("mousedown",selectClickDownCallback)
+    				 .off("mouseup",selectClickUpCallback)
+					 .off("mousemove",selectCursorCallback);
+					 //.off("hover",selectHoverOnCallback,selectHoverOffCallback)
     }
     
+    function setDeleteMode()
+    {
+    	bindDeletion($(".note"));
+    }
+    
+    function exitDeleteMode()
+    {
+    	
+    }
+    
+    function setCopyMode()
+    {
+    
+    }
+    
+    function exitCopyMode()
+    {
+    
+    }
+    
+    function changemainMode(nextMode)
+    {
+   		if(mainMode == nextMode) return;
+    	switch(mainMode)
+    	{
+    		case em.EDIT:
+    			exitmainMode();
+    			break;
+    		case em.SELECT:
+    			exitSelectMode();
+    			break;
+    		case em.DELETE:
+    			exitDeleteMode();
+    			break;
+    	}
+    	switch(nextMode)
+    	{
+    		case em.EDIT:
+				console.log("edit mode");
+				setmainMode();
+    			break;
+    		case em.SELECT:
+				console.log("select mode");
+				setSelectMode();
+    			break;
+    		case em.DELETE:
+    			console.log("delete mode");
+    			setDeleteMode();
+    			break;
+    			
+    	}
+    	mainMode = nextMode;
+    }
 	$(document).keyup(function(e) {
 		
+			var nextMode = mainMode;
 			switch(e.keyCode)
 			{
 				case 67: //"c" key"
 					break;
 				case 68: //"d" key
+					if((selectState == selectEnum.SELECTED) || (selectState == selectEnum.DRAG))
+					{
+						selectState = selectEnum.BEGIN;
+						$(".selected").remove();
+					}
+					else
+					{
+						nextMode = em.DELETE;
+					}
 					break;
-				case 69: //"e" key
-					if(widthMode > snapX)
-						widthMode = widthMode/2;
-					if(currentObj)
-						currentObj.css({'width':widthMode});	
-					break;
+				
 				case 81: //"q" key
 					console.log("cancel");
 					unSelect($(".note"));
+					if(mainMode == em.EDIT)
+						editState = editEnum.DRAG;
 					deleteCurrentObj();
 					break;
 				case 87: //"w" key
+					if(widthMode > snapX)
+						widthMode = widthMode/2;
+					//if(currentObj)
+					$('.selected').each(function(){
+						$(this).css({'width':widthMode});	
+					});
+					break;
+				case 69: //"e" key
 					if(widthMode < 8*snapX)
 						widthMode = widthMode*2;
-					if(currentObj)
-						currentObj.css({'width':widthMode});
+					//if(currentObj)
+					$('.selected').each(function(){
+						$(this).css({'width':widthMode});
+					});
 					break;
 				case 88: //"x" key"
-					exitEditMode();
-					console.log("select mode");
-					setSelectMode();
+					nextMode = em.SELECT;
 					break;
 				case 90: //"z" key"
-					exitSelectMode();
-					console.log("edit mode");
-					setEditMode();
+					nextMode = em.EDIT;
 					break;
 				
 			}
+			changemainMode(nextMode);
+			
 			
 	});
-	$(document).mousemove(mainCursorCallback);
-	setEditMode();
+	$("#gridbox").mousemove(mainCursorCallback);
+	$("#gridbox").hover(mainHoverOnCallback,mainHoverOffCallback);
+	setmainMode();
     
 } );
 

@@ -7,8 +7,8 @@ canvas {
 .selectable .ui-selected { background: #F39814; color: white; }
 #gridbox {
 	border:solid red 1px;
-	width:600px;
-	height:300px;
+	width:800px;
+	height:800px;
 	position:relative;
 	background:whitesmoke url('https://s3.amazonaws.com/com.appgrinders.test/images/grid_20.png') repeat;
 	overflow-x:scroll;
