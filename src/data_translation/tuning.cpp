@@ -4,11 +4,18 @@
 #define  STR7
 
 
+#ifdef FUCK
+char tuning[] = {23, 28, 33, 38, 42,47 };
+char ptuning[] = "BEAGBe";
+const int tuningMinimum = 23;
+//const int SIZEOF_TUNING = sizeof(tuning)/sizeof(tuning[0])+1;
+#endif
+
 #ifdef STR7
 //7 string
 char tuning[] = {23, 28, 33, 38, 43, 47,52 };
 char ptuning[] = "BEADGBe";
-const int tuningMinimum = 24;
+const int tuningMinimum = 23;
 
 #endif
 #ifdef STANDARD

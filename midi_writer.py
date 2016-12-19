@@ -1,7 +1,7 @@
 import midi, collections, sys, os
 from collections import Counter
 
-note_offsets = (00,00,00,00,00,00,00,00,00,00,00,00,00,00)
+#note_offsets = (00,00,00,00,00,00,00,00,00,00,00,00,00,00)
 delta_offsets = (00,00,00,00)
 
 
@@ -13,7 +13,7 @@ def float_eq( a, b, eps=0.0001 ):
     return abs(a - b) <= eps
     
     
-def make(newfile,infile,condition):
+def make(newfile,infile,condition,note_offsets):
 	#condition = "count in range(3)"
 	'''
 	Uses the midi parser provided by Vishnubob's github project
@@ -31,6 +31,9 @@ def make(newfile,infile,condition):
 		1 - 4th note resolution
 	
 	'''
+	
+	note_offsets = eval(note_offsets)
+	print note_offsets
 	if(False):
 		infile,newfile = argv[0],argv[1]
 	p = midi.read_midifile(infile)
@@ -91,6 +94,7 @@ def make(newfile,infile,condition):
 						note_count +=1
 			try:
 				print "track "+str(count) +" average pitch: " +str(note_sum/note_count)+"["+str(lowest)+","+str(max)+"]: "+ trackname
+				
 			except:
 				pass			
 			note_sum=0
@@ -111,7 +115,7 @@ def make(newfile,infile,condition):
 			chunk = list(set(chunk)) #remove redundant notes (exact copies only)
 			chunk.sort()
 			
-			while len(chunk) > 6:
+			while len(chunk) > 5:
 				lost_notes += 1
 				chunk.pop(len(chunk)/2) #remove internal voices if the texture is too thick :'(
 			

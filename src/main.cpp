@@ -60,7 +60,7 @@ int main(int argc, char* argv[])
 	
 	std::cout << outputFile << std::endl;
 	RotateVisitor* thefixer = new RotateVisitor();
-	PrintVisitor* theprinter = new PrintVisitor(outputFile);
+	PrintVisitor* theprinter = new PrintVisitor(outputFile,80);
 	cout << "tabbing " << (upperBound - lowerBound) <<  " measures from " << lowerBound << " to " << upperBound << "..." << endl;
 	
 	measureIndex=0;	

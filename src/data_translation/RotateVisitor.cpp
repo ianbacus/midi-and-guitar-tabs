@@ -116,7 +116,7 @@ void RotateVisitor::conditionallyAddToStack(comparisonResult test, Chunk *c,
 	switch(test)
 	{
 		case DISCARD: //discard note from chunk
-			cout << "discard" << endl;
+			//cout << "discard" << endl;
 			c->remove_note(c->get_note_at(counter_index));
 			break;
 		case GOOD: //lock in compatible note for now
