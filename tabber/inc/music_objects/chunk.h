@@ -3,6 +3,13 @@
 #include "Note.h"
 #include "base.h"
 
+
+
+enum comparisonResult {
+BAD, DISCARD, GOOD,
+};
+
+
 class Chunk : public Base 
 {
 	private:
@@ -21,7 +28,7 @@ class Chunk : public Base
 		void pop_stack();
 		void push_stack(Note* n);
 		void print_stack();
-		int compare_with_stack(Note*);
+		comparisonResult compare_with_stack(Note*);
 		
 		int get_optima_size(void);
 		void set_optima(vector<pair <int, int> > set);
@@ -43,10 +50,6 @@ class Chunk : public Base
 		
 		Chunk(int d=0);
 		virtual ~Chunk(void);
-};
-
-enum {
-BAD, DISCARD, GOOD,
 };
 
 #endif

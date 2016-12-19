@@ -22,7 +22,8 @@ class Note : public Base
 		int get_fret() ;
 		
 		static int get_fret_at(int,int);
-		virtual bool compare(Note*) ;
+		static int get_string_at(int, int);
+		//virtual bool compare(Note*) ;
 		
 		int get_string();
 		int get_noteslost() const ;

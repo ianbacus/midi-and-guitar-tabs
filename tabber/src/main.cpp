@@ -36,7 +36,7 @@ int main(int argc, char* argv[])
 	int lowerBound=atoi(argv[5]);
 	unsigned int upperBound=atoi(argv[6]);
 	unsigned int align=atoi(argv[7]);
-	std::cout << align << std::endl;
+	std::cout << inputFile << std::endl;
 	vector<Bar*> score = score_maker(inputFile,noteOffset,align);
 	
 	//Fix inputs
@@ -57,10 +57,12 @@ int main(int argc, char* argv[])
 		lowerBound ^= upperBound;
 		upperBound ^= lowerBound;
 	}
-	if(( -1 == upperBound) || upperBound > score.size())	upperBound = score.size();
+	if(( -1 == upperBound) || upperBound > score.size())	
+		upperBound = score.size();
 	
+	std::cout << outputFile << std::endl;
 	RotateVisitor* thefixer = new RotateVisitor();
-	PrintVisitor* theprinter = new PrintVisitor(outputFile);
+	PrintVisitor* theprinter = new PrintVisitor(outputFile,80);
 	cout << "tabbing " << (upperBound - lowerBound) <<  " measures from " << lowerBound << " to " << upperBound << "..." << endl;
 	
 	measureIndex=0;	
@@ -76,8 +78,11 @@ int main(int argc, char* argv[])
 			(*it)->accept(theprinter);
 			format_count++;
 		}
+		
 	}
 	
+	theprinter->print_out();
+	theprinter->set_outfile("data/outTab.txt");
 	theprinter->print_out();
 	std::cout << "done. " << std::endl;
   
