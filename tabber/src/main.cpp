@@ -74,7 +74,7 @@ int main(int argc, char* argv[])
 		}
 		if((lowerBound <= measureIndex) && (measureIndex <= upperBound))
 		{
-			(*it)->accept(thefixer);
+			//(*it)->accept(thefixer);
 			(*it)->accept(theprinter);
 			format_count++;
 		}
