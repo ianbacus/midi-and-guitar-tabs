@@ -1,8 +1,8 @@
 # midi
 
-Use:  python midiTranslate.py <midi filename> <transpose> <measuresPerRow> <startMeasure> <endMeasure>
-Example: python midiTranslate.py 988-v01 2 3 0 -1
-This will load the midi file "data/input_files/988-v01.mid," transpose all of its notes down by two pitches, print 3 measures per row, and print all of the measures (-1 defaulting to the maximum size for the upper measure bound).
+Use:  python2.7 midiTranslate.py <midi filename> <transpose> <measuresPerRow> <startMeasure> <endMeasure> <mixCondition>
+Example: python midiTranslate.py wtc1f01 2 2 0 -1 1
+This will load the midi file "data/input_files/wtc1f01.mid," transpose all of its notes up by two pitches, print 3 measures per row, and print all measures from 0 until the upper bound (-1 defaults to the end of the score). The last argument can be used to filter out tracks conditionally by passing a string with the following format: "count in [0,1,...n]," for all tracks that one wishes to include.
 
 
 Sample output for Bach's Well Tempered Clavier, Book 1, Fugue 1:
