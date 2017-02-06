@@ -5,25 +5,30 @@ map<int,int> beat_value = {{1,32},{2,16},{4,8},{8,4},{16,2},{32,1}};
 
 std::map<int,string> quaver_map = 
 {
-{2," T"},{4, " s"},{6,".s"},{8," e"},{14,".e"},{16, " Q"},{24, ".Q"},{32," H"},{56,".H"},{64, " W"},
+{2,".T"},{4, ".s"},{6,",s"},{8,".e"},{14,",e"},{16, ".q"},{24, ",q"},{32,".h"},{56,",h"},{64, ".w"},
 };
 
+/*
+ *	Initialize print visitor with output file and columns per row
+ */	
 PrintVisitor::PrintVisitor(std::string ofile, int cset) : string_print_index(0), \
 							strings_closed(false), tripled(false), outfile(ofile), columnSet(cset)
 {
 	string_buffer.push_back(vector<string>(SIZEOF_TUNING+2));
 }
 
+/*
+ *	
+ */	
 void PrintVisitor::visitBar(Bar* b)
 {
     for(string_print_index=SIZEOF_TUNING; string_print_index>= 0; string_print_index--)
     {
     	if(string_print_index == SIZEOF_TUNING) 
     	{
-    		string_buffer.back()[SIZEOF_TUNING] += "   ";
+    		string_buffer.back()[SIZEOF_TUNING] += "...";
     		continue;
     	}
-//<<<<<<< HEAD:tabber/src/data_translation/printVisitor.cpp
     	(string_buffer.back())[string_print_index] += "|-";
 		for(int j=0; j<b->get_children_size(); j++)
 		{
@@ -47,74 +52,70 @@ void PrintVisitor::visitBar(Bar* b)
 				{
 					if(!tripled)
 					{ 
-						if(quaver_map.find(delta) != quaver_map.end()) //item is in our map
-						{
-							string_buffer.back()[SIZEOF_TUNING] += quaver_map[delta]+ std::string(delta,' ');
-						}
-						else
-						{
-							int extra_delta=0;
-							//split the delta, render enough empty spaces 
-							//TODO: find a better (more general) way to handle unanticipated note durations
-							std::cout << "stuck: delta=" << delta <<std::endl;
-							if(delta<0) delta *= -2;
-							while(quaver_map.find(delta) == quaver_map.end())
-							{
-								delta--;
-								extra_delta++;
-							}
-							string_buffer.back()[SIZEOF_TUNING] += quaver_map[delta]+ std::string(delta,' ');
-							string_buffer.back()[SIZEOF_TUNING] += quaver_map[extra_delta]+ std::string(extra_delta,' ');
-							
-						}
-						
+						appendThing();
 					}
 					else if(string_print_index == 0) string_buffer.back()[SIZEOF_TUNING] += " t";
 				}
 			}
 		}
 		(string_buffer.back())[string_print_index] += "-";
-		
-/*		
-=======
-
-    	(string_buffer.back())[string_print_index] += "|";
-		for(int j=0; j<b->get_children_size(); j++)
-		{
-			b->get_child(j)->accept(this);
-		}
-		(string_buffer.back())[string_print_index] += "-";
-		if(!tripled) 
-		{
-			string_buffer.back()[SIZEOF_TUNING] += "   ";
-		}
->>>>>>> temp:src/data_translation/printVisitor.cpp
-*/
-		tripled = false;
-		
-		
-		
+		tripled = false;	
 	}
-	
-	
 }
 
+/*
+ *	Add padding to the string buffers based on the given delta
+ */
+void PrintVisitor::addSpaces(int &delta)
+{
+	if(quaver_map.find(delta) != quaver_map.end()) //item is in our map
+	{
+		string_buffer.back()[SIZEOF_TUNING] += quaver_map[delta]+ std::string(delta,'.');
+	}
+	else
+	{
+		int extra_delta=0;
+		//split the delta, render enough empty spaces 
+		//TODO: find a better (more general) way to handle unanticipated note durations
+		std::cout << "stuck: delta=" << delta <<std::endl;
+		if(delta<0) delta *= -2;
+		while(quaver_map.find(delta) == quaver_map.end())
+		{
+			delta--;
+			extra_delta++;
+		}
+		string_buffer.back()[SIZEOF_TUNING] += quaver_map[delta]+ std::string(delta,' ');
+		string_buffer.back()[SIZEOF_TUNING] += quaver_map[extra_delta]+ std::string(extra_delta,' ');
+	}
+}
+
+/*
+ *	Get columns per row
+ */	
 int PrintVisitor::get_columnSet(void)
 {
 	return columnSet;
 }
 
+/*
+ *	Reset bar ticks
+ */	
 void PrintVisitor::bar_ticks_reset(void) 
 {
 	bar_ticks = 0;
 }
 
+/*
+ *	Increment bar ticks d times
+ */	
 void PrintVisitor::bar_ticks_increment(int d) 
 {
 	bar_ticks+=d;
 }
-    
-//<<<<<<< HEAD:tabber/src/data_translation/printVisitor.cpp
+ 
+/*
+ *	Add newlines 
+ */	   
 void PrintVisitor::newlines(bool fresh=false) 
 { 
 	if(fresh == false)
@@ -124,30 +125,6 @@ void PrintVisitor::newlines(bool fresh=false)
 			else
 				string_buffer.back()[string_print_index] += "|";
 		}
-/*
-=======
-void PrintVisitor::overflowLines(void)
-{
-	columnIndex = 0;
-	string_buffer.push_back(vector<string>(SIZEOF_TUNING+2) );
-	//newlines();
-}
-void PrintVisitor::newlines(void) 
-{ 
-	//Push the end of line columns
-	for(string_print_index=SIZEOF_TUNING+1; string_print_index>= 0; string_print_index--){
-		if(string_print_index>=SIZEOF_TUNING) 
-		{
-			string_buffer.back()[string_print_index] += " ";
-		}
-		else
-		{
-			string_buffer.back()[string_print_index] += "|";
-		}
-	}
-	//Push a new vector of strings to be printed on new lines
->>>>>>> temp:src/data_translation/printVisitor.cpp
-*/
 	string_buffer.push_back(vector<string>(SIZEOF_TUNING+2) );
 	}
 	
@@ -166,14 +143,12 @@ void PrintVisitor::newlines(void)
 	}
 }
 
+/*
+ *	Visit a chunk and iterate through all of its notes. Only visit notes which are on the currently set
+ *	string index, which each enclosing bar decrements through.
+*/
 void PrintVisitor::visitChunk(Chunk* c)
 {
-/*
-	Visit a chunk and iterate through all of its notes. Only visit notes which are on the currently set
-	string index, which each enclosing bar decrements through. Decrementing is chosen arbitrarily (?)	
-
-*/
-
 	strings_closed=false;
 	bool locked = false;
 	
@@ -212,43 +187,34 @@ void PrintVisitor::visitChunk(Chunk* c)
 		result = "--" ;
 	}	
 	//This is where the padding takes place for notes based on their note duration
-//<<<<<<< HEAD:tabber/src/data_translation/printVisitor.cpp
+
 	if(delta >= 0){
 		
 		string_buffer.back()[string_print_index] += result+ std::string(delta,'-');
-/*
-=======
-	if(delta >= 0)
-	{	
-		string_buffer.back()[string_print_index] += std::string(delta,'-') + result;
->>>>>>> temp:src/data_translation/printVisitor.cpp
-*/
 	}
 	else 
 	{
 		//triplets case
 		tripled = true;
-//<<<<<<< HEAD:tabber/src/data_translation/printVisitor.cpp
-		
 		string_buffer.back()[string_print_index] +=  result;
 	}
-/*=======
-		//string_buffer.back()[SIZEOF_TUNING] += " t";
-		string_buffer.back()[string_print_index] +=  result;
-	}
-	
->>>>>>> temp:src/data_translation/printVisitor.cpp*/
 }
 
+
+/*
+ *	Claim a string for a given note
+ */	
 void PrintVisitor::visitNote(Note* n)
 {
 	if(n->get_string() == string_print_index)
 	{
     	strings_closed = true; 
 	}
-
 }
 
+/*
+ *	Print the contents of the string buffer to the chosen file
+ */	
 void PrintVisitor::print_out(void)
 {
 	ofstream ofile;
@@ -278,14 +244,7 @@ void PrintVisitor::print_out(void)
 			}
 			ss << (*it)[i] << '\n';
 		}
-//<<<<<<< HEAD:tabber/src/data_translation/printVisitor.cpp
 		ss << '\n';
-/*=======
-		cindex += ((*it)[1]).size();
-		freshlines = false;
-		
->>>>>>> temp:src/data_translation/printVisitor.cpp
-*/
 	}
 	ofile << ss.rdbuf();
 	ofile.close();

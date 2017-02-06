@@ -12,11 +12,18 @@ Chunk::~Chunk()
 
 }
 
+/* 
+ *	Get length of chord/chunk (in notes)
+ */
 int Chunk::get_children_size() const 
 {
 	return _chunk_notes.size();
 }
 
+/* 
+ *	Generate a vector of <note-index, pitch> pairs. The note index indicates which fretboard
+ *	position the pitch is currently set to
+ */
 vector<pair<int, int> > Chunk::get_note_indices()
 {
 	vector<pair<int, int> > indices;
@@ -26,25 +33,40 @@ vector<pair<int, int> > Chunk::get_note_indices()
 	return indices;
 }
 
+/* 
+ *	Dispatch a visitor on a chunk
+ */
 void Chunk::accept(Visitor* v) 
 {
 	v->visitChunk(this);
 }
-		
+
+/* 
+ *	Insert a note into the vector of notes. Insert in sorted order by the number of frettable
+ *	positions for that note.
+ */
 void Chunk::add_note(Note* n) 
 {
-	_chunk_notes.insert(std::upper_bound( _chunk_notes.begin(), _chunk_notes.end(), n, \
-    [](Note *a, Note*b) \
-    { return a->get_children_size() < b->get_children_size(); }),n ); //sorted by number of entries in the pitch map table
+	//insert at iterator to first element with a pitch-map entry larger than the candidate note
+	_chunk_notes.insert(std::upper_bound( _chunk_notes.begin(), _chunk_notes.end(), n,  \
+    [](Note *a, Note*b) { 																\
+    	return (a->get_children_size() < b->get_children_size()); 						\
+    }),n); 
     
-	//_chunk_notes.push_back(n);
 }
 
+/* 
+ *	Remove a given note from the chunk
+ */
 void Chunk::remove_note(Note* n) 
 {
 	_chunk_notes.erase(std::remove(_chunk_notes.begin(), _chunk_notes.end(), n), _chunk_notes.end()); 
 }
 
+/* 
+ *	Reconfigure all notes in the chunk to the fret+string positions indicated in the 
+ *	current optimum object.
+ */
 void Chunk::force_chunk_note_indices(void)
 {
 	if (_optima.size() == get_children_size()){
@@ -53,16 +75,56 @@ void Chunk::force_chunk_note_indices(void)
 	}
 }
 
+/* 
+ *	Get ith note in this chunk
+ */
+Note* Chunk::get_note_at(int i) 
+{
+	return _chunk_notes[i];
+}
+
+/* 
+ *	Get last note in this chunk, this note will have the most fret+string positions
+ */
+Note* Chunk::get_note_at(void) 
+{
+	return _chunk_notes.back();
+}
+
+/* 
+ *	Get the offset of this chunk from the previous one
+ */
+int Chunk::get_delta() const 
+{
+	return delta;
+}
+
+
+
+
+
+
+//========= Below methods moved from Rotation visitor for Threading test
+
+/* 
+ *	Remove a candidate note from the comparison stack (for rotation)
+ */
 void Chunk::pop_stack(void) 
 {
 	_comparison_stack.pop();
 }
 
+/* 
+ *	Add a candidate note from the comparison stack (for rotation)
+ */
 void Chunk::push_stack(Note* n) 
 {
 	_comparison_stack.push(n); 
 }
 
+/* 
+ *	Reinitialize comparison stack
+ */
 void Chunk::empty_stack(void)
 {
 	while(!_comparison_stack.empty()){
@@ -83,7 +145,9 @@ void Chunk::print_stack(void)
 }
 
 
-
+/* 
+ *	Add a candidate note from the comparison stack (for rotation)
+ */
 comparisonResult Chunk::compare_with_stack(Note* n){
 // Return true if the note is addable. This method will copy the stack of notes 
     //return false if the note should perform a rotation to a new fret/string
@@ -139,43 +203,44 @@ comparisonResult Chunk::compare_with_stack(Note* n){
 	
 }
 
+/* 
+ *	Get the number of fret+string positions in the current optima
+ */
 int Chunk::get_optima_size(void) 
 { 
 	return _optima.size(); 
 }
 
+/* 
+ *	Set the current optimal configuration of fret+string positions for this chunk
+ */
 void Chunk::set_optima(vector<pair <int, int> > set) 
 {
 	_optima = set;
 }
 
+/* 
+ *	Increment the recursion lock
+ */
 void Chunk::inc_lock()
 {
 	_recursion_lock++;
 }
 
+/* 
+ *	Get the recursion lock value
+ */
 int Chunk::get_lock_val()
 {
 	return _recursion_lock;
 }
 
+/* 
+ *	Set the recursion lock value
+ */
 void Chunk::set_lock_val(int n) 
 {
 	_recursion_lock = n;
 }
 
-Note* Chunk::get_note_at(int i) 
-{
-	return _chunk_notes[i];
-}
-
-Note* Chunk::get_note_at(void) 
-{
-	return _chunk_notes.back();
-}
-
-int Chunk::get_delta() const 
-{
-	return delta;
-}
-		
+	

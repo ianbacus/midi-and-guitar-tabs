@@ -1,12 +1,17 @@
 #include "GUIprintvisitor.h"
 
 
-
+/*
+ *	
+ */	
 GUIPrintVisitor::GUIPrintVisitor(std::string ofile) : string_print_index(0), strings_closed(false), tripled(false), outfile(ofile)
 {
 	string_buffer.push_back(vector<string>(SIZEOF_TUNING+2));
 }
   	
+/*
+ *	
+ */	
 void GUIPrintVisitor::visitBar(Bar* b)
 {
 
@@ -19,20 +24,32 @@ void GUIPrintVisitor::visitBar(Bar* b)
 	tripled = false;
 }
 
+/*
+ *	
+ */	
 void GUIPrintVisitor::bar_ticks_reset(void) 
 {
 	bar_ticks = 0;
 }
 
+/*
+ *	
+ */	
 void GUIPrintVisitor::bar_ticks_increment(int d) 
 {
 	bar_ticks+=d;
 }
-    
+
+/*
+ *	
+ */	 
 void GUIPrintVisitor::newlines(void) 
 { 
 }
 
+/*
+ *	
+ */	
 void GUIPrintVisitor::visitChunk(Chunk* c)
 {
 /*
@@ -46,7 +63,6 @@ void GUIPrintVisitor::visitChunk(Chunk* c)
 	if(c->get_children_size() == 0){
 		return;
 	}
-//	string_buffer.back()[0] += "\n\t";
 	for(int j=0; j<c->get_children_size(); j++)
 	{
 		delta += c->get_note_at(j)->get_delta();
@@ -69,6 +85,9 @@ void GUIPrintVisitor::visitChunk(Chunk* c)
 	}
 }
 
+/*
+ *	
+ */	
 void GUIPrintVisitor::visitNote(Note* n)
 {
 	int delta = 0;
@@ -87,6 +106,9 @@ void GUIPrintVisitor::visitNote(Note* n)
 
 }
 
+/*
+ *	
+ */	
 void GUIPrintVisitor::print_out(void)
 {
 	ofstream ofile;
