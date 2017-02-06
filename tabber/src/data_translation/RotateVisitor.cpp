@@ -204,7 +204,6 @@ void RotateVisitor::compare_chunks(Chunk *c, vector<pair <int, int> > current_in
 			int optima_spacing = getFretMaxAndOptimaSpacing(fmax_optima,c->_optima);
 			int candidate_spacing = getFretMaxAndOptimaSpacing(fmax_candidate,current_indices);
 			//If candidate spacing is wider than the current spacing by 2 frets, cancel candidate
-
 			#define SPACING(a,b,c) ((a < b) && ((b - a) > c))
 			
 			//candidate will be discarded unless it is better than the current optima
@@ -270,5 +269,3 @@ void RotateVisitor::clear_cache(void)
 	_cache.clear();
 	//mtx_cache.unlock();
 }
-
-
