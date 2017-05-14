@@ -8,646 +8,87 @@
 <link rel="stylesheet" href="/resources/demos/style.css">
 <link rel="stylesheet" href="css/example.css">
 
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
 <script src="js/jquery.min.js"> </script>
-<script src="js/jquery-ui.js"> </script>
-<script src="js/jquery.mobile.min.js"> </script>
 
-<!--
-<script src="jquery-1.8.3.min.js"></script>
-    <script src="ui/jquery.ui.core.js"></script>
-    <script src="ui/jquery.ui.widget.js"></script>
-    <script src="ui/jquery.ui.mouse.js"></script>
-    <script src="ui/jquery.ui.draggable.js"></script>
-    <script src="jquery-collision.min.js"></script>
-    <script src="jquery-ui-draggable-collision.min.js"></script>
-
-
-<script src="js/jquery.ui-draggable-collision.js"> </script>
-<script src="js/jquery-ui.js"> </script>
-<script src="js/jquery.mobile.min.js"> </script>
--->
+<!-- audio attempt 1 -->
 <script type="text/javascript" src="js/nexusUI.js" ></script>
 <script type="text/javascript" src="js/Tone.js" ></script>
 
-<script>
-
-
-//var colorKey = ['red','#CC0099','yellow','#669999','#003399','#990000',  
-//				'#000099','#ff6600','#660066','#006600','#669999','#003399'];
-				
-var colorKey = ['gray','gray','gray','gray','gray','gray','gray','gray','gray','gray','gray','gray'];
-
-
-$( function() {
-	var selectEnum = {
-		BEGIN: 1,
-		SELECTED: 2,
-		DRAG: 3	
-	}
-	var editEnum = {
-		PREVIEW: 1,
-		DRAG: 2,
-		OFF: 3
-	}
-	var em = {
-		EDIT: 0,
-		SELECT: 1,
-		DELETE: 2
-	}
-	var emColors = ['orange','blue','green']
-	var currentObjs = [];
-	var mainMode = em.EDIT;
-	var editState = editEnum.PREVIEW;
-	var selectState = selectEnum.BEGIN;
-	var cursorP = { x: -1, y: -1 };
-	var selectP = { x: 0, y: 0};
-	var currentObj = null;
-	var snapX = 20,snapY=20;
-	var widthMode = 40;
-	var claimedSpots = [];
-	var previewStyle = "opacity:0.5; height:"+snapY+"px; position:absolute;";
-	
-	
-	function checkOverlap(rect1,rect2)
-	{
-		//See if Rect1 bounds rect2
-		/*
-		var overlap = !(rect1.css('right') < rect2.css(' left') || 
-						rect1.css( 'left') > rect2.css('right'));
-		*/
-		var R1L=parseInt(rect1.css('left'),10),R1T=parseInt(rect1.css('top'),10);
-		R1R=(R1L+parseInt(rect1.css('width'),10)),R1B=(R1T+parseInt(rect1.css('height'),10));
-		
-		var R2L=parseInt(rect2.css('left'),10),R2T=parseInt(rect2.css('top'),10);
-		R2R=(R2L+parseInt(rect2.css('width'),10)),R2B=(R2T+parseInt(rect2.css('height'),10));
-		
-		var xcond = (R1L <= R2L) && (R1R >= R2R);
-		var ycond = (R1T <= R2T) && (R1B >= R2B);
-		
-		return (xcond && ycond);
-	}
-	
-	function deleteCurrentObj()
-	{
-		if(currentObj)
-		{
-			$(currentObj).remove();	
-    		currentObj=null;	
-    	}
-    	else console.log("error");
-	}
-	
-	function wasClicked(selector)
-	{
-		var cursorRect = $('<div>');
-		$(cursorRect).css({'top':cursorP.y, 'left':cursorP.x, 'height':1, 'width':1});
-		var overlapping = false;
-		$(selector).each(function(){
-			if(checkOverlap($(this),$(cursorRect)))
-			{
-				overlapping = true;
-			}
-		});
-		cursorRect = null;
-		return overlapping;
-	}
-	
-	
-	/* 
-		Select functions	
-	*/
-	
-	function makeSelected(selector)
-	{
-		$(selector).each(function(){
-			if(!($(this).hasClass('selected')))
-				$(this).addClass('selected');
-			$(this).data( "init-position", { top: $(this).css('top'), 
-												left: $(this).css('left') } );
-			$(this).css({'opacity':0.7});
-		});
-	}
-	
-	function unSelect(selector)
-	{	
-		$(selector).removeData("init-position");
-		$(selector).css({'opacity':1});
-		$(selector).removeClass('selected');
-	}
-	
-	
-	function createSelectRectangle()
-	{
-		if(!currentObj)
-		{
-			var node = document.createElement('div');
-			$("#gridbox").append(node);
-
-			selectP.x = cursorP.x;
-			selectP.y = cursorP.y;
-						console.log(cursorP.y,cursorP.x,selectP.x,selectP.y);
-			$(node).css({'top':cursorP.y, 'left':cursorP.x, 
-						 'border':'solid black 1px', 'position':'absolute',
-						 'width':'0px','height':'0px'});
-			currentObj = $(node);
-		}
-	}
-	
-	function bindDeletion(selector)
-	{
-		$(selector).mouseup(function()
-		{
-			$(this).remove();
-		});
-	}
-	function unbindDeletion(selector)
-	{
-		$(selector).unbind("mouseup");
-	}
-	
-	function unbindSelection(selector)
-	{
-		
-	}
-	
-	function selectClickDownCallback()
-	{
-		
-		switch(selectState)
-		{
-			case selectEnum.SELECTED:
-				console.log("cd selected");
-				
-				if(!wasClicked($(".selected")) )
-				{
-					selectState = selectEnum.BEGIN;
-				}
-				else 
-				{
-					selectState = selectEnum.DRAG;
-					makeSelected($('.selected'));
-					selectP.x = cursorP.x;
-					selectP.y = cursorP.y;
-					break;
-				}
-			case selectEnum.BEGIN:
-				console.log("cd begin");
-				unSelect($('.note'))
-				createSelectRectangle();
-				break;
-			case selectEnum.DRAG:
-				console.log("cd drag");
-				selectState = selectEnum.SELECTED;
-				break;
-		}
-		
-	}
-	
-	function selectClickUpCallback()
-	{
-		console.log('clickup',selectState);
-			switch(selectState)
-			{
-				case selectEnum.BEGIN:
-					console.log("cu begin");
-					selectState = selectEnum.BEGIN;
-					$(".note").each(function() 
-					{
-						if(checkOverlap($(currentObj),$(this)))
-						{
-							console.log("detected selection");
-							makeSelected($(this));
-							selectState = selectEnum.SELECTED;
-						}
-					});
-					deleteCurrentObj(); //delete selection rectangle
-					
-					break;
-				case selectEnum.SELECTED:
-					console.log("cu selected");
-					break;
-				case selectEnum.DRAG:
-					console.log("cu drag");
-					break;
-			}
-		
-	}
-	
-	function selectCursorCallback(event)
-    {
-    	if (currentObj) {
-    		var y = (cursorP.y)-selectP.y;
-    		var x = (cursorP.x)-selectP.x;
-        	//currentObj.css({'height':cursorP.y-topOffset, 'width':cursorP.x-leftOffset});
-        	//console.log(cursorP.y,cursorP.x,selectP.x,selectP.y);
-        				
-        	if(x < 0) currentObj.css({'width':-1-x,'left':cursorP.x});
-        	else if(x==0) currentObj.css({'width':0,'left':selectP.x});
-        	else currentObj.css({'width':x-1});
-        	
-        	if(y < 0) currentObj.css({'height':-1-y,'top':cursorP.y});
-        	else if(y==0) currentObj.css({'height':0,'top':selectP.y});
-        	else currentObj.css({'height':y-1});
-	 
-    	}
-    	else if(selectState == selectEnum.DRAG)
-    	{
-    		var y = (cursorP.y)-selectP.y;
-    		var x = (cursorP.x)-selectP.x;
-    		$(".selected").each(function(){
-				var thisY = (parseInt($(this).data( "init-position").top,10)+y);
-				var thisX = (parseInt($(this).data( "init-position").left,10)+x);
-				var ix = thisY/20;
-				ix = ix % 12;
-				$(this).css({'top':thisY, 'left':thisX, 'background':colorKey[ix]});
-			});
-    	}
-    }
-	
-	/*
-		Edit functions
-	*/
-	
-	
-	function createPreview()
-	{
-		console.log("create preview");
-		if(!currentObj)
-		{
-			var node = document.createElement('div');
-			var ix = (cursorP.y/20) % 12;
-			$("#gridbox").append(node);
-			$(node).attr('style',previewStyle);
-			$(node).addClass("selected");
-        	$(node).css({'top':cursorP.y, 'left':cursorP.x, 'background':colorKey[ix], 'width':widthMode});
-			currentObj = $(node);
-		}
-	}
-	
-	function bindDragging(selector)
-	{
-		$(selector).mousedown(function() 
-		{
-			if(!currentObj) 
-			{
-				console.log("clicked a note");
-				currentObj = $(this);
-			}
-		}).mouseup(function() 
-		{
-			currentObj = null;
-			//claimedSpots.push({'position':[cursorP.x,cursorP.y],'width':widthMode});
-		});
-	}
-	
-	function unbindDragging(selector)
-	{
-		$(selector).unbind("mousedown");
-		$(selector).unbind("mouseup");
-	}
-	
-	function editClickDownCallback()
-	{
-		//Instantiate object
-		var clickedNote = wasClicked($(".note"));
-		
-		if(!clickedNote)
-		{
-			console.log("note wasn't clicked");
-		}
-		if(currentObj)
-		{
-			$(currentObj).css({'opacity':'1'});
-			$(currentObj).addClass('note');
-			$(currentObj).removeClass('selected');
-			bindDragging(currentObj);
-		}
-	}
-	
-	function editClickUpCallback()
-	{
-		//if(editState == editEnum.PREVIEW)
-		createPreview();
-	}
-	
-	function editHoverOnCallback() {
-		//When cursor enters the gridbox
-		hoveringOverGrid = true;
-		console.log(editState);
-		//if(editState == editEnum.PREVIEW)
-		//{	console.log("creatin preview");
-			createPreview();
-		//}     
-	}
-	
-
-    function editCursorCallback(event)
-    {
-    	//console.log(currentObj);
-    	
-    	//if ((editState = editEnum.DRAG) && (currentObj)) {
-    	if(currentObj) {
-        	var ix = cursorP.y/20;
-        	ix = ix % 12;
-        	currentObj.css({'top':cursorP.y, 'left':cursorP.x, 'background':colorKey[ix]});
-    	}
-    }
-    
-    function mainCursorCallback(event) 
-    {
-    	//Move preview object to follow cursor, make it snappable
-    	var offset = $("#gridbox").offset();
-        cursorP.x = (Math.ceil((event.pageX-offset.left) / snapX)*snapX)-snapX;
-        cursorP.y = (Math.ceil(((event.pageY-offset.top)) / snapY)*snapY)-snapY;
-    }
-	function mainHoverOnCallback(event)
-	{
-		$(this).css({'border':'solid '+emColors[mainMode]+' 1px'})
-	}
-	
-	function mainHoverOffCallback(event)
-	{
-		$(this).css({'border':'solid black 1px'});
-		deleteCurrentObj();
-	}
-	
-    function setmainMode()
-    {
-    	editState = editEnum.PREVIEW;
-    	deleteCurrentObj();
-    	bindDragging($(".note"));
-    	
-    	$('#gridbox').mousedown(editClickDownCallback)
-    				 .mouseup(editClickUpCallback)
-					 .hover(editHoverOnCallback,function(){})
-					 .mousemove(editCursorCallback)
-					 .css({'border':'solid orange 1px'});
-		createPreview();
-    }
-
-    function exitmainMode()
-    {
-    	editState = editEnum.OFF;
-    	unbindDragging($(".note"));
-    	$('#gridbox').off("mousedown",editClickDownCallback)
-    				 .off("mouseup",editClickUpCallback)
-					 .off("hover",editHoverOnCallback,function(){})
-					 .off("mousemove",editCursorCallback);
-		
-    }
-
-    function setSelectMode()
-    {
-    	deleteCurrentObj();
-    	selectState = selectEnum.BEGIN;
-    	$('#gridbox').mousedown(selectClickDownCallback)
-    				 .mouseup(selectClickUpCallback)
-					 .mousemove(selectCursorCallback)
-					 .css({'border':'solid blue 1px'});
-					 //.hover(selectHoverOnCallback,selectHoverOffCallback)
-    }
-
-    function exitSelectMode()
-    {
-    	unSelect($(".note"));
-    	$('#gridbox').off("mousedown",selectClickDownCallback)
-    				 .off("mouseup",selectClickUpCallback)
-					 .off("mousemove",selectCursorCallback);
-					 //.off("hover",selectHoverOnCallback,selectHoverOffCallback)
-    }
-    
-    function setDeleteMode()
-    {
-    	bindDeletion($(".note"));
-    }
-    
-    function exitDeleteMode()
-    {
-    	
-    }
-    
-    function setCopyMode()
-    {
-    
-    }
-    
-    function exitCopyMode()
-    {
-    
-    }
-    
-    function changemainMode(nextMode)
-    {
-   		if(mainMode == nextMode) return;
-    	switch(mainMode)
-    	{
-    		case em.EDIT:
-    			exitmainMode();
-    			break;
-    		case em.SELECT:
-    			exitSelectMode();
-    			break;
-    		case em.DELETE:
-    			exitDeleteMode();
-    			break;
-    	}
-    	switch(nextMode)
-    	{
-    		case em.EDIT:
-				console.log("edit mode");
-				setmainMode();
-    			break;
-    		case em.SELECT:
-				console.log("select mode");
-				setSelectMode();
-    			break;
-    		case em.DELETE:
-    			console.log("delete mode");
-    			setDeleteMode();
-    			break;
-    			
-    	}
-    	mainMode = nextMode;
-    }
-	$(document).keyup(function(e) {
-		
-			var nextMode = mainMode;
-			switch(e.keyCode)
-			{
-				case 67: //"c" key"
-					break;
-				case 68: //"d" key
-					if((selectState == selectEnum.SELECTED) || (selectState == selectEnum.DRAG))
-					{
-						selectState = selectEnum.BEGIN;
-						$(".selected").remove();
-					}
-					else
-					{
-						nextMode = em.DELETE;
-					}
-					break;
-				
-				case 81: //"q" key
-					console.log("cancel");
-					unSelect($(".note"));
-					if(mainMode == em.EDIT)
-						editState = editEnum.DRAG;
-					deleteCurrentObj();
-					break;
-				case 87: //"w" key
-					if(widthMode > snapX)
-						widthMode = widthMode/2;
-					//if(currentObj)
-					$('.selected').each(function(){
-						$(this).css({'width':widthMode});	
-					});
-					break;
-				case 69: //"e" key
-					if(widthMode < 8*snapX)
-						widthMode = widthMode*2;
-					//if(currentObj)
-					$('.selected').each(function(){
-						$(this).css({'width':widthMode});
-					});
-					break;
-				case 88: //"x" key"
-					nextMode = em.SELECT;
-					break;
-				case 90: //"z" key"
-					nextMode = em.EDIT;
-					break;
-				
-			}
-			changemainMode(nextMode);
-			
-			
-	});
-	$("#gridbox").mousemove(mainCursorCallback);
-	$("#gridbox").hover(mainHoverOnCallback,mainHoverOffCallback);
-	setmainMode();
-    
-} );
-
-  
-</script>
-      
-<script>
-	
-	/*
-	var audioCtx = new (window.AudioContext || window.webkitAudioContext);
-	var sinea = audioCtx.createOscillator();
-	sinea.frequency.value = 440;
-	sinea.type = "sine";
-	
-	var sampler = new Tone.Player("samples/pluck.wav", function() {
-		console.log("samples loaded");
-	});
-	*/
-	var synth = new Tone.PolySynth(4, Tone.MonoSynth, {
-	"oscillator" : {
-				"partials" : [0, 2, 3, 4],
-			}
-		}).toMaster();
-	synth.set({
-		"envelope" : {
-			"attack" : 0.1
-		}
-	});
-	
-	
-	var notes = 
-	["b3" ,"c3" ,"c-3" ,"d3" ,"d-3" ,"e3" ,"f3" ,"f-3" ,"g3" ,"g-3" ,
-	 "b4" ,"c4" ,"c-4" ,"d4" ,"d-4" ,"e4" ,"f4" ,"f-4" ,"g4" ,"g-4" ,
-	 "b5" ,"c5" ,"c-5" ,"d5" ,"d-5" ,"e5" ,"f5" ,"f-5" ,"g5" ,"g-5" ];
-	var notesPaths = {
-			"b3" : "./samples/b3.mp3",
-			"c3" : "./samples/c3.mp3",
-			"c-3" : "./samples/c-3.mp3",
-			"d3" : "./samples/d3.mp3",
-			"d-3" : "./samples/d-3.mp3",
-			"e3" : "./samples/e3.mp3",
-			"f3" : "./samples/f3.mp3",
-			//"f-3" : "./samples/f-3.mp3",
-			"g3" : "./samples/g3.mp3",
-			"g-3" : "./samples/g-3.mp3",
-			"b4" : "./samples/b4.mp3",
-			"c4" : "./samples/c4.mp3",
-			"c-4" : "./samples/c-4.mp3",
-			"d4" : "./samples/d4.mp3",
-			"d-4" : "./samples/d-4.mp3",
-			"e4" : "./samples/e4.mp3",
-			"f4" : "./samples/f4.mp3",
-			//"f-4" : "./samples/f-4.mp3",
-			"g4" : "./samples/g4.mp3",
-			"g-4" : "./samples/g-4.mp3",
-			"b5" : "./samples/b5.mp3",
-			"c5" : "./samples/c5.mp3",
-			"c-5" : "./samples/c-5.mp3",
-			"d5" : "./samples/d5.mp3",
-			"d-5" : "./samples/d-5.mp3",
-			"e5" : "./samples/e5.mp3",
-			"f5" : "./samples/f5.mp3",
-			"f-5" : "./samples/f-5.mp3",
-			"g5" : "./samples/g5.mp3",
-			"g-5" : "./samples/g-5.mp3",
-		};
-	//sampler.toMaster();
-	
-	var data = {
-		urls : notesPaths,
-		volume : -10,
-		fadeOut : 0.1,
-    };
-	var sampler = new Tone.Player('./samples/pluck.wav',function(){
-        console.log("samples loaded");
-      });
-      sampler.retrigger=true;
-      sampler.toMaster();
-      
-    
-    /*
-	var keys = new Tone.MultiPlayer({
-		urls : notesPaths,
-		volume : -10,
-		fadeOut : 0.1,
-    }).toMaster();
-	
-	var piano = new Tone.PolySynth(4, Tone.Synth, {
-		"volume" : -8,
-		"oscillator" : {
-			"partials" : [1, 2, 1],
-		},
-		"portamento" : 0.05
-	}).toMaster();
-	var cChord = ["C4"];
-	var dChord = ["D4"];
-	var gChord = ["E4"];
-	var pianoPart = new Tone.Part(function(time, chord){
-		piano.triggerAttackRelease(chord, "8n", time);
-	}, [["0:0:0", cChord], ["1:0:0", dChord],]).start("0");
-*/
-	Tone.Transport.bpm.value = 90;
-	//Tone.Transport.start();
-	
-	nx.onload = function() 
-	{
-		var counter = 0;
-		button1.on('*',function(data) 
-		{
-			console.log("button pressed!",counter);
-			counter = counter+ 1;
-			sampler.start();
-			
-		});
-	}
-</script>
+<!-- audio attempt 2 -->
+<script src="http://mohayonao.github.io/timbre.js/timbre.js"></script>
+<script src="http://mohayonao.github.io/timbre.js/src/extras/keyboard.js"></script>
+<script src="mainjs.js"></script>
 
 </head>
-<body>
 
-	<div id="gridbox"></div>
-	<canvas nx="button"></canvas>
+<body>
+<div class="container">
+	<h4> Badassery </h4>
+	<div class="row">
+		<div class="col-md-7">
+			<div id="gridbox"></div>
+		</div>
+	
+		<div class="col-md-5">
+			<ul class="nav nav-tabs">
+				<li><a data-toggle="tab" href="#keys">Keys</a></li>
+				<li class="active"><a data-toggle="tab" href="#mode">Mode</a></li>
+				<li><a data-toggle="tab" href="#menu2">Menu 2</a></li>
+			</ul>
+			<div class="tab-content">
+				<div id="keys" class="tab-pane fade">
+					<h3>Keys</h3>
+					<ul>
+						<li>Z: write mode</li>
+						<li>X: select mode</li>
+						<li>C: copy mode</li>
+						<li>W/E: shrink/grow note</li>
+						
+					</ul>
+				</div>
+				<div id="mode" class="tab-pane fade in active">
+					<h3>Mode</h3>
+					<br>
+					Analysis
+					<div class="radio">
+					<label><input type="radio" name="optradio">Invertible</label>
+					</div>
+					<div class="radio">
+					<label><input type="radio" name="optradio">Canon</label>
+					</div>
+					<div class="radio">
+					<label><input type="radio" name="optradio" disabled>Option 3</label>
+					</div>
+					<br> 
+					Meter
+					<div class="radio">
+					<label><input type="radio" name="optradio">Duple</label>
+					</div>
+					<div class="radio">
+					<label><input type="radio" name="optradio" disabled>Triple</label>
+					</div>
+					
+				</div>
+				<div id="menu2" class="tab-pane fade">
+					<h3>Menu 2</h3>
+					<p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam.</p>
+				</div>
+				<div id="menu3" class="tab-pane fade">
+					<h3>Menu 3</h3>
+					<p>Eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.</p>
+				</div>
+				</div>
+		</div>
+	</div>
+</div>
 </body>
 	
+	
+	
+
 </html>
