@@ -4,6 +4,7 @@
 
 extern char tuning[];
 extern const int SIZEOF_TUNING;
+extern const int tuningMinimum;
 extern char ptuning[];
 
 #endif

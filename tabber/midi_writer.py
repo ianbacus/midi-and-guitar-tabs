@@ -35,7 +35,7 @@ def set_onetime_delta(val):
 	if a['value'] is True:
 		a['value'] = val
 		
-def make(newfile,infile,condition):
+def make(newfile,infile,condition,note_offsets):
 	'''
 	Converts a midi file to an intermediate plaintext list of triples (note, duration, track no.), writes them to a file.
 	Each triple represents a "note press," deltas indicate absolute "ticks," 0 and -1 are reserved for chords (0) and triplets (-1) for deltas

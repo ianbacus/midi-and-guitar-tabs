@@ -48,11 +48,11 @@ vector<Bar*> score_maker(std::string infile, int shift,int align) {
     score.back()->add_chunk(new Chunk());
     std::string line;
     
-    
 	//align = align*(beat_overflow/(2*(beat_per_measure)));
 	//bartime += align;
     while( std::getline( file, line ) ) 
     {
+    	std::cout << bartime << " " << beat_overflow << " " << counter << std::endl;
         std::istringstream iss( line );
 		if(line == "SIGEVENT"){
 			std::getline(file, line);
