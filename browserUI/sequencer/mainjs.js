@@ -1,8 +1,9 @@
 $( function() {
 	
 	var synth = T("OscGen", {
-	wave: "saw",
-	mul: 0.25
+	wave: "cos",
+	//fami, saw, tri, pulse, konami, cos, sin
+	mul: 0.5
 	}).play();
 
 	/* variable init */
@@ -54,14 +55,22 @@ $( function() {
 	
 	/* analysis suite */
 	{
-	
-	
-	}
-	
-	
-	/* general utilities */
-	{
-		function renderNoteArray()
+		function DrawBeats(meter)
+		{
+			var gridWidth = parseInt($(maingrid).css('width'),10)/snapX;
+			var divisions = gridWidth/meter;
+			var currentLeftOffset = 0;
+			for(var i=0;i<divisions;i++)
+			{
+				currentLeftOffset += meter*snapX;
+				var node = document.createElement('div');
+				$(maingrid).append(node);
+			
+				$(node).css({'position':'absolute','top':0,'left':currentLeftOffset, 'height':'100%', 'width':1,'background':'black'});
+			}			
+		}
+		
+		function getNoteArray()
 		{
 			var noteArray = [];
 			
@@ -72,9 +81,153 @@ $( function() {
 				var duration = parseInt($(this).css('width'),10)/snapX;
 				var entry = {'pitch':pitch,'delta':delta,'duration':duration};
 				noteArray.push(entry);
+				//console.log(entry);
 			});
 			return noteArray;
 		}
+		
+		function getIntervalArray()
+		{
+			var noteArray = getNoteArray();	
+			var temporalDict = {};
+			for(var i =0; i<noteArray.length;i++)
+			{
+				noteEntry = noteArray[i];
+				delta = noteEntry.delta;
+				if(!temporalDict[delta])
+					temporalDict[delta] = [];
+				temporalDict[delta].push(noteEntry);
+			}
+			temporaryDict = {};
+			for(var delta in temporalDict)
+			{
+				chunk = temporalDict[delta];
+				delta = parseInt(delta,10);
+				for(var j=0; j<chunk.length;j++)
+				{
+					//for each note in the chunk at this moment
+					note = chunk[j];
+					duration = note.duration;
+					
+					while(duration-- > 0)
+					{
+						
+						tempDelta = duration+delta;
+						if(temporalDict[tempDelta])
+						{
+							if(!temporaryDict[tempDelta])
+								temporaryDict[tempDelta] = [];
+							temporaryDict[tempDelta].push(note);
+						}
+					}
+					
+					
+				}
+			}
+			//merged dict of temporal events
+			//console.log('temporary: '+JSON.stringify(temporaryDict));
+			//console.log('main: '+JSON.stringify(temporalDict));
+			
+			for(var delta in temporaryDict)
+			{
+				temporaryNoteChunk = temporaryDict[delta];
+				temporalNoteChunk = temporalDict[delta];
+				
+				if(!temporalDict[delta])
+					temporalDict[delta] = temporaryNoteChunk;
+				else
+				{
+					for(var i=0;i<temporaryNoteChunk.length;i++)
+					{
+						var noteToAdd = temporaryNoteChunk[i]
+						var pitchAlreadyPresent = false;
+						for(var j=0;j<temporalNoteChunk.length;j++)
+						{
+							
+							if(temporalNoteChunk[j].pitch == noteToAdd.pitch)
+								pitchAlreadyPresent = true;
+						}
+						if(!pitchAlreadyPresent)
+						{
+							temporalDict[delta].push(noteToAdd);
+							
+						}
+					}
+				}
+			}
+			var intervals = []
+			console.log(JSON.stringify(temporalDict));
+			for(var delta in temporalDict)
+			{
+				//If more than 2 entries, just ignore it.. use outer eventually
+				if(temporalDict[delta].length == 2)
+					intervals.push(Math.abs(temporalDict[delta][0].pitch - temporalDict[delta][1].pitch));
+					
+			}
+			console.log(intervals);
+			return intervals;
+			
+		}		
+		function CheckMelody(track)
+		{
+			
+		}
+		
+		function CheckCounterpoint()
+		{
+			//Fux's fundamental rules:
+			//Any interval -> Perfect: contrary/oblique
+
+			//Species:
+			//Strong beat: consonance
+			//1st: 1:1 notes
+			//2nd
+			//3rd
+			//4th
+			
+			//General:
+			//Balance leaps of a fifth or more by going down afterwards
+			//Don't move stepwise into a leap in the same direction
+			//
+			
+			//getNoteArray();
+			var perfectIntervals = new Set([0, 7, 12]); //unison, fifth, octave
+			var imperfectIntervals = new Set([3,4,8,9]); //m3,M3,m6,M6
+			var dissonantIntervals = new Set([1,2,5,6,10,11]);
+			var intervals = getIntervalArray();
+			var directions = getDirectionsArray();
+			var beats = getBeatsArray();
+			var previousStrongBeatInterval = null;
+			for(var i=0; i<intervals.length-1;i++)
+			{
+				var oppositeMotion = (directions[i] == 'contrary') || (directions[i] == 'oblique');
+				var directMotionToPerfectInterval = (perfectIntervals.has(intervals[i+1]) && !oppositeMotion);
+				var parallelPerfectIntervals = perfectIntervals.has(intervals[i+1]) && perfectIntervals.has(intervals[i])
+				
+				if(beats[i] == 'strong')
+				{
+					var directConsonantBeats = perfectIntervals.has(previousStrongBeatInterval) && perfectIntervals.has(intervals[i]);
+					var strongbeatDissonance = dissonantIntervals.has(intervals[i]);
+					previousStrongBeatInterval = intervals[i];
+				}
+				
+				if(directMotionToPerfectInterval || strongbeatDissonance || parallelPerfectIntervals)
+				{
+					//bad
+				}
+				
+			}
+			
+		}
+		DrawBeats(4);
+	}
+	
+	
+	/* general utilities */
+	{
+		
+		
+		
 		function checkEncapsulate(rect1,rect2)
 		{
 			//See if Rect1 bounds rect2
@@ -347,7 +500,8 @@ $( function() {
 				$(node).addClass("selected");
 				$(node).css({'top':cursorP.y, 'left':cursorP.x});
 				$(node).css({"opacity":0.5, "height":snapY,"width":widthMode,"position":"absolute"});
-				$(node).css({'background':colorKey[((cursorP.y/snapY)%12)]});
+				var colorIndex = getNoteIndex(cursorP.y,12);///snapY)%12);
+				$(node).css({'background':colorKey[colorIndex]});
 				currentObj = $(node);
 			}
 		}
@@ -393,6 +547,7 @@ $( function() {
 			createPreview();
 			var pitchIndex = getNoteIndex(cursorP.y,24);
 			synth.noteOnWithFreq(pitchKey[pitchIndex], 100);
+			getIntervalArray();
 		}
 	
 		function editHoverOnCallback() {
@@ -506,7 +661,7 @@ $( function() {
 			switch(e.keyCode)
 			{
 				case 67: //"c" key"
-					console.log(renderNoteArray());
+					console.log(getNoteArray());
 					
 					break;
 				case 68: //"d" key
@@ -561,116 +716,3 @@ $( function() {
 } );
 
 
-
-
-/*
-	TONE STUFF
-*/
-	
-	/*
-	var audioCtx = new (window.AudioContext || window.webkitAudioContext);
-	var sinea = audioCtx.createOscillator();
-	sinea.frequency.value = 440;
-	sinea.type = "sine";
-	
-	var sampler = new Tone.Player("samples/pluck.wav", function() {
-		console.log("samples loaded");
-	});
-	*/
-	var synth = new Tone.PolySynth(4, Tone.MonoSynth, {
-	"oscillator" : {
-				"partials" : [0, 2, 3, 4],
-			}
-		}).toMaster();
-	synth.set({
-		"envelope" : {
-			"attack" : 0.1
-		}
-	});
-	
-	
-	var notes = 
-	["b3" ,"c3" ,"c-3" ,"d3" ,"d-3" ,"e3" ,"f3" ,"f-3" ,"g3" ,"g-3" ,
-	 "b4" ,"c4" ,"c-4" ,"d4" ,"d-4" ,"e4" ,"f4" ,"f-4" ,"g4" ,"g-4" ,
-	 "b5" ,"c5" ,"c-5" ,"d5" ,"d-5" ,"e5" ,"f5" ,"f-5" ,"g5" ,"g-5" ];
-	var notesPaths = {
-			"b3" : "./samples/b3.mp3",
-			"c3" : "./samples/c3.mp3",
-			"c-3" : "./samples/c-3.mp3",
-			"d3" : "./samples/d3.mp3",
-			"d-3" : "./samples/d-3.mp3",
-			"e3" : "./samples/e3.mp3",
-			"f3" : "./samples/f3.mp3",
-			//"f-3" : "./samples/f-3.mp3",
-			"g3" : "./samples/g3.mp3",
-			"g-3" : "./samples/g-3.mp3",
-			"b4" : "./samples/b4.mp3",
-			"c4" : "./samples/c4.mp3",
-			"c-4" : "./samples/c-4.mp3",
-			"d4" : "./samples/d4.mp3",
-			"d-4" : "./samples/d-4.mp3",
-			"e4" : "./samples/e4.mp3",
-			"f4" : "./samples/f4.mp3",
-			//"f-4" : "./samples/f-4.mp3",
-			"g4" : "./samples/g4.mp3",
-			"g-4" : "./samples/g-4.mp3",
-			"b5" : "./samples/b5.mp3",
-			"c5" : "./samples/c5.mp3",
-			"c-5" : "./samples/c-5.mp3",
-			"d5" : "./samples/d5.mp3",
-			"d-5" : "./samples/d-5.mp3",
-			"e5" : "./samples/e5.mp3",
-			"f5" : "./samples/f5.mp3",
-			"f-5" : "./samples/f-5.mp3",
-			"g5" : "./samples/g5.mp3",
-			"g-5" : "./samples/g-5.mp3",
-		};
-	//sampler.toMaster();
-	
-	var data = {
-		urls : notesPaths,
-		volume : -10,
-		fadeOut : 0.1,
-    };
-	var sampler = new Tone.Player('./samples/pluck.wav',function(){
-        console.log("samples loaded");
-      });
-      sampler.retrigger=true;
-      sampler.toMaster();
-      
-    
-    /*
-	var keys = new Tone.MultiPlayer({
-		urls : notesPaths,
-		volume : -10,
-		fadeOut : 0.1,
-    }).toMaster();
-	
-	var piano = new Tone.PolySynth(4, Tone.Synth, {
-		"volume" : -8,
-		"oscillator" : {
-			"partials" : [1, 2, 1],
-		},
-		"portamento" : 0.05
-	}).toMaster();
-	var cChord = ["C4"];
-	var dChord = ["D4"];
-	var gChord = ["E4"];
-	var pianoPart = new Tone.Part(function(time, chord){
-		piano.triggerAttackRelease(chord, "8n", time);
-	}, [["0:0:0", cChord], ["1:0:0", dChord],]).start("0");
-*/
-	Tone.Transport.bpm.value = 90;
-	//Tone.Transport.start();
-	
-	nx.onload = function() 
-	{
-		var counter = 0;
-		button1.on('*',function(data) 
-		{
-			console.log("button pressed!",counter);
-			counter = counter+ 1;
-			sampler.start();
-			
-		});
-	}
