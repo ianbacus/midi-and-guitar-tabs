@@ -1,6 +1,6 @@
 #ifndef __PRINTVISITOR__
 #define __PRINTVISITOR__
-#include "Visitor.h"
+#include "visitor.h"
 #include "base.h"
 #include "tuning.h"
 #include <string>
@@ -23,6 +23,7 @@ class PrintVisitor : public Visitor
     bool tripled;
     bool strings_closed;
     std::string outfile;
+    void addSpaces(int &delta);
     
   public:
   	

@@ -2,8 +2,8 @@ EXE = gen
 SOURCES = src/music_objects/bar.cpp                     \
 	  src/music_objects/chunk.cpp                   \
 	  src/music_objects/note.cpp                    \
-	  src/data_translation/rotatevisitor.cpp        \
-	  src/data_translation/printvisitor.cpp         \
+	  src/data_translation/rotateVisitor.cpp        \
+	  src/data_translation/printVisitor.cpp         \
 	  src/data_translation/midi2melody.cpp          \
 	  src/data_translation/tuning.cpp               \
 	  src/main.cpp

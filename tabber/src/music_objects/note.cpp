@@ -83,7 +83,7 @@ int Note::get_fret()
 {
 	int ret,n=0;
 	if(pitch<0) return -1;
-	int i = 0
+	int i = 0;
 	while(++i < 10) {
 		try {
 			ret = pitch_to_frets_map.at(pitch)[current_note_index].second;
@@ -161,7 +161,7 @@ int Note::get_string_at(int n_index, int pitch)
 void Note::decrement_octave()
 {
   pitch-=12;
-  octave_counter--;
+  octave_refcount--;
 }
 
 /*
@@ -170,7 +170,7 @@ void Note::decrement_octave()
 void Note::increment_octave()
 {
   pitch+=12;
-  octave_counter++;
+  octave_refcount++;
 }
 
 /*
@@ -178,8 +178,8 @@ void Note::increment_octave()
  */
 void Note::rebalance_note()
 {
-  pitch += octave_counter*12;
-  octave_counter = 0;
+  pitch += octave_refcount*12;
+  octave_refcount = 0;
 }
 
 /*

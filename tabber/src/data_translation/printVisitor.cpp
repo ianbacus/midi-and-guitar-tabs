@@ -1,4 +1,5 @@
-#include "printvisitor.h"
+#include "printVisitor.h"
+
 using std::cout;
 using std::endl;
 map<int,int> beat_value = {{1,32},{2,16},{4,8},{8,4},{16,2},{32,1}};
@@ -52,7 +53,7 @@ void PrintVisitor::visitBar(Bar* b)
 				{
 					if(!tripled)
 					{ 
-						appendThing();
+						//appendThing();
 					}
 					else if(string_print_index == 0) string_buffer.back()[SIZEOF_TUNING] += " t";
 				}

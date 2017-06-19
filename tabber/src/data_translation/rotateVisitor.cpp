@@ -1,4 +1,4 @@
-#include "RotateVisitor.h"
+#include "rotateVisitor.h"
 
 //Recursively check and reconfigure all of the elements of the tree
 

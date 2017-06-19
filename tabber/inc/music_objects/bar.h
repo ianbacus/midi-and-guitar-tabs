@@ -1,7 +1,7 @@
 #ifndef __BAR__
 #define __BAR__
 #include "base.h"
-#include "Chunk.h"
+#include "chunk.h"
 
 class Bar : public Base
 {

@@ -1,6 +1,6 @@
 #ifndef __MIDI2MELODY__
 #define __MIDI2MELODY__
-#include "Base.h"
+#include "base.h"
 #include "MidiFile.h"
 #include <ctype.h>
 #include <stdlib.h>

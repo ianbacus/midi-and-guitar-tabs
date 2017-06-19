@@ -1,6 +1,6 @@
 #ifndef __CHUNK__
 #define __CHUNK__
-#include "Note.h"
+#include "note.h"
 #include "base.h"
 
 
