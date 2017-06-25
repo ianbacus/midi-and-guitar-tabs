@@ -29,9 +29,9 @@ class PrintVisitor : public Visitor
   	
   	PrintVisitor(string,int);
   	virtual ~PrintVisitor(void) {}
-    virtual void visitNote(Note*);
-    virtual void visitBar(Bar*);
-    virtual void visitChunk(Chunk*);
+    virtual void VisitNote(Note*);
+    virtual void VisitBar(Bar*);
+    virtual void VisitChunk(Chunk*);
     int get_columnSet(void);
     void overflowLines(void);
     void bar_ticks_reset();

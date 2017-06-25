@@ -34,11 +34,11 @@ vector<pair<int, int> > Chunk::get_note_indices()
 }
 
 /* 
- *	Dispatch a visitor on a chunk
+ *	Dispatch a Visitor on a chunk
  */
 void Chunk::accept(Visitor* v) 
 {
-	v->visitChunk(this);
+	v->VisitChunk(this);
 }
 
 /* 
@@ -104,7 +104,7 @@ int Chunk::get_delta() const
 
 
 
-//========= Below methods moved from Rotation visitor for Threading test
+//========= Below methods moved from Rotation Visitor for Threading test
 
 /* 
  *	Remove a candidate note from the comparison stack (for rotation)

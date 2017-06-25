@@ -27,9 +27,9 @@ void print_initmap(std::map<int,vector< pair<int,int> > > initmap)
  *	Configure the pitch map: maps midi pitch values to pairs of string and fret positions.
  *	note index indicates which fret+string position is currently being used
  */
-Note::PitchMap config()
+PitchMap config()
 {
-    Note::PitchMap initmap;
+    PitchMap initmap;
 
     int value;
 
@@ -264,11 +264,11 @@ int Note::get_delta()  const
  */
 void Note::accept(Visitor* v) 
 {
-	v->visitNote(this);
+	v->VisitNote(this);
 }
 
 
 //At compile time: generate the pitch to fret mapping
-Note::PitchMap Note::pitch_to_frets_map = config();
+PitchMap Note::pitch_to_frets_map = config();
 int Note::noteslost = 0;
 

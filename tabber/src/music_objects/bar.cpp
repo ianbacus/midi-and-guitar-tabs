@@ -42,11 +42,11 @@ Chunk* Bar::get_child()
 }
 
 /* 
- *	Dispatch visitor code
+ *	Dispatch Visitor code
  */
 void Bar::accept(Visitor*v) 
 {
-	v->visitBar(this);
+	v->VisitBar(this);
 }
 
 /* 

@@ -1,0 +1,36 @@
+#include "visitor.h"
+#include "base.h"
+#include <math.h>
+#include <mutex>
+
+#ifndef __ROTATEVISITOR__
+#define __ROTATEVISITOR__
+
+
+class RotateVisitor : public Visitor
+{
+
+	private:
+
+    
+		vector< vector<pair<int, int> > > _cache;
+		vector<int> locked_strings;
+		std::mutex mtx_optima, mtx_cache;
+		int chunk_count;
+
+	public:
+  		virtual ~RotateVisitor() {}
+  		void print_chunk_count();
+    
+		void compare_chunks(Chunk *c,vector<pair<int, int> >);
+		virtual void visitNote(Note*);
+		virtual void visitBar(Bar*);
+
+		virtual void visitChunk(Chunk*);
+		bool in_cache(vector<pair<int, int> > input);
+		void clear_cache(void);
+		void recursivePermutationCompare(Chunk* c);
+		void conditionallyAddToStack(comparisonResult, Chunk*, int&, int&);
+};
+
+#endif

@@ -45,6 +45,7 @@ def make(newfile,infile,condition,note_offsets):
 	
 	
 	'''
+	print "wtf"
 	if(False):
 		infile,newfile = argv[0],argv[1]
 	p = midi.read_midifile(infile)
@@ -190,10 +191,11 @@ if __name__ == "__main__":
 				make(newfile="data/intermediates/"+fileName+".txt", \
 				infile="data/input_files/"+fileName+".mid",condition="True")
 			except:
-				pass#print "error parsing " + str(fileName)
+				print "error parsing " + str(fileName)
 	elif len(sys.argv) == 3:
 		condition = sys.argv[2]
 		file_name = sys.argv[1]
+		print "fuckkkk"
 		make(newfile="data/intermediates/"+fileName+".txt", \
 		infile="data/input_files/"+fileName+".mid",condition=condition)
 

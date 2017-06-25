@@ -1,16 +1,19 @@
-#include "printVisitor.h"
+#include "print_visitor.h"
 
 using std::cout;
 using std::endl;
 map<int,int> beat_value = {{1,32},{2,16},{4,8},{8,4},{16,2},{32,1}};
 
+//Note length indications to print above the notes
 std::map<int,string> quaver_map = 
 {
-{2,".T"},{4, ".s"},{6,",s"},{8,".e"},{14,",e"},{16, ".q"},{24, ",q"},{32,".h"},{56,",h"},{64, ".w"},
+	{2," T"},{4, " s"},{6," s"},{8," e"},{14," e"},{16, " q"},{24, " q"},{32," h"},{56," h"},{64, " w"},
+	//{2,"T "},{4, "s "},{6,"s "},{8,"e "},{14,"e "},{16, "q "},{24, "q "},{32,"h "},{56,"h "},{64, "w "},
+
 };
 
 /*
- *	Initialize print visitor with output file and columns per row
+ *	Initialize print Visitor with output file and columns per row
  */	
 PrintVisitor::PrintVisitor(std::string ofile, int cset) : string_print_index(0), \
 							strings_closed(false), tripled(false), outfile(ofile), columnSet(cset)
@@ -21,13 +24,13 @@ PrintVisitor::PrintVisitor(std::string ofile, int cset) : string_print_index(0),
 /*
  *	
  */	
-void PrintVisitor::visitBar(Bar* b)
+void PrintVisitor::VisitBar(Bar* b)
 {
     for(string_print_index=SIZEOF_TUNING; string_print_index>= 0; string_print_index--)
     {
     	if(string_print_index == SIZEOF_TUNING) 
     	{
-    		string_buffer.back()[SIZEOF_TUNING] += "...";
+    		string_buffer.back()[SIZEOF_TUNING] += "   ";
     		continue;
     	}
     	(string_buffer.back())[string_print_index] += "|-";
@@ -53,7 +56,7 @@ void PrintVisitor::visitBar(Bar* b)
 				{
 					if(!tripled)
 					{ 
-						//appendThing();
+						addSpaces(delta);
 					}
 					else if(string_print_index == 0) string_buffer.back()[SIZEOF_TUNING] += " t";
 				}
@@ -69,16 +72,21 @@ void PrintVisitor::visitBar(Bar* b)
  */
 void PrintVisitor::addSpaces(int &delta)
 {
-	if(quaver_map.find(delta) != quaver_map.end()) //item is in our map
+
+	if(quaver_map.find(delta) != quaver_map.end()) 
 	{
-		string_buffer.back()[SIZEOF_TUNING] += quaver_map[delta]+ std::string(delta,'.');
+		string_buffer.back()[SIZEOF_TUNING] += quaver_map[delta]+ std::string(delta,' ');
 	}
 	else
 	{
 		int extra_delta=0;
+
 		//split the delta, render enough empty spaces 
 		//TODO: find a better (more general) way to handle unanticipated note durations
-		std::cout << "stuck: delta=" << delta <<std::endl;
+		std::cout << "splitting delta in print visitor line 84: delta=" << delta <<std::endl;
+		
+		//Replace tuplet delta indications with an appropriate amount of spacing
+
 		if(delta<0) delta *= -2;
 		while(quaver_map.find(delta) == quaver_map.end())
 		{
@@ -121,12 +129,13 @@ void PrintVisitor::newlines(bool fresh=false)
 { 
 	if(fresh == false)
 	{
-		for(string_print_index=SIZEOF_TUNING+1; string_print_index>= 0; string_print_index--){
+		for(string_print_index=SIZEOF_TUNING+1; string_print_index>= 0; string_print_index--)
+		{
 			if(string_print_index>=SIZEOF_TUNING) string_buffer.back()[string_print_index] += " ";
 			else
 				string_buffer.back()[string_print_index] += "|";
 		}
-	string_buffer.push_back(vector<string>(SIZEOF_TUNING+2) );
+		string_buffer.push_back(vector<string>(SIZEOF_TUNING+2) );
 	}
 	
 	//Push open string values for the new lines
@@ -145,10 +154,10 @@ void PrintVisitor::newlines(bool fresh=false)
 }
 
 /*
- *	Visit a chunk and iterate through all of its notes. Only visit notes which are on the currently set
+ *	Visit a chunk and iterate through all of its notes. Only Visit notes which are on the currently set
  *	string index, which each enclosing bar decrements through.
 */
-void PrintVisitor::visitChunk(Chunk* c)
+void PrintVisitor::VisitChunk(Chunk* c)
 {
 	strings_closed=false;
 	bool locked = false;
@@ -205,7 +214,7 @@ void PrintVisitor::visitChunk(Chunk* c)
 /*
  *	Claim a string for a given note
  */	
-void PrintVisitor::visitNote(Note* n)
+void PrintVisitor::VisitNote(Note* n)
 {
 	if(n->get_string() == string_print_index)
 	{

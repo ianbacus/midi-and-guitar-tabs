@@ -52,7 +52,7 @@ vector<Bar*> score_maker(std::string infile, int shift,int align) {
 	//bartime += align;
     while( std::getline( file, line ) ) 
     {
-    	std::cout << bartime << " " << beat_overflow << " " << counter << std::endl;
+    	//std::cout << bartime << " " << beat_overflow << " " << counter << std::endl;
         std::istringstream iss( line );
 		if(line == "SIGEVENT"){
 			std::getline(file, line);
@@ -60,7 +60,7 @@ vector<Bar*> score_maker(std::string infile, int shift,int align) {
 			std::string num,denom;
 			if( std::getline( iss, num , ',') && std::getline( iss, denom )) 
 			{
-				std::cout << "TS: " << num << "/" << denom << std::endl;
+				//std::cout << "TS: " << num << "/" << denom << std::endl;
 				//beat_overflow = (std::stof(num)*(beat_value[std::stoi(denom)]) );
 				beat_overflow = (std::stof(num)/std::stof(denom)) * std::stof(denom) * 8; //(beat_value[std::stoi(denom)]) );
 			}

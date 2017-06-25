@@ -4,6 +4,8 @@
 
 #include "tuning.h"
 
+typedef std::map <int, vector< pair<int,int> >  > PitchMap;
+
 class Note : public Base 
 {
 	private:
@@ -13,7 +15,6 @@ class Note : public Base
 		int current_note_index;
 		int octave_refcount;
 	public:
-		typedef std::map <int, vector< pair<int,int> >  > PitchMap;
 	 	static PitchMap pitch_to_frets_map;
 		static int noteslost;
 		

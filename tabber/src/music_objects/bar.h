@@ -1,7 +1,9 @@
-#ifndef __BAR__
-#define __BAR__
 #include "base.h"
 #include "chunk.h"
+
+
+#ifndef __BAR__
+#define __BAR__
 
 class Bar : public Base
 {
@@ -13,6 +15,8 @@ class Bar : public Base
 		
 		void add_chunk(Chunk* c);
 		void remove_chunk(Chunk* c);
+
+		//retrieve a chunk from the bar by its index
 		Chunk* get_child(int i);
 		Chunk* get_child();
 		

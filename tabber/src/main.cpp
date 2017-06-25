@@ -4,8 +4,8 @@
 //#include "Options.h"
 #include "midi2melody.h"
 #include "visitor.h"
-#include "printVisitor.h"
-#include "rotateVisitor.h"
+#include "print_visitor.h"
+#include "rotate_visitor.h"
 
 #include <thread>
 #include <ctype.h>
@@ -23,20 +23,25 @@ int main(int argc, char* argv[])
 
 	if(argc != 8)
 	{
-		cout << "Invalid entry. use the following format:\n>> ./gen <inputFile> <outputFile> <pitchShift#>, <measuresPerRow#> <startMeasure#> <endMeasure#>" << endl;
+		cout << "Invalid entry. use the following format:\n";
+		cout << ">> ./gen <inputFile> <outputFile> <pitchShift#>,";
+		cout << " <measuresPerRow#> <startMeasure#> <endMeasure#>" << endl;
 		return 0;
 	}
 	
 	int measureIndex = 0;
-	string inputFile = argv[1]; //name of input file
-	string outputFile = argv[2];
+
+	const string inputFile = argv[1]; //name of input file
+	const string outputFile = argv[2];
+
 	int noteOffset=24-atoi(argv[3]); //pitch shifts of 24 are common for the guitar
-	int barset = atoi(argv[4]);
-	int format_count = barset;
+	const int format_count_initial = atoi(argv[4]);
+	int format_count = format_count_initial;
+	
 	int lowerBound=atoi(argv[5]);
 	unsigned int upperBound=atoi(argv[6]);
-	unsigned int align=atoi(argv[7]);
-	std::cout << inputFile << std::endl;
+	const unsigned int align = atoi(argv[7]);
+	std::cout << "scanning " << inputFile << "...";
 	vector<Bar*> score = score_maker(inputFile,noteOffset,align);
 	
 	//Fix inputs
@@ -52,23 +57,25 @@ int main(int argc, char* argv[])
 	}
 	if (upperBound < lowerBound)
 	{
-		//swap in place
-		upperBound ^= lowerBound;
-		lowerBound ^= upperBound;
-		upperBound ^= lowerBound;
+		//swap
+		int tempBound = lowerBound;
+		lowerBound = upperBound;
+		upperBound = tempBound;
 	}
 	if(( -1 == upperBound) || upperBound > score.size())	
 		upperBound = score.size();
 	
-	std::cout << outputFile << std::endl;
+	std::cout << "done." << std::endl;
 	RotateVisitor* thefixer = new RotateVisitor();
 	PrintVisitor* theprinter = new PrintVisitor(outputFile,80);
-	cout << "tabbing " << (upperBound - lowerBound) <<  " measures from " << lowerBound << " to " << upperBound << "..." << endl;
+	cout << "tabbing " << (upperBound - lowerBound) <<  " measures";
+	cout << " from " << lowerBound << " to " << upperBound << "..." << endl;
 	
-	measureIndex=0;	
+
+	//Iterate through each bar, recursively apply the visitor pattern to fix note positions
 	for (std::vector< Bar* >::iterator it = score.begin() ; it < score.end(); it++,measureIndex++)
 	{	
-		if(format_count == barset){
+		if(format_count == format_count_initial){
 		   theprinter->newlines((it==score.begin()));
 		   format_count = 0;
 		}
