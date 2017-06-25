@@ -83,7 +83,6 @@ void PrintVisitor::addSpaces(int &delta)
 
 		//split the delta, render enough empty spaces 
 		//TODO: find a better (more general) way to handle unanticipated note durations
-		std::cout << "splitting delta in print visitor line 84: delta=" << delta <<std::endl;
 		
 		//Replace tuplet delta indications with an appropriate amount of spacing
 
@@ -93,8 +92,14 @@ void PrintVisitor::addSpaces(int &delta)
 			delta--;
 			extra_delta++;
 		}
-		string_buffer.back()[SIZEOF_TUNING] += quaver_map[delta]+ std::string(delta,' ');
-		string_buffer.back()[SIZEOF_TUNING] += quaver_map[extra_delta]+ std::string(extra_delta,' ');
+		
+		std::cout << "\npv: split delta=" << delta << std::endl;
+		std::cout << "pv: added delta=" << extra_delta << std::endl;
+		
+		string_buffer.back()[SIZEOF_TUNING] += quaver_map[delta] + std::string(delta,' ');
+		string_buffer.back()[SIZEOF_TUNING] += std::string(extra_delta,' ');
+
+		//string_buffer.back()[SIZEOF_TUNING] += quaver_map[extra_delta];// + std::string(extra_delta,' ');
 	}
 }
 
