@@ -1,10 +1,13 @@
 import time, sys, os
+sys.path.insert(0, './src/scripts/')
+
 from collections import OrderedDict
 from midi_writer import make as generate_pitch_delta
 import subprocess
 
+
 #set the order of input parameters here
-inputParameters = OrderedDict([('fileName','None'),('noteOffset','0'),('columnsPerRow','4'),('align','1'),('startMeasure','0'),('endMeasure','-1'),('condition','True')])
+inputParameters = OrderedDict([('fileName', 'None'),('noteOffset', '0'),('columnsPerRow', '4'),('align', '1'),('startMeasure', '0'),('endMeasure', '-1'),('condition', 'True')])
 
 def join(seq, sep=','):
     return sep.join(str(i) for i in seq)
