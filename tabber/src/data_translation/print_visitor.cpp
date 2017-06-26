@@ -7,9 +7,7 @@ map<int,int> beat_value = {{1,32},{2,16},{4,8},{8,4},{16,2},{32,1}};
 //Note length indications to print above the notes
 std::map<int,string> quaver_map = 
 {
-	{2," T"},{4, " s"},{6," s"},{8," e"},{14," e"},{16, " q"},{24, " q"},{32," h"},{56," h"},{64, " w"},
-	//{2,"T "},{4, "s "},{6,"s "},{8,"e "},{14,"e "},{16, "q "},{24, "q "},{32,"h "},{56,"h "},{64, "w "},
-
+	{1, "S"}, {2," T"},{4, " s"},{6," s"},{8," e"},{14," e"},{16, " q"},{24, " q"},{32," h"},{56," h"},{64, " w"},
 };
 
 /*
@@ -73,33 +71,34 @@ void PrintVisitor::VisitBar(Bar* b)
 void PrintVisitor::addSpaces(int &delta)
 {
 
+	//Case 1: the delay between the chunks can be represented with one of the defined note duration codes
 	if(quaver_map.find(delta) != quaver_map.end()) 
 	{
 		string_buffer.back()[SIZEOF_TUNING] += quaver_map[delta]+ std::string(delta,' ');
 	}
+	
+	//Case 2: a triplet
+	else if(delta<0)
+	{
+		delta *= -2;
+		string_buffer.back()[SIZEOF_TUNING] += quaver_map[delta] + std::string(delta,' ');
+	}
+	
+	
+	//Case 2: the delay between chunks is the result of one or more rests, and a normal note duration
 	else
 	{
 		int extra_delta=0;
 
-		//split the delta, render enough empty spaces 
-		//TODO: find a better (more general) way to handle unanticipated note durations
-		
 		//Replace tuplet delta indications with an appropriate amount of spacing
-
-		if(delta<0) delta *= -2;
 		while(quaver_map.find(delta) == quaver_map.end())
 		{
 			delta--;
 			extra_delta++;
 		}
 		
-		std::cout << "\npv: split delta=" << delta << std::endl;
-		std::cout << "pv: added delta=" << extra_delta << std::endl;
-		
 		string_buffer.back()[SIZEOF_TUNING] += quaver_map[delta] + std::string(delta,' ');
 		string_buffer.back()[SIZEOF_TUNING] += std::string(extra_delta,' ');
-
-		//string_buffer.back()[SIZEOF_TUNING] += quaver_map[extra_delta];// + std::string(extra_delta,' ');
 	}
 }
 

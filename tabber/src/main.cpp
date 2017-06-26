@@ -42,7 +42,7 @@ int main(int argc, char* argv[])
 	unsigned int upperBound=atoi(argv[6]);
 	const unsigned int align = atoi(argv[7]);
 	std::cout << "scanning " << inputFile << "...";
-	vector<Bar*> score = score_maker(inputFile,noteOffset,align);
+	vector<Bar*> score = ParseIntermediateFile(inputFile,noteOffset,align);
 	
 	//Fix inputs
 	if (noteOffset < -127) 

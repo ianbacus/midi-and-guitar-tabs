@@ -7,6 +7,5 @@
 for file in ./data/input_files/*$1*
 do 
 	foo=${file#./data/input_files/}
-	#echo "${foo}"
-	python2.7 midiTranslate.py "${foo%.mid}" 
+	python2.7 run.py "${foo%.mid}" 
 done

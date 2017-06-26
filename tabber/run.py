@@ -9,6 +9,9 @@ import subprocess
 #set the order of input parameters here
 inputParameters = OrderedDict([('fileName', 'None'),('noteOffset', '0'),('columnsPerRow', '4'),('align', '1'),('startMeasure', '0'),('endMeasure', '-1'),('condition', 'True')])
 
+IntermediateFileToTabExecutable = './src/gen'
+
+
 def join(seq, sep=','):
     return sep.join(str(i) for i in seq)
 
@@ -36,10 +39,10 @@ if __name__ == "__main__":
 		
 		#Translate midi file into intermediate format with raw pitch/time information
 		generate_pitch_delta(newfile="data/intermediates/"+inputParameters['fileName']+".txt", \
-		infile="data/input_files/"+inputParameters['fileName']+".mid",condition=inputParameters['condition'],note_offsets='(000,0,0,00,0,00)')
+		infile="data/input_files/"+inputParameters['fileName']+".mid",condition=inputParameters['condition'],note_offsets='(0,0,0,0,0,0)')
 
 		#Invoke c++ tab optimizer to translate intermediate file to tabs
-		spstring= ['./gen', 'data/intermediates/'+inputParameters['fileName']+'.txt', 'data/tabs/'+inputParameters['fileName']+'.txt',\
+		spstring= [IntermediateFileToTabExecutable, 'data/intermediates/'+inputParameters['fileName']+'.txt', 'data/tabs/'+inputParameters['fileName']+'.txt',\
 		inputParameters['noteOffset'], inputParameters['columnsPerRow'],inputParameters['startMeasure'],inputParameters['endMeasure'], inputParameters['align']]
 		subprocess.call(spstring)
 

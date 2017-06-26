@@ -1,4 +1,4 @@
-EXE = gen
+EXE = src/gen
 SOURCES = src/music_objects/bar.cpp                     \
 	  src/music_objects/chunk.cpp                   \
 	  src/music_objects/note.cpp                    \
@@ -13,11 +13,9 @@ INC_PATH = -I midifile/include/                         \
 	   -I src/music_objects/                        \
 	   -I src/data_translation/
 
-all: $(EXE)
+tabber:$(EXE)
 $(EXE): $(SOURCES)
 	g++ $(CFLAGS) -std=c++11 $(INC_PATH) $(SOURCES) $(LIB_PATH) -o $(EXE)
-DEBUG: $(SOURCES)
-	g++ $(CFLAGS) -std=c++11 $(INC_PATH) $(SOURCES) $(LIB_PATH) -g -o $(EXE)
 	
 clean:
-	rm -rf *.o $(EXE)
+	rm $(EXE)

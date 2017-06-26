@@ -1,3 +1,5 @@
+//Translate an intermediate file into a c++ representation of the pitches and deltas
+
 #include "midi2melody.h"
 #include <iomanip>
 
@@ -6,104 +8,104 @@
 using namespace std;
 
 
-//See midiTranslate for the order of initial translations
 
 typedef unsigned char uchar;
 
 
-vector<Bar*> score_maker(std::string infile, int shift,int align) {
-	/* 
-	  A beat overflow is calculated by multiplying the numerator of the time signature with
-	  the mapped value of the denominator. This the denominator is mapped as 32/n, where n is the denominator.
-	  
-	  The time signature ratio is multiplied by 32 to count how many 32nd notes would fit in a bar.
-	  
-	  4/4 time: 32 32nd notes .... 128 128th notes
-	     four quarter notes : 6 quarter triplets
-	     sixteen sixteenth notes : 16*3/2 = 24 sixteenth triplets
-	  6/8 time: 24 32nd notes
-	  
-	  This is because 32nd notes are used as the most precise bits (highest resolution).
-	  
-	  Triplets are 2/3 of their normal note value, so in the time that 2 eighth notes pass 3 triple-eighth notes pass
-	  There are no reasonably low numbers with common multiples that are compatible with triplets
-	  
-	  all that matters is that the beginning and end notes are aligned properly... 
-	  
-	  
-	  handles input in this form
-  	 	 line 0: 72,100
-		 line 1: 72,0
-	*/
+vector<Bar*> ParseIntermediateFile(std::string infile, int shift,int align) 
+{
     std::ifstream file( infile );
-    int last;
-    
-    map<int,int> beat_value = {{1,32},{2,16},{4,8},{8,4},{16,2},{32,1}};
-    float bartime = 0;
-    int counter = 0;
-    float beat_overflow=36;
-	vector<Bar*> score;
+
+	uint32_t ticksAccumulatedForCurrentMeasure = 0;
+	uint32_t ticksPerMeasure = 36;
+	vector<Bar*> parsedResult;
 	
-    score.push_back(new Bar());
-    score.back()->add_chunk(new Chunk());
-    std::string line;
+    parsedResult.push_back(new Bar());
+    parsedResult.back()->add_chunk(new Chunk());
     
-	//align = align*(beat_overflow/(2*(beat_per_measure)));
-	//bartime += align;
+	std::string line;
+    
     while( std::getline( file, line ) ) 
     {
-    	//std::cout << bartime << " " << beat_overflow << " " << counter << std::endl;
-        std::istringstream iss( line );
-		if(line == "SIGEVENT"){
-			std::getline(file, line);
-			std::istringstream iss( line );
-			std::string num,denom;
-			if( std::getline( iss, num , ',') && std::getline( iss, denom )) 
-			{
-				//std::cout << "TS: " << num << "/" << denom << std::endl;
-				//beat_overflow = (std::stof(num)*(beat_value[std::stoi(denom)]) );
-				beat_overflow = (std::stof(num)/std::stof(denom)) * std::stof(denom) * 8; //(beat_value[std::stoi(denom)]) );
-			}
-		}	
-        std::string p,d,tn;
-		if( std::getline( iss, p , ',') && std::getline( iss, d, ',' ) && std::getline( iss, tn) ) 
+       	const bool currentMeasureIsFull = (ticksAccumulatedForCurrentMeasure >= ticksPerMeasure); 
+		std::istringstream pitchDeltaInputStringStream( line );
+
+		if(line == "SIGEVENT")
 		{
-			//delimiting character inside each line
-			counter++;
-			int track_num = stoi(tn);
-			float delta = stof(d)*pow(2.0,align); //multiply by a factor of 2: lengthen notes 
-			int pitch = stoi(p);
-			
-			if(bartime >= beat_overflow && delta != 0)
+			std::getline(file, line);
+			std::istringstream pitchDeltaInputStringStream( line );
+			std::string beatsPerBarString, beatUnitString; 
+
+			if( std::getline( pitchDeltaInputStringStream, beatsPerBarString, ',') && 
+				std::getline( pitchDeltaInputStringStream, beatUnitString )) 
 			{
-				//Case 1: the bar is full, create a new one with an empty initial chunk
-				score.push_back(new Bar());	
-			    score.back()->add_chunk(new Chunk());
-				while(bartime >= beat_overflow) bartime -= beat_overflow;
-				
+				const float beatsPerBar = std::stof(beatsPerBarString);
+				const float beatUnit = std::stof(beatUnitString);
+				const float meterRatio = (beatsPerBar/beatUnit);
+
+				ticksPerMeasure = meterRatio * beatUnit * 8;
 			}
-			bartime += abs(delta);
-			pitch = (pitch<0) ? pitch : pitch-shift;
+		}
+
+        std::string pitchString,deltaString,trackNumberString;
+
+		if( std::getline( pitchDeltaInputStringStream, pitchString , ',') && 
+			std::getline( pitchDeltaInputStringStream, deltaString, ',' ) && 
+			std::getline( pitchDeltaInputStringStream, trackNumberString) ) 
+		{
+			const uint32_t currentTrackNumber = stoi(trackNumberString);
+			const uint32_t delta = stoi(deltaString)*pow(2.0,align);
+			int32_t pitch = stoi(pitchString);
 			
-			if(delta == 0){
-			  //Case 2: this note must be added to the current chunk in the current bar
-			  //score.back() returns the last bar
-			  //score.back()->get_children_size() returns the number of chunks, used to index the last chunk
-			  //since the member vectors are inaccessible, using the "back()" function on the vector is not viable
-			  
-			  last = score.back()->get_children_size() - 1;
-			  score.back()->get_child(last)->add_note(new Note(pitch,delta,track_num));
+			if(pitch<0)
+			{
+				std::cout << "negative pitch m2m" << std::endl;
+				pitch -= shift;
+			}	
+			
+			
+			//The bar is full, create a new measure with an empty initial chunk
+			//if((ticksAccumulatedForCurrentMeasure >= ticksPerMeasure) && (delta != 0))	
+			if(currentMeasureIsFull && (delta > 0))
+			{
+				Bar *nextMeasure = new Bar();
+				Chunk* initialChunk = new Chunk();
+
+				nextMeasure->add_chunk(initialChunk);
+				parsedResult.push_back(nextMeasure);
+
+				//Find the remainder and carry it over to the next bar. Omit rests across
+				// all voices that last more than one bar.  
+				ticksAccumulatedForCurrentMeasure %= ticksPerMeasure;
 			}
-			else{
-			  //Case 3: a new chunk in the current bar is needed
-			  
-			  score.back()->add_chunk(new Chunk(delta));
-			  last =  score.back()->get_children_size() - 1;
-			  score.back()->get_child(last)->add_note(new Note(pitch,delta,track_num));
+			
+			//This note must be added to the current chunk in the current bar
+			if(delta == 0)
+			{
+			 
+				Bar* currentMeasure = parsedResult.back(); 
+				uint32_t indexOfLastChunkInScore = currentMeasure->get_children_size() - 1;
+				Chunk* currentChunk = currentMeasure->get_child(indexOfLastChunkInScore);
+
+				currentChunk->add_note(new Note(pitch,delta,currentTrackNumber));
+
+			}
+			
+			
+			//A new chunk in the current bar is needed
+			else
+			{
+			 	Bar* currentMeasure = parsedResult.back();
+				Chunk* nextChunk = new Chunk(delta);
+
+				nextChunk->add_note(new Note(pitch,delta,currentTrackNumber));
+ 				currentMeasure->add_chunk(nextChunk);
 			}	
 
+			ticksAccumulatedForCurrentMeasure += abs(delta);
+			
 		}
 	}
-	return score;
+	return parsedResult;
 
 }
