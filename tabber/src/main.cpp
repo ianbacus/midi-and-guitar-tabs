@@ -28,23 +28,30 @@ int main(int argc, char* argv[])
 		cout << " <measuresPerRow#> <startMeasure#> <endMeasure#>" << endl;
 		return 0;
 	}
-	
+
+
+	const int pitchOffset = 24;
 	int measureIndex = 0;
 
 	const string inputFile = argv[1]; //name of input file
 	const string outputFile = argv[2];
 
-	int noteOffset=24-atoi(argv[3]); //pitch shifts of 24 are common for the guitar
+	int noteOffset=pitchOffset - atoi(argv[3]); 
 	const int format_count_initial = atoi(argv[4]);
 	int format_count = format_count_initial;
 	
 	int lowerBound=atoi(argv[5]);
 	unsigned int upperBound=atoi(argv[6]);
+
 	const unsigned int align = atoi(argv[7]);
+
+	RotateVisitor* const TablatureRearranger = new RotateVisitor();
+	PrintVisitor* const TablaturePrinter = new PrintVisitor(outputFile,80);
+	
 	std::cout << "scanning " << inputFile << "...";
 	vector<Bar*> score = ParseIntermediateFile(inputFile,noteOffset,align);
 	
-	//Fix inputs
+	//Limit transpositions to +/- 127 pitches 
 	if (noteOffset < -127) 
 	{
 		noteOffset = -127;
@@ -55,49 +62,56 @@ int main(int argc, char* argv[])
 		noteOffset = 127;
 		std::cout << "Note shift exceeds bounds: set to 127" << std::endl;
 	}
+
+	//Swap bounds if they are incorrect
 	if (upperBound < lowerBound)
 	{
-		//swap
-		int tempBound = lowerBound;
+		const int tempBound = lowerBound;
 		lowerBound = upperBound;
 		upperBound = tempBound;
 	}
-	if(( -1 == upperBound) || upperBound > score.size())	
-		upperBound = score.size();
 	
-	std::cout << "done." << std::endl;
-	RotateVisitor* thefixer = new RotateVisitor();
-	PrintVisitor* theprinter = new PrintVisitor(outputFile,80);
+	//Set the default upper bound to the maximum value
+	if(( 0 > upperBound) || upperBound > score.size())	
+	{
+		upperBound = score.size();
+	}
+
+	std::cout << "done.";
 	cout << "tabbing " << (upperBound - lowerBound) <<  " measures";
-	cout << " from " << lowerBound << " to " << upperBound << "..." << endl;
+	cout << " from " << lowerBound << " to " << upperBound << "...";
 	
 
 	//Iterate through each bar, recursively apply the visitor pattern to fix note positions
 	for (std::vector< Bar* >::iterator it = score.begin() ; it < score.end(); it++,measureIndex++)
 	{	
-		if(format_count == format_count_initial){
-		   theprinter->newlines((it==score.begin()));
+		if(format_count == format_count_initial)
+		{
+		   TablaturePrinter->newlines((it==score.begin()));
 		   format_count = 0;
 		}
 		if((lowerBound <= measureIndex) && (measureIndex <= upperBound))
 		{
-			(*it)->accept(thefixer);
-			(*it)->accept(theprinter);
+			(*it)->accept(TablatureRearranger);
+			(*it)->accept(TablaturePrinter);
 			format_count++;
 		}
 		
 	}
 	
-	theprinter->print_out();
-	theprinter->set_outfile("data/outTab.txt");
-	theprinter->print_out();
+	TablaturePrinter->print_out();
+	TablaturePrinter->set_outfile("data/outTab.txt");
+	TablaturePrinter->print_out();
 	std::cout << "done. " << std::endl;
   
-	delete thefixer;
-	delete theprinter; 
+	delete TablatureRearranger;
+	delete TablaturePrinter; 
+
 	for (std::vector< Bar* >::iterator it = score.begin() ; it != score.end(); ++it)
+	{
 		delete (*it);
-  	
+  	}
+
 	return 0;
   
 }

@@ -14,6 +14,8 @@ INC_PATH = -I midifile/include/                         \
 	   -I src/data_translation/
 
 tabber:$(EXE)
+install:
+	sh ./src/scripts/install.sh
 $(EXE): $(SOURCES)
 	g++ $(CFLAGS) -std=c++11 $(INC_PATH) $(SOURCES) $(LIB_PATH) -o $(EXE)
 	

@@ -7,5 +7,5 @@
 for file in ./data/input_files/*$1*
 do 
 	foo=${file#./data/input_files/}
-	python2.7 run.py "${foo%.mid}" 
+	python2.7 run.py "${foo%.mid}" $2 $3 $4 $5 $6 $7 $8 $9 $10 
 done

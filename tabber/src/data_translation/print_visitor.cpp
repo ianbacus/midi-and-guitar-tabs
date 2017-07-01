@@ -31,6 +31,7 @@ void PrintVisitor::VisitBar(Bar* b)
     		string_buffer.back()[SIZEOF_TUNING] += "   ";
     		continue;
     	}
+
     	(string_buffer.back())[string_print_index] += "|-";
 		for(int j=0; j<b->get_children_size(); j++)
 		{
@@ -52,11 +53,12 @@ void PrintVisitor::VisitBar(Bar* b)
 				}
 				if(string_print_index == 0)
 				{
-					if(!tripled)
-					{ 
-						addSpaces(delta);
-					}
-					else if(string_print_index == 0) string_buffer.back()[SIZEOF_TUNING] += " t";
+					addSpaces(delta);
+//					if(!tripled)
+//					{ 
+//						addSpaces(delta);
+//					}
+//					else if(string_print_index == 0) string_buffer.back()[SIZEOF_TUNING] += " t";
 				}
 			}
 		}
@@ -80,8 +82,12 @@ void PrintVisitor::addSpaces(int &delta)
 	//Case 2: a triplet
 	else if(delta<0)
 	{
-		delta *= -2;
-		string_buffer.back()[SIZEOF_TUNING] += quaver_map[delta] + std::string(delta,' ');
+		
+		//Replace tuplet delta indications with an appropriate amount of spacing
+		//delta *= -2;
+		//string_buffer.back()[SIZEOF_TUNING] += quaver_map[delta] + std::string(delta,' ');
+	
+		string_buffer.back()[SIZEOF_TUNING] += " t";// + std::string(2,' ');
 	}
 	
 	
@@ -90,7 +96,6 @@ void PrintVisitor::addSpaces(int &delta)
 	{
 		int extra_delta=0;
 
-		//Replace tuplet delta indications with an appropriate amount of spacing
 		while(quaver_map.find(delta) == quaver_map.end())
 		{
 			delta--;
@@ -172,7 +177,10 @@ void PrintVisitor::VisitChunk(Chunk* c)
 	int j = c->get_children_size();
 	
 	if(c->get_children_size() == 0)
+	{
 		return;
+	}
+
 	for(int j=0; j<c->get_children_size(); j++)
 	{
 		current_note = c->get_note_at(j);
@@ -180,38 +188,62 @@ void PrintVisitor::VisitChunk(Chunk* c)
 		{
 			current_note->accept(this);
 		}
+
 		if(strings_closed && !locked)
 		{
 			int fret = current_note->get_fret();
 			int pitch = current_note->get_pitch();
+
 			if (fret < 0) //rest note
+			{
 				result = "--";
+			}
+
 			else if(fret < 10)
+			{
 				result = "-" + std::to_string(fret);
+			}
+
 			else
+			{
 				result = std::to_string(fret);
-			//New test for ascii output
-			//result = std::to_string(fret);
+			}
+
 			locked = true;
 		}
+
 		delta += current_note->get_delta();
 	}
-	if(!strings_closed)//none of the chunk members were on the current string index, so print null space instead
+
+	//Notes were not printed in this column, place "note filler" dashes
+	if(!strings_closed)
 	{
 		result = "--" ;
-	}	
+	}
+	
+
 	//This is where the padding takes place for notes based on their note duration
 
+	string_buffer.back()[string_print_index] += result;
+	if(delta >= 0)
+	{
+		string_buffer.back()[string_print_index] += std::string(delta,'-');
+	}
+
+/*
 	if(delta >= 0){
 		
 		string_buffer.back()[string_print_index] += result+ std::string(delta,'-');
 	}
+
 	else 
 	{
 		//triplets case
 		tripled = true;
 		string_buffer.back()[string_print_index] +=  result;
 	}
+*/
+
 }
 
 

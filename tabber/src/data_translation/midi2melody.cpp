@@ -55,13 +55,8 @@ vector<Bar*> ParseIntermediateFile(std::string infile, int shift,int align)
 		{
 			const uint32_t currentTrackNumber = stoi(trackNumberString);
 			const uint32_t delta = stoi(deltaString)*pow(2.0,align);
-			int32_t pitch = stoi(pitchString);
+			const uint32_t pitch = stoi(pitchString)- shift;
 			
-			if(pitch<0)
-			{
-				std::cout << "negative pitch m2m" << std::endl;
-				pitch -= shift;
-			}	
 			
 			
 			//The bar is full, create a new measure with an empty initial chunk
