@@ -81,7 +81,6 @@ int main(int argc, char* argv[])
 	cout << "tabbing " << (upperBound - lowerBound) <<  " measures";
 	cout << " from " << lowerBound << " to " << upperBound << "...";
 	
-
 	//Iterate through each bar, recursively apply the visitor pattern to fix note positions
 	for (std::vector< Bar* >::iterator it = score.begin() ; it < score.end(); it++,measureIndex++)
 	{	
@@ -98,7 +97,6 @@ int main(int argc, char* argv[])
 		}
 		
 	}
-	
 	TablaturePrinter->print_out();
 	TablaturePrinter->set_outfile("data/outTab.txt");
 	TablaturePrinter->print_out();

@@ -31,12 +31,10 @@ def BuildTickToPitchMidiValueDictionary(midiTracks,trackFilterCondition):
 		lowestPitchMidiValue = 200
 		highestPitchMidiValue = 0
 		currentEventTickValue = 0
-
 		for midiEvent in track:					
 
-			
 			nextTickValue = (midiEvent.tick*MaximumNotesPerBeat/midiTracks.resolution)
-			currentEventTickValue += round(nextTickValue,10)
+			currentEventTickValue += round(nextTickValue,3)
 
 			#Time signature events are added to a separate data structure
 			if type(midiEvent) is midi.events.TimeSignatureEvent:
@@ -66,7 +64,6 @@ def BuildTickToPitchMidiValueDictionary(midiTracks,trackFilterCondition):
 					except KeyError:
 						TickToPitchMidiValueDictionary[currentEventTickValue] = [pitchMidiValueEntry]
 
-					print str(currentEventTickValue)," ",str(pitchMidiValue)
 				#Note off events: update the note durations of notes as they expire
 				'''
 				elif (type(midiEvent) is midi.events.NoteOffEvent):
@@ -130,25 +127,21 @@ def WriteExtractedMidiDataToIntermediateFile(newfile):
 				alignedTriplets = [x*(2.0/3.0) for x in [1,4,16]]
 				unalignedTriplets = [x*(4.0/3.0) for x in [1,4,16]]
 
-				DEBUGSTR = str(delta)
+				#DEBUGSTR = str(delta)
 				newDelta = ""
 				if True in [float_eq(delta,tripletCase) for tripletCase in alignedTriplets]:
-					newDelta = "-1"#(( 2.0*delta)-1)
+					newDelta = "-1"
  
 					currentLineOfIntermediateFile+="-1"
 				elif True in [float_eq(delta,tripletCase) for tripletCase in unalignedTriplets]:
 					newDelta = ((-2.0*delta)-1)*(2.0/3.0)
 				
-				#if float_eq(delta,MaximumNotesPerBeat/12.0):
 				else:
 					newDelta = str(round(delta))
-					#currentLineOfIntermediateFile+= str(round(delta))
 
-				currentLineOfIntermediateFile += newDelta
-
-				DEBUGSTR += ' '+ str(newDelta)
-				print DEBUGSTR
-
+				currentLineOfIntermediateFile += str(newDelta)
+				
+				#DEBUGSTR += ' '+ str(newDelta)
 				currentLineOfIntermediateFile+= ','+str(trackNumber)
 				intermediateOutputFile.write(currentLineOfIntermediateFile+'\n')
 
@@ -171,5 +164,4 @@ def make(newfile,infile,condition,note_offsets):
 
 	#Write the output to an intermediate file
 	WriteExtractedMidiDataToIntermediateFile(newfile)
-
 

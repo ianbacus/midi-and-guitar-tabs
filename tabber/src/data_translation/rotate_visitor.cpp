@@ -34,17 +34,21 @@ have been attempted
 
 void printNoteIndices(vector<pair <int, int> > currentNoteConfigurations)
 {
+
 //      Print the fret and string of each note in the current chunk configuration	
 	std::cout << "-" << std::endl;
 	int notefret = 0;
 	char notestring = '0';
+
 	for(auto i: currentNoteConfigurations)
 	{
 		notefret = Note::get_fret_at(i.first, i.second);
 		notestring = ptuning[Note::get_string_at(i.first, i.second)];
 		std::cout << notefret << notestring << std::endl;
 	}
+
 	std::cout << "-" << std::endl;
+
 }
 
 void RotateVisitor::VisitBar(Bar* bar) 
@@ -52,8 +56,8 @@ void RotateVisitor::VisitBar(Bar* bar)
   //Go through all of the chunks in a given bar and reconfigure them
   for(int i=0; i < bar->get_children_size(); i++)
   {
-  	Chunk* candidateChunk = bar->get_child(i);
-  	candidateChunk->accept(this);
+  	  Chunk* candidateChunk = bar->get_child(i);
+  	  candidateChunk->accept(this);
   }
 
 }
@@ -77,6 +81,7 @@ void RotateVisitor::RecursivelyFindLowestCostChunkConfiguration(Chunk* candidate
 
 	//Make sure that the permutation limit has not been reached
 	candidateChunk->inc_lock();
+
 	if (candidateChunk->get_lock_val() < pow(PERMUTATION_MAX_BASE,(candidateChunk->get_children_size() ))) 
 	{
 		CompareChunks(candidateChunk,candidateChunk->get_note_indices());	
@@ -141,6 +146,7 @@ void RotateVisitor::VisitChunk(Chunk* candidateChunk)
 
 	while(counter_index < candidateChunk->get_children_size())
 	{
+
 		if(max_permutation_counter > max_permutation_limit)
 		{
 			//go with local minimum
