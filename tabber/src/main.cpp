@@ -77,10 +77,9 @@ int main(int argc, char* argv[])
 		upperBound = score.size();
 	}
 
-	std::cout << "done.";
+	std::cout << "done." << std::endl;
 	cout << "tabbing " << (upperBound - lowerBound) <<  " measures";
 	cout << " from " << lowerBound << " to " << upperBound << "...";
-	
 	//Iterate through each bar, recursively apply the visitor pattern to fix note positions
 	for (std::vector< Bar* >::iterator it = score.begin() ; it < score.end(); it++,measureIndex++)
 	{	
@@ -89,6 +88,7 @@ int main(int argc, char* argv[])
 		   TablaturePrinter->newlines((it==score.begin()));
 		   format_count = 0;
 		}
+
 		if((lowerBound <= measureIndex) && (measureIndex <= upperBound))
 		{
 			(*it)->accept(TablatureRearranger);

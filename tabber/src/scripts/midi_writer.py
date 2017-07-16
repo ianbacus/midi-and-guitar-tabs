@@ -10,9 +10,14 @@ note_offsets = (00,00,00,00,00,00,00,00,00,00,00,00,00,00)
 #Limit the TickToPitchMidiValueDictionaryal resolution. This value also affects the scaling of time values in terms of beats
 MaximumNotesPerBeat = 8.0
 
+MaximumChunkSize = 6
+RoundTo = 100
+
 lowest = 0
 maxNote = 0
-def float_eq( a, b, eps=0.05 ):
+
+
+def float_eq( a, b, eps=0.35):
     return abs(a - b) <= eps
     
 
@@ -34,8 +39,15 @@ def BuildTickToPitchMidiValueDictionary(midiTracks,trackFilterCondition):
 		for midiEvent in track:					
 
 			nextTickValue = (midiEvent.tick*MaximumNotesPerBeat/midiTracks.resolution)
-			currentEventTickValue += round(nextTickValue,3)
+			CA0 = nextTickValue
+			if(nextTickValue<1) and (float_eq(round(nextTickValue,3),0.666)):
+				nextTickValue = 0.5
+			else:
+				nextTickValue = round(nextTickValue)
+			currentEventTickValue += nextTickValue
+			CA1 = nextTickValue
 
+			print str(CA0)+"-->"+str(CA1)
 			#Time signature events are added to a separate data structure
 			if type(midiEvent) is midi.events.TimeSignatureEvent:
 				timeSignatureEvents[currentEventTickValue] = midiEvent.get_numerator(),midiEvent.get_denominator()
@@ -112,6 +124,8 @@ def WriteExtractedMidiDataToIntermediateFile(newfile):
 			except:
 				delta = 4
 
+			while len(chunk) > MaximumChunkSize: 
+				chunk.pop(len(chunk)/2)
 			#write the event data to a file
 			for event in chunk:
 
@@ -128,19 +142,28 @@ def WriteExtractedMidiDataToIntermediateFile(newfile):
 				unalignedTriplets = [x*(4.0/3.0) for x in [1,4,16]]
 
 				#DEBUGSTR = str(delta)
+				
+#				newDelta = str(round(delta,RoundTo))
+
+				newDelta = delta
+				if (newDelta < 1) and (float_eq(newDelta,0.5)):
+					newDelta = -1
+
+				currentLineOfIntermediateFile += str(newDelta)
+				'''
+				
 				newDelta = ""
 				if True in [float_eq(delta,tripletCase) for tripletCase in alignedTriplets]:
 					newDelta = "-1"
  
-					currentLineOfIntermediateFile+="-1"
 				elif True in [float_eq(delta,tripletCase) for tripletCase in unalignedTriplets]:
 					newDelta = ((-2.0*delta)-1)*(2.0/3.0)
 				
 				else:
 					newDelta = str(round(delta))
 
-				currentLineOfIntermediateFile += str(newDelta)
-				
+				'''
+				#currentLineOfIntermediateFile += str(newDelta)
 				#DEBUGSTR += ' '+ str(newDelta)
 				currentLineOfIntermediateFile+= ','+str(trackNumber)
 				intermediateOutputFile.write(currentLineOfIntermediateFile+'\n')
@@ -164,4 +187,3 @@ def make(newfile,infile,condition,note_offsets):
 
 	#Write the output to an intermediate file
 	WriteExtractedMidiDataToIntermediateFile(newfile)
-
