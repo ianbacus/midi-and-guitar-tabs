@@ -38,16 +38,17 @@ def BuildTickToPitchMidiValueDictionary(midiTracks,trackFilterCondition):
 		currentEventTickValue = 0
 		for midiEvent in track:					
 
-			nextTickValue = (midiEvent.tick*MaximumNotesPerBeat/midiTracks.resolution)
-			CA0 = nextTickValue
+			#nextTickValue = ((midiEvent.tick*MaximumNotesPerBeat)/midiTracks.resolution)
+			nextTickValue =  2*(midiEvent.tick*(MaximumNotesPerBeat/midiTracks.resolution))
+                        #CA0 = nextTickValue
 			if(nextTickValue<1) and (float_eq(round(nextTickValue,3),0.666)):
 				nextTickValue = 0.5
 			else:
-				nextTickValue = round(nextTickValue)
+				nextTickValue = round(nextTickValue,1)
 			currentEventTickValue += nextTickValue
-			CA1 = nextTickValue
+			#CA1 = nextTickValue
 
-			print str(CA0)+"-->"+str(CA1)
+			#print str(CA0)+"-->"+str(CA1)
 			#Time signature events are added to a separate data structure
 			if type(midiEvent) is midi.events.TimeSignatureEvent:
 				timeSignatureEvents[currentEventTickValue] = midiEvent.get_numerator(),midiEvent.get_denominator()

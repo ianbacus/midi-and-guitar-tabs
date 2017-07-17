@@ -24,13 +24,11 @@ if __name__ == "__main__":
 
 
 	try: 
-		os.makedirs("./data/input_files")
-		os.makedirs("./data/intermediates")
-		os.makedirs("./data/tabs")
+	    os.makedirs("./data/intermediates")
+            os.makedirs("./data/input_files")
+            os.makedirs("./data/tabs")
 	except OSError:
-
-		if not os.path.isdir("./data/intermediates"):
-			raise
+            pass
 
 	#Use command line arguments for the first (argc-1) parameters 
 	argCount = 1
