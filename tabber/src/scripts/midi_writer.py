@@ -5,6 +5,8 @@ Take an input midi file and translate it into an intermediate file containing on
 import midi, collections, sys, os
 from collections import Counter
 
+import json
+
 note_offsets = (00,00,00,00,00,00,00,00,00,00,00,00,00,00)
 
 #Limit the TickToPitchMidiValueDictionaryal resolution. This value also affects the scaling of time values in terms of beats
@@ -31,30 +33,32 @@ TickToPitchMidiValueDictionary = collections.OrderedDict()
 def BuildTickToPitchMidiValueDictionary(midiTracks,trackFilterCondition):
 	
 	active_notes = {}
+        resolution = float(midiTracks.resolution)
 	for currentTrackNumber,track in enumerate(midiTracks):
-
 		lowestPitchMidiValue = 200
 		highestPitchMidiValue = 0
 		currentEventTickValue = 0
-		for midiEvent in track:					
+                track.make_ticks_abs()
+                for midiEvent in track:	
+                        initialValue = midiEvent.tick
 
 			#nextTickValue = ((midiEvent.tick*MaximumNotesPerBeat)/midiTracks.resolution)
-			nextTickValue =  2*(midiEvent.tick*(MaximumNotesPerBeat/midiTracks.resolution))
-                        #CA0 = nextTickValue
+			nextTickValue =  2*(midiEvent.tick*(MaximumNotesPerBeat/float(midiTracks.resolution)))
+
+			currentEventTickValue = round(nextTickValue)
+                        '''
 			if(nextTickValue<1) and (float_eq(round(nextTickValue,3),0.666)):
-				nextTickValue = 0.5
+				nextTickValue = 0.66
 			else:
 				nextTickValue = round(nextTickValue,1)
-			currentEventTickValue += nextTickValue
-			#CA1 = nextTickValue
+			'''
 
-			#print str(CA0)+"-->"+str(CA1)
 			#Time signature events are added to a separate data structure
 			if type(midiEvent) is midi.events.TimeSignatureEvent:
 				timeSignatureEvents[currentEventTickValue] = midiEvent.get_numerator(),midiEvent.get_denominator()
 
 			#Note events: update the ticks of the pitch-delta map: delta:pitch
-			if type(midiEvent) in [midi.events.NoteOnEvent,midi.events.NoteOffEvent]:
+                        if type(midiEvent) in [midi.events.NoteOnEvent]:#,midi.events.NoteOffEvent]:
 				pitchMidiValue = midiEvent.get_pitch()
 
 				#Transpose the track individually
@@ -63,7 +67,8 @@ def BuildTickToPitchMidiValueDictionary(midiTracks,trackFilterCondition):
 
 				#Note on events: add the pitch information to the intermediate file for rendering in the tab	
 				if (type(midiEvent) is midi.events.NoteOnEvent) and not (float_eq(midiEvent.get_velocity(),0.0)):
-					active_notes[pitchMidiValue] = currentEventTickValue
+			
+                                        active_notes[pitchMidiValue] = currentEventTickValue
 					
 					#Track info: Determine if this pitch surpasses the current minimum or maximum value
 					lowestPitchMidiValue = min(lowestPitchMidiValue,pitchMidiValue)
@@ -95,7 +100,6 @@ def BuildTickToPitchMidiValueDictionary(midiTracks,trackFilterCondition):
 		#end of track
 	#end of all tracks 
 
-
 def WriteExtractedMidiDataToIntermediateFile(newfile):
 	with open(newfile, 'w') as intermediateOutputFile:
 	
@@ -104,7 +108,6 @@ def WriteExtractedMidiDataToIntermediateFile(newfile):
 		for tick in sortedMidiEventTicksList:
 			
 			chunk = TickToPitchMidiValueDictionary[tick]
-
 			beatUnit = 0;
 	
 			#Add time signature events to output file
@@ -147,8 +150,12 @@ def WriteExtractedMidiDataToIntermediateFile(newfile):
 #				newDelta = str(round(delta,RoundTo))
 
 				newDelta = delta
-				if (newDelta < 1) and (float_eq(newDelta,0.5)):
-					newDelta = -1
+
+                                if(newDelta < 1):
+                                    if (float_eq(round(newDelta,3),0.666)):
+			    	        newDelta = -1
+                                    else:
+                                        newDelta = 0
 
 				currentLineOfIntermediateFile += str(newDelta)
 				'''

@@ -7,7 +7,7 @@ map<int,int> beat_value = {{1,32},{2,16},{4,8},{8,4},{16,2},{32,1}};
 //Note length indications to print above the notes
 std::map<int,string> quaver_map = 
 {
-	{1, "S"}, {2," T"},{4, " s"},{6," s"},{8," e"},{14," e"},{16, " q"},{24, " q"},{32," h"},{56," h"},{64, " w"},
+	{1, " S"}, {2," T"},{4, " s"},{6," s"},{8," e"},{14," e"},{16, " q"},{24, " q"},{32," h"},{56," h"},{64, " w"},
 };
 
 /*
