@@ -1,4 +1,7 @@
 #include "rotate_visitor.h"
+#include "note.h"
+#include "bar.h"
+#include "chunk.h"
 
 //Recursively check and reconfigure all of the elements of the tree
 
@@ -30,40 +33,17 @@ have been attempted
 */
 
 
-#define PERMUTATION_MAX_BASE 3
-
-void printNoteIndices(vector<pair <int, int> > currentNoteConfigurations)
-{
-
-//      Print the fret and string of each note in the current chunk configuration	
-	std::cout << "-" << std::endl;
-	int notefret = 0;
-	char notestring = '0';
-
-	for(auto i: currentNoteConfigurations)
-	{
-		notefret = Note::get_fret_at(i.first, i.second);
-		notestring = ptuning[Note::get_string_at(i.first, i.second)];
-		std::cout << notefret << notestring << std::endl;
-	}
-
-	std::cout << "-" << std::endl;
-
-}
+#define PERMUTATION_MAX_BASE 3.0f
 
 void RotateVisitor::VisitBar(Bar* bar) 
 {
-  //Go through all of the chunks in a given bar and reconfigure them
-  for(int i=0; i < bar->get_children_size(); i++)
-  {
-  	  Chunk* candidateChunk = bar->get_child(i);
-  	  candidateChunk->accept(this);
-  }
-
+    //Go through all of the chunks in a given bar and reconfigure them
+    for(int i=0; i < bar->get_children_size(); i++)
+    {
+        Chunk* candidateChunk = bar->get_child(i);
+        candidateChunk->accept(this);
+    }
 }
-
-
-
 
 void RotateVisitor::RecursivelyFindLowestCostChunkConfiguration(Chunk* candidateChunk)
 {
@@ -86,15 +66,18 @@ void RotateVisitor::RecursivelyFindLowestCostChunkConfiguration(Chunk* candidate
 	{
 		CompareChunks(candidateChunk,candidateChunk->get_note_indices());	
 		
-		for(int i=0;i< (candidateChunk->get_children_size());i++)
+		for(int chunkIndex =0; chunkIndex< (candidateChunk->get_children_size()); chunkIndex++)
 		{
-			for(int i2=0;i2<3;i2++)
+            int retryCounter = 3;
+            
+			while(retryCounter-- > 0)
 			{
 				if(!InCache( candidateChunk->get_note_indices() ) )
 				{
 					break;
 				}
-				candidateChunk->get_note_at(i)->accept(this);
+                
+				candidateChunk->get_note_at(chunkIndex)->accept(this);
 			}
 		}
 
@@ -121,12 +104,15 @@ void RotateVisitor::ConditionallyAddToStack(comparisonResult test, Chunk *candid
 		case DISCARD: //discard note from chunk
 			candidateChunk->remove_note(candidateChunk->get_note_at(counter_index));
 			break;
+            
 		case GOOD: //lock in compatible note for now
 			candidateChunk->push_stack(candidateChunk->get_note_at(counter_index));
 			counter_index++;
 			fail_count=0;
 			break;
-		case BAD:	
+                
+        case BAD:
+        default:
 			break;
 	};
 }
@@ -138,7 +124,7 @@ void RotateVisitor::VisitChunk(Chunk* candidateChunk)
 {
 	//Visit a chunk, and re-arrange all of its notes until they are valid/playable
 
-	const int max_permutation_limit = pow(PERMUTATION_MAX_BASE,(candidateChunk->get_children_size() ));
+	const int max_permutation_limit = static_cast<int>(pow(PERMUTATION_MAX_BASE,(candidateChunk->get_children_size() )));
 	int counter_index=0,fail_count=0,max_permutation_counter=0;
 	comparisonResult result;
 
@@ -146,7 +132,6 @@ void RotateVisitor::VisitChunk(Chunk* candidateChunk)
 
 	while(counter_index < candidateChunk->get_children_size())
 	{
-
 		if(max_permutation_counter > max_permutation_limit)
 		{
 			//go with local minimum
@@ -186,17 +171,33 @@ int getFretMaxAndOptimaSpacing(int &fmax,vector<pair <int, int> > indices)
 	Find the maximum fret in the vector of note grid positions, and the maximum spacing
 	*/
 	int fmin = 24,fret=0,spacing=0;
+    
 	for(auto i : indices)
 	{
 		fret = Note::get_fret_at(i.first, i.second);
-		if(fret == 0) continue;
+		if(fret == 0)
+        {
+            continue;
+        }
+        
 		if (fret > fmax)
-			fmax = fret;
-		if (fret < fmin)
-			fmin = fret;		
+		{
+            fmax = fret;
+		}
+        
+        if (fret < fmin)
+        {
+			fmin = fret;
+        }
 	}
+    
 	spacing = fmax-fmin;
-	if (spacing < 0) spacing = 0;
+    
+	if (spacing < 0) 
+    {
+        spacing = 0;
+    }
+    
 	return spacing;
 }
 
@@ -205,7 +206,8 @@ bool IsFretSpacingValid(uint32_t candidateMaximumFret, uint32_t currentMaximumFr
 {
 	//If candidate spacing is wider than the current spacing by 2 frets, cancel candidate		
 
-	return ((candidateMaximumFret < currentMaximumFret) && ((currentMaximumFret - candidateMaximumFret) > minimumDifferenceForReplacement));
+	return ((candidateMaximumFret < currentMaximumFret) && 
+            ((currentMaximumFret - candidateMaximumFret) > minimumDifferenceForReplacement));
 }
 
 /*
@@ -226,6 +228,7 @@ void RotateVisitor::CompareChunks(Chunk *candidateChunk, vector<pair <int, int> 
 		{
 			int maximumFretInCurrentConfiguration = 0;
 			int maximumFretInCandidateChunk = 0;
+            
 			int optima_spacing = getFretMaxAndOptimaSpacing(maximumFretInCurrentConfiguration,candidateChunk->_optima);
 			int candidate_spacing = getFretMaxAndOptimaSpacing(maximumFretInCandidateChunk,currentNoteConfigurations);
 			

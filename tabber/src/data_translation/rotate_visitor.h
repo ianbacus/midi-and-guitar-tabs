@@ -1,11 +1,12 @@
 #ifndef __ROTATEVISITOR__
 #define __ROTATEVISITOR__
 
-
 #include "visitor.h"
-#include "base.h"
+
+#include "note.h"
+#include "bar.h"
+#include "chunk.h"
 #include <math.h>
-#include <mutex>
 
 
 class RotateVisitor : public Visitor
@@ -14,7 +15,6 @@ class RotateVisitor : public Visitor
 	private:
 		vector< vector<pair<int, int> > > ValidChunkConfigurations;
 		vector<int> locked_strings;
-		std::mutex mtx_optima, mtx_cache;
 
 	public:
   		virtual ~RotateVisitor() {}

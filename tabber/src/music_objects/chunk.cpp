@@ -1,5 +1,10 @@
 #include "base.h"
-#define ALLOWABLE  3
+
+#include "note.h"
+#include "bar.h"
+#include "chunk.h"
+
+#define ALLOWABLE_FRET_SPACING  3
 
 Chunk::Chunk(int d) : delta(d), _recursion_lock(0) {}
 
@@ -28,7 +33,7 @@ vector<pair<int, int> > Chunk::get_note_indices()
 {
 	vector<pair<int, int> > indices;
 	for(int i=0; i<get_children_size(); i++){
-		indices.push_back(pair<int,int>( get_note_at(i)->get_current_note_index(), get_note_at(i)->get_pitch()));
+		indices.push_back(pair<int,int>( get_note_at(i)->get_note_position_pitch_map_index(), get_note_at(i)->get_pitch()));
 	}
 	return indices;
 }
@@ -181,13 +186,13 @@ comparisonResult Chunk::compare_with_stack(Note* n){
 	  	stack_copy.pop();
 	  }
 
-	  else if(abs((n->get_fret() - current->get_fret())) <= ALLOWABLE)
+	  else if(abs((n->get_fret() - current->get_fret())) <= ALLOWABLE_FRET_SPACING)
 	  {
 	  	// check if the fret position for the candidate note would fit with the current portion of the note stack
 	  	//don't bother evaluating this for open strings
 	  	return GOOD;
 	  }
-	  else if(abs((n->get_fret() - current->get_fret())) > ALLOWABLE)
+	  else if(abs((n->get_fret() - current->get_fret())) > ALLOWABLE_FRET_SPACING)
 	  {
 	  	// check if the fret position for the candidate note would fit with the current portion of the note stack
 	  	//don't bother evaluating this for open strings

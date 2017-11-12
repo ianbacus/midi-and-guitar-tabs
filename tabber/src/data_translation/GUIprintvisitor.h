@@ -23,8 +23,8 @@ class GUIPrintVisitor : public Visitor
     
   public:
   	
-  	PrintVisitor(string);
-  	virtual ~PrintVisitor(void) {}
+  	GUIPrintVisitor(string);
+  	virtual ~GUIPrintVisitor(void) {}
     virtual void visitNote(Note*);
     virtual void visitBar(Bar*);
     virtual void visitChunk(Chunk*);

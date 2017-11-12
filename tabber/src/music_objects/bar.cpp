@@ -1,5 +1,8 @@
 #include "base.h"
 
+#include "note.h"
+#include "bar.h"
+#include "chunk.h"
 
 Bar::~Bar()
 {

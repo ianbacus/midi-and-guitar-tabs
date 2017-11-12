@@ -1,16 +1,12 @@
-//Translate an intermediate file into a c++ representation of the pitches and deltas
+//Translate an intermediate file into a c++ object with the pitches and deltas
 
 #include "midi2melody.h"
 #include <iomanip>
 
 #include <stdlib.h>
 #include <cmath>
+
 using namespace std;
-
-
-
-typedef unsigned char uchar;
-
 
 vector<Bar*> ParseIntermediateFile(std::string infile, int shift,int align) 
 {
@@ -21,7 +17,7 @@ vector<Bar*> ParseIntermediateFile(std::string infile, int shift,int align)
 	vector<Bar*> parsedResult;
 	
     parsedResult.push_back(new Bar());
-    parsedResult.back()->add_chunk(new Chunk());
+    parsedResult.back()->add_chunk(new Chunk(0));
     
 	std::string line;
     
@@ -43,28 +39,25 @@ vector<Bar*> ParseIntermediateFile(std::string infile, int shift,int align)
 				const float beatUnit = std::stof(beatUnitString);
 				const float meterRatio = (beatsPerBar/beatUnit);
 
-				ticksPerMeasure = meterRatio * beatUnit * 8;
+				ticksPerMeasure = static_cast<uint32_t>(meterRatio * beatUnit * 8);
 			}
 		}
 
         std::string pitchString,deltaString,trackNumberString;
 
-		if( std::getline( pitchDeltaInputStringStream, pitchString , ',') && 
+		if( std::getline( pitchDeltaInputStringStream, pitchString, ',') && 
 			std::getline( pitchDeltaInputStringStream, deltaString, ',' ) && 
 			std::getline( pitchDeltaInputStringStream, trackNumberString) ) 
 		{
 			const uint32_t currentTrackNumber = stoi(trackNumberString);
-			const uint32_t delta = stoi(deltaString)*pow(2.0,align);
+			const uint32_t delta = static_cast<uint32_t>(stoi(deltaString)*pow(2.0f,align));
 			const uint32_t pitch = stoi(pitchString)- shift;
 			
-			
-			
 			//The bar is full, create a new measure with an empty initial chunk
-			//if((ticksAccumulatedForCurrentMeasure >= ticksPerMeasure) && (delta != 0))	
 			if(currentMeasureIsFull && (delta > 0))
 			{
 				Bar *nextMeasure = new Bar();
-				Chunk* initialChunk = new Chunk();
+				Chunk* initialChunk = new Chunk(0);
 
 				nextMeasure->add_chunk(initialChunk);
 				parsedResult.push_back(nextMeasure);
@@ -86,7 +79,6 @@ vector<Bar*> ParseIntermediateFile(std::string infile, int shift,int align)
 
 			}
 			
-			
 			//A new chunk in the current bar is needed
 			else
 			{
@@ -97,7 +89,7 @@ vector<Bar*> ParseIntermediateFile(std::string infile, int shift,int align)
  				currentMeasure->add_chunk(nextChunk);
 			}	
 
-			ticksAccumulatedForCurrentMeasure += abs(delta);
+			ticksAccumulatedForCurrentMeasure += abs(static_cast<long>(delta));
 			
 		}
 	}

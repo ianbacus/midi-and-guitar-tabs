@@ -3,10 +3,11 @@
 #include "note.h"
 #include "base.h"
 
-
-
-enum comparisonResult {
-BAD, DISCARD, GOOD,
+enum comparisonResult 
+{
+    BAD =0, 
+    DISCARD, 
+    GOOD,
 };
 
 
@@ -48,7 +49,7 @@ class Chunk : public Base
 		virtual void accept(Visitor* v) ;
 		bool compare_chunks(Chunk*);
 		
-		Chunk(int d=0);
+		Chunk(int delta);
 		virtual ~Chunk(void);
 };
 
