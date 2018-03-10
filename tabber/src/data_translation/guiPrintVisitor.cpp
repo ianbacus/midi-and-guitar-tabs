@@ -1,8 +1,5 @@
 #include "GUIprintvisitor.h"
 
-#include "note.h"
-#include "bar.h"
-#include "chunk.h"
 
 /*
  *	
@@ -19,9 +16,9 @@ void GUIPrintVisitor::visitBar(Bar* b)
 {
 
 	string_buffer.back()[0] += "[[";    		
-	for(int j=0; j<b->get_children_size(); j++)
+	for(int j=0; j<b->GetNumberOfElements(); j++)
 	{
-		b->get_child(j)->accept(this);
+		b->GetElementWithIndex(j)->DispatchVisitor(this);
 	}
 	string_buffer.back()[0] += "]],";
 	tripled = false;
@@ -62,13 +59,13 @@ void GUIPrintVisitor::visitChunk(Chunk* c)
 */	
 	int delta = 0;
 	Note* current_note;
-	int numChilds = c->get_children_size();
-	if(c->get_children_size() == 0){
+	int numChilds = c->GetNumberOfElements();
+	if(c->GetNumberOfElements() == 0){
 		return;
 	}
-	for(int j=0; j<c->get_children_size(); j++)
+	for(int j=0; j<c->GetNumberOfElements(); j++)
 	{
-		delta += c->get_note_at(j)->get_delta();
+		delta += c->GetElementWithIndex(j)->get_delta();
 	}
 	for(int i=0;i<=delta;i++)
 		string_buffer.back()[0] += "p," ;
@@ -76,10 +73,10 @@ void GUIPrintVisitor::visitChunk(Chunk* c)
 	if(numChilds > 1) 
 		string_buffer.back()[0] += std::string("[");
 
-	for(int j=0; j<c->get_children_size(); j++)
+	for(int j=0; j<c->GetNumberOfElements(); j++)
 	{
-		current_note = c->get_note_at(j);
-		current_note->accept(this);	
+		current_note = c->GetElementWithIndex(j);
+		current_note->DispatchVisitor(this);	
 	}
 	if(numChilds > 1)
 	{

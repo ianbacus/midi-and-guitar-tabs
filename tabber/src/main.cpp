@@ -11,69 +11,98 @@
 #include <iostream>
 
 
-void GenerateTab(string outputFile, vector<Bar*> score, int upperBound, int lowerBound, int format_count_initial)
+class test1
 {
-	int measureIndex = 0;
-	int format_count = format_count_initial;
+public:
+    vector<pair<int,int> > X;
     
-	RotateVisitor* const TablatureRearranger = new RotateVisitor();
-	PrintVisitor* const TablaturePrinter = new PrintVisitor(outputFile,80);
-    
-    std::cout << "done." << std::endl;
-	cout << "tabbing " << (upperBound - lowerBound) <<  " measures";
-	cout << " from " << lowerBound << " to " << upperBound << "...";
-    
-	//Iterate through each bar, recursively apply the visitor pattern to fix note positions
-	for (std::vector< Bar* >::iterator it = score.begin() ; it < score.end(); it++,measureIndex++)
-	{	
-		if(format_count == format_count_initial)
-		{
-		   TablaturePrinter->newlines((it==score.begin()));
-		   format_count = 0;
-		}
+    void setX(vector<pair<int,int> >  x)
+    {
+        X = x;
+    }
+    vector<pair<int,int> > getX(void)
+    {
+        return X;
+    }
+};
 
-		if((lowerBound <= measureIndex) && (measureIndex <= upperBound))
-		{
-			(*it)->accept(TablatureRearranger);
-			(*it)->accept(TablaturePrinter);
-			format_count++;
-		}
-	}
-    
-	TablaturePrinter->print_out();
-	TablaturePrinter->set_outfile("data/outTab.txt");
-	TablaturePrinter->print_out();
-    
-	std::cout << "done. " << std::endl;
-    
-	delete TablatureRearranger;
-	delete TablaturePrinter; 
+void test2(test1* qqq)
+{
+    vector<pair<int,int> > a = {{1,2},{1,3}};
+    qqq->setX(a);
+}
+
+vector<pair<int,int> > test3(test1* qqq)
+{
+    return qqq->getX();
+}
+
+//    vector<pair<int,int> > a = {{1,2},{1,3}};
+//    test1 mmm;
+//    test2(&mmm);
+//    vector<pair<int,int> > b = test3(&mmm);
+//    
+//    cout << endl;
+//    for(auto i:a)
+//        cout << "(" << i.first << "," << i.second << "),";
+//     
+//    cout << endl;
+//    for(auto i:b)
+//        cout << "(" << i.first << "," << i.second << "),";
+//    
+//    cout << endl;
+
+
+
+void GenerateTab(
+        string outputFile, vector<Bar*> score, 
+        int upperBound, int lowerBound, 
+        int format_count_initial)
+{
+    int measureIndex = 0;
+    int format_count = format_count_initial;
+
+    RotateVisitor* const TablatureRearranger = new RotateVisitor();
+    PrintVisitor* const TablaturePrinter = new PrintVisitor(outputFile,80);
+
+    std::cout << "done.\r\n tabbing " 
+              << (upperBound - lowerBound)
+              << " measures  from " 
+              << lowerBound << " to " << upperBound << "...";
+
+    //Iterate through each bar, recursively apply the visitor pattern to fix note positions
+    for (std::vector< Bar* >::iterator it = score.begin() ; it < score.end(); it++,measureIndex++)
+    {	
+        if(format_count == format_count_initial)
+        {
+           TablaturePrinter->newlines((it==score.begin()));
+           format_count = 0;
+        }
+
+        if((lowerBound <= measureIndex) && (measureIndex <= upperBound))
+        {
+                (*it)->DispatchVisitor(TablatureRearranger);
+                (*it)->DispatchVisitor(TablaturePrinter);
+                format_count++;
+        }
+    }
+
+    TablaturePrinter->print_out();
+    TablaturePrinter->set_outfile("data/outTab.txt");
+    TablaturePrinter->print_out();
+
+    std::cout << "done. " << std::endl;
+
+    delete TablatureRearranger;
+    delete TablaturePrinter; 
 
 }
 
-int main(int argc, char* argv[]) 
+
+int ParseFileIntoTab(const string inputFile, const string outputFile,
+        int noteOffset, const int format_count_initial, int lowerBound,
+        unsigned int upperBound, const unsigned int align) 
 {
-	if(argc != 8)
-	{
-		cout << "Invalid entry. use the following format:\n";
-		cout << ">> ./gen <inputFile> <outputFile> <pitchShift#>,";
-		cout << " <measuresPerRow#> <startMeasure#> <endMeasure#>" << endl;
-		return 0;
-	}
-
-	const int pitchOffset = 24;
-
-	const string inputFile = argv[1]; //name of input file
-	const string outputFile = argv[2];
-
-	int noteOffset=pitchOffset - atoi(argv[3]); 
-	const int format_count_initial = atoi(argv[4]);
-	
-	int lowerBound=atoi(argv[5]);
-	unsigned int upperBound=atoi(argv[6]);
-
-	const unsigned int align = atoi(argv[7]);
-
 	std::cout << "scanning " << inputFile << "...";
 	vector<Bar*> score = ParseIntermediateFile(inputFile,noteOffset,align);
 	
@@ -114,4 +143,40 @@ int main(int argc, char* argv[])
   
 }
 
+int main(int argc, char* argv[])
+{
+    bool Debug = false;
+            
+    if(Debug)
+    {
+        return ParseFileIntoTab("data/intermediates/test_for_tabber.txt", 
+                                "data/tabs/outTab.txt", 12, 4, 0, -1, -1);
+    }
+    
+    else
+    {
+        if(argc != 8)
+        {
+            cout << "Invalid entry. use the following format:\n";
+            cout << ">> ./gen <inputFile> <outputFile> <pitchShift#>,";
+            cout << " <measuresPerRow#> <startMeasure#> <endMeasure#>" << endl;
+            return 0;
+        }
 
+        const int pitchOffset = 24;
+
+        const string inputFile = argv[1]; //name of input file
+        const string outputFile = argv[2];
+
+        int noteOffset=pitchOffset - atoi(argv[3]); 
+        const int format_count_initial = atoi(argv[4]);
+
+        int lowerBound=atoi(argv[5]);
+        unsigned int upperBound=atoi(argv[6]);
+
+        const unsigned int align = atoi(argv[7]);
+
+        return ParseFileIntoTab(inputFile, outputFile, noteOffset, format_count_initial, lowerBound, upperBound, align);
+    }
+    
+}

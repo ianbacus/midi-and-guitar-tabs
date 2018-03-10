@@ -1,12 +1,16 @@
-//Translate an intermediate file into a c++ object with the pitches and deltas
+//Translate an intermediate file into a c++ representation of the pitches and deltas
 
 #include "midi2melody.h"
 #include <iomanip>
 
 #include <stdlib.h>
 #include <cmath>
+#include <assert.h>
 
 using namespace std;
+
+typedef unsigned char uchar;
+
 
 vector<Bar*> ParseIntermediateFile(std::string infile, int shift,int align) 
 {
@@ -14,10 +18,9 @@ vector<Bar*> ParseIntermediateFile(std::string infile, int shift,int align)
 
 	uint32_t ticksAccumulatedForCurrentMeasure = 0;
 	uint32_t ticksPerMeasure = 36;
-	vector<Bar*> parsedResult;
+	vector<Bar*> scoreTree;
 	
-    parsedResult.push_back(new Bar());
-    parsedResult.back()->add_chunk(new Chunk(0));
+    scoreTree.push_back(new Bar());
     
 	std::string line;
     
@@ -25,7 +28,9 @@ vector<Bar*> ParseIntermediateFile(std::string infile, int shift,int align)
     {
        	const bool currentMeasureIsFull = (ticksAccumulatedForCurrentMeasure >= ticksPerMeasure); 
 		std::istringstream pitchDeltaInputStringStream( line );
-
+        std::string pitchString,deltaString,trackNumberString;
+        
+        //Case 0: Time signature event
 		if(line == "SIGEVENT")
 		{
 			std::getline(file, line);
@@ -39,60 +44,68 @@ vector<Bar*> ParseIntermediateFile(std::string infile, int shift,int align)
 				const float beatUnit = std::stof(beatUnitString);
 				const float meterRatio = (beatsPerBar/beatUnit);
 
-				ticksPerMeasure = static_cast<uint32_t>(meterRatio * beatUnit * 8);
+				ticksPerMeasure = meterRatio * beatUnit * 8;
 			}
 		}
 
-        std::string pitchString,deltaString,trackNumberString;
-
-		if( std::getline( pitchDeltaInputStringStream, pitchString, ',') && 
+        //Case 1: pitch event
+		if( std::getline( pitchDeltaInputStringStream, pitchString , ',') && 
 			std::getline( pitchDeltaInputStringStream, deltaString, ',' ) && 
 			std::getline( pitchDeltaInputStringStream, trackNumberString) ) 
 		{
 			const uint32_t currentTrackNumber = stoi(trackNumberString);
-			const uint32_t delta = static_cast<uint32_t>(stoi(deltaString)*pow(2.0f,align));
+			const uint32_t delta = stoi(deltaString)*pow(2.0,align);
 			const uint32_t pitch = stoi(pitchString)- shift;
-			
-			//The bar is full, create a new measure with an empty initial chunk
+            
+			//The bar is full, create a new measure with an empty initial chunk	
 			if(currentMeasureIsFull && (delta > 0))
 			{
-				Bar *nextMeasure = new Bar();
-				Chunk* initialChunk = new Chunk(0);
+				Bar* const nextMeasure = new Bar();
+				//Chunk* initialChunk = new Chunk();
 
-				nextMeasure->add_chunk(initialChunk);
-				parsedResult.push_back(nextMeasure);
+				//nextMeasure->add_chunk(initialChunk);
+				scoreTree.push_back(nextMeasure);
 
-				//Find the remainder and carry it over to the next bar. Omit rests across
-				// all voices that last more than one bar.  
+				//Find the delta remainder and carry it over to the next bar. 
+                //Omit rests across all voices that last more than one bar.  
 				ticksAccumulatedForCurrentMeasure %= ticksPerMeasure;
 			}
 			
 			//This note must be added to the current chunk in the current bar
 			if(delta == 0)
 			{
-			 
-				Bar* currentMeasure = parsedResult.back(); 
-				uint32_t indexOfLastChunkInScore = currentMeasure->get_children_size() - 1;
-				Chunk* currentChunk = currentMeasure->get_child(indexOfLastChunkInScore);
+				Bar* const currentMeasure = scoreTree.back(); 
+                Chunk* const currentChunk = currentMeasure->GetLastElement();
 
-				currentChunk->add_note(new Note(pitch,delta,currentTrackNumber));
-
+				currentChunk->PushElement(new Note(pitch,delta,currentTrackNumber));
 			}
 			
 			//A new chunk in the current bar is needed
 			else
 			{
-			 	Bar* currentMeasure = parsedResult.back();
-				Chunk* nextChunk = new Chunk(delta);
+			 	Bar* const currentMeasure = scoreTree.back();
+                
+                //Initialize the current optimal note positions to their default
+                //placements
+                if(currentMeasure->GetNumberOfElements() > 0)
+                {
+                    Chunk* const currentChunk = currentMeasure->GetLastElement();
+                    
+                    vector<NotePositionEntry> currentNotePositionEntires = 
+                      currentChunk->GetCurrentNotePositionEntries();
 
-				nextChunk->add_note(new Note(pitch,delta,currentTrackNumber));
- 				currentMeasure->add_chunk(nextChunk);
+                    currentChunk->SetOptimalNotePositions(currentNotePositionEntires);
+                }     
+                
+				Chunk* const nextChunk = new Chunk(delta);
+
+				nextChunk->PushElement(new Note(pitch,delta,currentTrackNumber));
+ 				currentMeasure->PushBackElement(nextChunk);
 			}	
 
-			ticksAccumulatedForCurrentMeasure += abs(static_cast<long>(delta));
-			
+			ticksAccumulatedForCurrentMeasure += abs(delta);
 		}
 	}
-	return parsedResult;
-
+    
+	return scoreTree;
 }

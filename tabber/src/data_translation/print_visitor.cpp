@@ -7,17 +7,7 @@ map<int,int> beat_value = {{1,32},{2,16},{4,8},{8,4},{16,2},{32,1}};
 //Note length indications to print above the notes
 std::map<int,string> quaver_map = 
 {
-	{1, " S"}, 
-    {2, " T"},
-    {4, " s"},
-    {6, " s"},
-    {8, " e"},
-    {14," e"},
-    {16," q"},
-    {24," q"},
-    {32," h"},
-    {56," h"},
-    {64," w"},
+	{1, " S"}, {2," T"},{4, " s"},{6," s"},{8," e"},{14," e"},{16, " q"},{24, " q"},{32," h"},{56," h"},{64, " w"},
 };
 
 /*
@@ -32,7 +22,7 @@ PrintVisitor::PrintVisitor(std::string ofile, int cset) : string_print_index(0),
 /*
  *	
  */	
-void PrintVisitor::VisitBar(Bar* bar)
+void PrintVisitor::VisitBar(Bar* b)
 {
     for(string_print_index=SIZEOF_TUNING; string_print_index>= 0; string_print_index--)
     {
@@ -43,36 +33,35 @@ void PrintVisitor::VisitBar(Bar* bar)
     	}
 
     	(string_buffer.back())[string_print_index] += "|-";
-		for(int measureBarIndex =0; measureBarIndex < bar->get_children_size(); measureBarIndex++)
+		for(int j=0; j<b->GetNumberOfElements(); j++)
 		{
-			bar->get_child(measureBarIndex)->accept(this);
-            
+
+			b->GetElementWithIndex(j)->DispatchVisitor(this);
 			int delta=0;
-            
 			Chunk*  Nextchunk;
 		
-			if(measureBarIndex<(bar->get_children_size()-1))
+			if(j<(b->GetNumberOfElements()-1))
 			{
-				Nextchunk = bar->get_child(measureBarIndex+1);
+				Nextchunk = b->GetElementWithIndex(j+1);
 				
-				int nextchunksize = Nextchunk->get_children_size();
+				int nextchunksize = Nextchunk->GetNumberOfElements();
 				if(nextchunksize == 0)
-                {
 					continue;
-                }
-                
-				for(int measureBarIndex=0; measureBarIndex<nextchunksize; measureBarIndex++)
+				for(int j=0; j<nextchunksize; j++)
 				{
-					delta+= Nextchunk->get_note_at(measureBarIndex)->get_delta();;
+					delta+= Nextchunk->GetElementWithIndex(j)->get_delta();;
 				}
-                
 				if(string_print_index == 0)
 				{
 					addSpaces(delta);
+//					if(!tripled)
+//					{ 
+//						addSpaces(delta);
+//					}
+//					else if(string_print_index == 0) string_buffer.back()[SIZEOF_TUNING] += " t";
 				}
 			}
 		}
-        
 		(string_buffer.back())[string_print_index] += "-";
 		tripled = false;	
 	}
@@ -177,7 +166,7 @@ void PrintVisitor::newlines(bool fresh=false)
  *	Visit a chunk and iterate through all of its notes. Only Visit notes which are on the currently set
  *	string index, which each enclosing bar decrements through.
 */
-void PrintVisitor::VisitChunk(Chunk* chunk)
+void PrintVisitor::VisitChunk(Chunk* c)
 {
 	strings_closed=false;
 	bool locked = false;
@@ -185,66 +174,83 @@ void PrintVisitor::VisitChunk(Chunk* chunk)
 	int delta = 0;
 	string result;
 	Note* current_note;
+	int j = c->GetNumberOfElements();
 	
-	if(chunk->get_children_size() > 0)
+	if(c->GetNumberOfElements() == 0)
 	{
-        for(int chunkNoteIndex = 0; chunkNoteIndex < chunk->get_children_size(); chunkNoteIndex++)
-        {
-            current_note = chunk->get_note_at(chunkNoteIndex);
-            
-            if(!strings_closed)
-            {
-                current_note->accept(this);
-            }
+		return;
+	}
 
-            if(strings_closed && !locked)
-            {
-                std::stringstream resultStringStream;
-                
-                int fret = current_note->get_fret();
-                int pitch = current_note->get_pitch();
+	for(int j=0; j<c->GetNumberOfElements(); j++)
+	{
+		current_note = c->GetElementWithIndex(j);
+		if(!strings_closed)
+		{
+			current_note->DispatchVisitor(this);
+		}
 
-                if (fret < 0) //rest note
-                {
-                    resultStringStream << "--";
-                }
+		if(strings_closed && !locked)
+		{
+			int fret = current_note->get_fret();
+			int pitch = current_note->get_pitch();
 
-                else
-                {
-                    resultStringStream << std::setfill('-') << std::setw(2) << std::hex << fret;
-                }
-                
-                result += resultStringStream.str();
+			if (fret < 0) //rest note
+			{
+				result = "--";
+			}
 
-                locked = true;
-            }
+			else if(fret < 16)
+			{
+				std::stringstream sstream;
+				sstream << "-" <<  std::hex << std::uppercase << fret;
+				result = sstream.str();
+			}
 
-            delta += current_note->get_delta();
-        }
 
-        //Notes were not printed in this column, place "note filler" dashes
-        if(!strings_closed)
-        {
-            result = "--" ;
-        }
-        
+			locked = true;
+		}
 
-        //Pad a string buffer with a number of filler characters equal to the delta
-        string_buffer.back()[string_print_index] += result;
-        if(delta >= 0)
-        {
-            string_buffer.back()[string_print_index] += std::string(delta,'-');
-        }
-    }
+		delta += current_note->get_delta();
+	}
+
+	//Notes were not printed in this column, place "note filler" dashes
+	if(!strings_closed)
+	{
+		result = "--" ;
+	}
+	
+
+	//This is where the padding takes place for notes based on their note duration
+
+	string_buffer.back()[string_print_index] += result;
+	if(delta >= 0)
+	{
+		string_buffer.back()[string_print_index] += std::string(delta,'-');
+	}
+
+/*
+	if(delta >= 0){
+		
+		string_buffer.back()[string_print_index] += result+ std::string(delta,'-');
+	}
+
+	else 
+	{
+		//triplets case
+		tripled = true;
+		string_buffer.back()[string_print_index] +=  result;
+	}
+*/
+
 }
 
 
 /*
  *	Claim a string for a given note
  */	
-void PrintVisitor::VisitNote(Note* note)
+void PrintVisitor::VisitNote(Note* n)
 {
-	if(note->get_string() == string_print_index)
+	if(n->get_string() == string_print_index)
 	{
     	strings_closed = true; 
 	}
@@ -257,24 +263,33 @@ void PrintVisitor::print_out(void)
 {
 	ofstream ofile;
 	ofile.open(outfile);
-	stringstream outputTabStringStream;
-    
+	stringstream ss;
+	int cindex = 0;
+	bool freshlines = false;
 	for(std::vector< vector<string> >::iterator it = string_buffer.begin() ; it != string_buffer.end(); ++it) 
-	{        
-		for(int stringIndex = SIZEOF_TUNING; stringIndex >=0; stringIndex--)
+	{
+		if((cindex+((*it)[1]).size()) > columnSet)
+		{
+			freshlines = true;
+			cindex = 0;
+		}
+		for(int i=SIZEOF_TUNING; i>=0; i--)
 		{
 			#ifdef brokenstring
 			if(i == brokenstring)
 			{
-				outputTabStringStream << " " << '\n';
+				ss << " " << '\n';
 			}
 			#endif
-                        
-			outputTabStringStream << (*it)[stringIndex] << '\n';
+			if(freshlines)
+			{
+				//(*it)[i].push_back('\n');
+				 //ss << '\n';
+			}
+			ss << (*it)[i] << '\n';
 		}
-        
-		outputTabStringStream << '\n';
+		ss << '\n';
 	}
-	ofile << outputTabStringStream.rdbuf();
+	ofile << ss.rdbuf();
 	ofile.close();
 }

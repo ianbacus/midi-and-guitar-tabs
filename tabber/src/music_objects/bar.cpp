@@ -1,53 +1,50 @@
 #include "base.h"
 
-#include "note.h"
-#include "bar.h"
-#include "chunk.h"
 
 Bar::~Bar()
 {
-	for (std::vector< Chunk* >::iterator it = _bar_chunks.begin() ; it != _bar_chunks.end(); ++it)
+	for (std::vector< Chunk* >::iterator it = ChunkElements.begin() ; it != ChunkElements.end(); ++it)
 		delete (*it);
-	_bar_chunks.clear();
+	ChunkElements.clear();
 }
 
 /* 
  *	Push reference to a chunk into the current bar
  */
-void Bar::add_chunk(Chunk* c) 
+void Bar::PushBackElement(Chunk* c) 
 {
-	_bar_chunks.push_back(c);
+	ChunkElements.push_back(c);
 }
 
 /* 
  *	Remove chunk from collection
  */
-void Bar::remove_chunk(Chunk* c) 
+void Bar::RemoveElement(Chunk* c) 
 { 
-	_bar_chunks.erase(std::find(_bar_chunks.begin(),_bar_chunks.end(),c)); 
+	ChunkElements.erase(std::find(ChunkElements.begin(),ChunkElements.end(),c)); 
 }
 
 /* 
  *	Get the ith chunk in the bar
  */
-Chunk* Bar::get_child(int i) 
+Chunk* Bar::GetElementWithIndex(int i) 
 {
-	return _bar_chunks[i];
+	return ChunkElements[i];
 }
 
 
 /* 
  *	Get the last chunk by default
  */
-Chunk* Bar::get_child() 
+Chunk* Bar::GetLastElement() 
 {
-	return _bar_chunks.back();
+	return ChunkElements.back();
 }
 
 /* 
  *	Dispatch Visitor code
  */
-void Bar::accept(Visitor*v) 
+void Bar::DispatchVisitor(Visitor*v) 
 {
 	v->VisitBar(this);
 }
@@ -55,7 +52,7 @@ void Bar::accept(Visitor*v)
 /* 
  *	Get number of chunks in the current bar
  */
-int Bar::get_children_size() const 
+int Bar::GetNumberOfElements() const 
 {
-	return _bar_chunks.size();
+	return ChunkElements.size();
 }

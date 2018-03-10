@@ -7,21 +7,21 @@
 
 class Bar : public Base
 {
-	private:
-		vector<Chunk*> _bar_chunks;
+    private:
+        vector<Chunk*> ChunkElements;
 
-	public:
-		virtual ~Bar();
-		
-		void add_chunk(Chunk* c);
-		void remove_chunk(Chunk* c);
+    public:
+        virtual ~Bar();
 
-		//retrieve a chunk from the bar by its index
-		Chunk* get_child(int i);
-		Chunk* get_child();
-		
-		virtual void accept(Visitor*v);
-		virtual int get_children_size() const;
+        void PushBackElement(Chunk* c);
+        void RemoveElement(Chunk* c);
+
+        //retrieve a chunk from the bar by its index
+        Chunk* GetElementWithIndex(int i);
+        Chunk* GetLastElement();
+
+        virtual void DispatchVisitor(Visitor*v);
+        virtual int GetNumberOfElements() const;
 };
 
 #endif

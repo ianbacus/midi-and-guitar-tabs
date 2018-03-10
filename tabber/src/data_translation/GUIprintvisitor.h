@@ -1,5 +1,9 @@
+
+
 #ifndef __GUIPRINTVISITOR__
 #define __GUIPRINTVISITOR__
+
+
 #include "visitor.h"
 #include "base.h"
 #include "tuning.h"
@@ -23,8 +27,8 @@ class GUIPrintVisitor : public Visitor
     
   public:
   	
-  	GUIPrintVisitor(string);
-  	virtual ~GUIPrintVisitor(void) {}
+  	PrintVisitor(string);
+  	virtual ~PrintVisitor(void) {}
     virtual void visitNote(Note*);
     virtual void visitBar(Bar*);
     virtual void visitChunk(Chunk*);

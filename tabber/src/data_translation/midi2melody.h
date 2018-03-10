@@ -1,9 +1,5 @@
+
 #include "base.h"
-
-#include "note.h"
-#include "bar.h"
-#include "chunk.h"
-
 #include <string.h>
 #include <stdio.h>
 #include <vector>

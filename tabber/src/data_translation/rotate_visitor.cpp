@@ -1,303 +1,412 @@
 #include "rotate_visitor.h"
-#include "note.h"
-#include "bar.h"
-#include "chunk.h"
+#include <algorithm>
+#include <assert.h>
 
-//Recursively check and reconfigure all of the elements of the tree
-
-/* 
-   Increment through vector of notes. If a candidate note compares nicely with the \
-  current stack of accepted notes,
-   add it to the stack and continue to the next candidate. If it does not work with \
-  the rest of the note coordinates,
-   go back to the previous candidate and increment its index. The current best candidate \
-  is put on the stack, and all 
-   future candidates are compared with this candidate note.
-
- the items are essentially being moved from the vector tree into a stack for comparison \
- purpose, element by element.
-  the counter_index allows the iterative testing of permutations. If the maximum allowable\
-  failure count is reached,
-  the current existing portion that was assumed to be correct must be wrong. Reversing\
-  the counter and incrementing
-  the note index at that point by one, and then checking all the future notes after that \
- should fix this.
-
-
-Two levels of "failure":
- - fail count keeps track of the number of string/fret positions that the candidate note\
- has tried to use.
-		it is reset when candidate notes are accepted
- - super fail is used to prevent re-checking the same set infinitely once all rotations \
-have been attempted
-*/
-
-
-#define PERMUTATION_MAX_BASE 3.0f
-
+//Go through all of the chunks in a given bar and reconfigure them
 void RotateVisitor::VisitBar(Bar* bar) 
 {
-    //Go through all of the chunks in a given bar and reconfigure them
-    for(int i=0; i < bar->get_children_size(); i++)
+    for(uint32_t barIndex=0; barIndex < bar->GetNumberOfElements(); barIndex++)
     {
-        Chunk* candidateChunk = bar->get_child(i);
-        candidateChunk->accept(this);
+        Chunk* candidateChunk = bar->GetElementWithIndex(barIndex);
+        candidateChunk->DispatchVisitor(this);
+        
+        PreviousChunk = candidateChunk;
     }
 }
 
-void RotateVisitor::RecursivelyFindLowestCostChunkConfiguration(Chunk* candidateChunk)
-{
-    /*
-	Recursively reconfigure note positions in a given chunk until they are acceptable
-
-	1. Begin with least mobile notes
-	2. come up with a set of different valid configurations for each chunk of notes (LUT style),
-		treat each bar like a chunk and perform rotations through the positions of each chunk
-		with a stack of candidate chunks
-	3. optimize chunks with more than n elements, configure the n-1 sized chunks to match these
-	4. find a "note center" for each chunk, formulate rules in terms of these to prioritize more
-		closely spaced note centers for adjacent individual chunks than narrower chunk fret widths
-	*/
-
-	//Make sure that the permutation limit has not been reached
-	candidateChunk->inc_lock();
-
-	if (candidateChunk->get_lock_val() < pow(PERMUTATION_MAX_BASE,(candidateChunk->get_children_size() ))) 
-	{
-		CompareChunks(candidateChunk,candidateChunk->get_note_indices());	
-		
-		for(int chunkIndex =0; chunkIndex< (candidateChunk->get_children_size()); chunkIndex++)
-		{
-            int retryCounter = 3;
-            
-			while(retryCounter-- > 0)
-			{
-				if(!InCache( candidateChunk->get_note_indices() ) )
-				{
-					break;
-				}
-                
-				candidateChunk->get_note_at(chunkIndex)->accept(this);
-			}
-		}
-
-		VisitChunk(candidateChunk);
-	}
-
-	else
-	{
-		candidateChunk->force_chunk_note_indices();
-		ClearCache();
-		candidateChunk->empty_stack();
-	}
-}
-
-/*
- *	
- */	
-void RotateVisitor::ConditionallyAddToStack(comparisonResult test, Chunk *candidateChunk, int &counter_index, int& fail_count)
-{
-	//Handle a test result
-
-	switch(test)
-	{
-		case DISCARD: //discard note from chunk
-			candidateChunk->remove_note(candidateChunk->get_note_at(counter_index));
-			break;
-            
-		case GOOD: //lock in compatible note for now
-			candidateChunk->push_stack(candidateChunk->get_note_at(counter_index));
-			counter_index++;
-			fail_count=0;
-			break;
-                
-        case BAD:
-        default:
-			break;
-	};
-}
-
-/*
- *	
- */	
+//Visit a chunk, and re-arrange all of its notes until they are valid/playable
 void RotateVisitor::VisitChunk(Chunk* candidateChunk) 
 {
-	//Visit a chunk, and re-arrange all of its notes until they are valid/playable
+    const uint32_t chunkSize = candidateChunk->GetNumberOfElements() ;
 
-	const int max_permutation_limit = static_cast<int>(pow(PERMUTATION_MAX_BASE,(candidateChunk->get_children_size() )));
-	int counter_index=0,fail_count=0,max_permutation_counter=0;
-	comparisonResult result;
+    const uint32_t permutationsForThisChunk = 
+        candidateChunk->GetNumberOfPositionPermutations();
 
-	candidateChunk->empty_stack();
+    uint32_t noteConfigurationIndex = chunkSize-1;
 
-	while(counter_index < candidateChunk->get_children_size())
-	{
-		if(max_permutation_counter > max_permutation_limit)
-		{
-			//go with local minimum
-			break; 
-		}
-		else if(fail_count == candidateChunk->get_note_at(counter_index)->get_children_size()) 
-		{
-			//after fruitlessly exhausting all candidate positions, unwind stack by one step
-			fail_count=0;
-			max_permutation_counter++;
-			counter_index--;
-			candidateChunk->pop_stack();
-			candidateChunk->get_note_at(counter_index)->accept(this);
-			
-		}
-		else if( (result = candidateChunk->compare_with_stack((candidateChunk->get_note_at(counter_index))) ) )
-		{
-			ConditionallyAddToStack(result, candidateChunk, counter_index, fail_count);
-		}
-		else
-		{
-			//if the note is incompatible, begin reconfiguring the candidate note
-			candidateChunk->get_note_at(counter_index)->accept(this);
-			fail_count++;
-		}
-	}
+    uint32_t permutationIndex = 0;
 
-	RecursivelyFindLowestCostChunkConfiguration(candidateChunk);
+    while(permutationIndex < permutationsForThisChunk)
+    {
+        permutationIndex++;
+
+        //Reconfigure or "rotate" the chunk until it is in another configuration
+        ReconfigureChunk(candidateChunk,noteConfigurationIndex);
+        
+        //Compare the current best chunk configuration against the reconfigured one
+        SelectOptimalFingering(candidateChunk);	
+    }
+
+    candidateChunk->RepositionNotesToCurrentOptimalPositions();
+    ResetMarkedChunks();
+
 }
 
-/*
- *	
- */	
-int getFretMaxAndOptimaSpacing(int &fmax,vector<pair <int, int> > indices)
+//Change the note positions in this chunk to a configuration that has not 
+//been checked yet. Skip configurations with impossible fingerings. 
+uint32_t RotateVisitor::ReconfigureChunk(Chunk* candidateChunk, uint32_t& noteConfigurationIndex)
 {
-	/*
-	Find the maximum fret in the vector of note grid positions, and the maximum spacing
-	*/
-	int fmin = 24,fret=0,spacing=0;
+    uint32_t octaveShiftCost = 0;
+    bool stringsOverlap = true;
+    bool currentNotePositionsAlreadyTried = true;
+    bool allNotePositionsTried = false;
     
-	for(auto i : indices)
-	{
-		fret = Note::get_fret_at(i.first, i.second);
-		if(fret == 0)
-        {
-            continue;
-        }
-        
-		if (fret > fmax)
-		{
-            fmax = fret;
-		}
-        
-        if (fret < fmin)
-        {
-			fmin = fret;
-        }
-	}
-    
-	spacing = fmax-fmin;
-    
-	if (spacing < 0) 
+    do
     {
-        spacing = 0;
+        allNotePositionsTried = RotateNoteOrItsParent(candidateChunk,
+                noteConfigurationIndex,octaveShiftCost);
+        
+        vector<NotePositionEntry> currentNotePositionsEntries =
+                candidateChunk->GetCurrentNotePositionEntries();
+        
+        stringsOverlap =
+                (1 < CountStringIntersectionsBetweenTwoChunkConfigurations(currentNotePositionsEntries,
+                candidateChunk->GetCurrentNotePositionEntries()));
+        
+        currentNotePositionsAlreadyTried = 
+                WasChunkProcessed(candidateChunk->GetCurrentNotePositionEntries());
+
+    } while(stringsOverlap && !allNotePositionsTried && currentNotePositionsAlreadyTried);
+    
+    return octaveShiftCost;
+    
+} //end ReconfigureChunk
+
+
+//Pick between the current note positions and the current optimum note positions
+//Apply the lower cost one 
+void RotateVisitor::SelectOptimalFingering(
+        Chunk *chunkToConfigure) 
+{
+    vector<NotePositionEntry> candidateChunkFingering =
+        chunkToConfigure->GetCurrentNotePositionEntries();
+        
+    vector<NotePositionEntry> currentChunkFingering =
+        chunkToConfigure->GetCurrentOptimalNotePositionEntries();
+    
+    const bool alreadyCheckedThisConfiguration = WasChunkProcessed(candidateChunkFingering);
+    
+    if(!alreadyCheckedThisConfiguration)
+    {
+        const uint32_t candidateCost = CalculateConfigurationCost(candidateChunkFingering);
+        const uint32_t currentCost = CalculateConfigurationCost(currentChunkFingering);  
+        
+        if(candidateCost < currentCost)
+        {
+            chunkToConfigure->SetOptimalNotePositions(candidateChunkFingering);
+            chunkToConfigure->RepositionNotesToCurrentOptimalPositions();
+            
+            vector<NotePositionEntry> newCurrentChunkFingering =
+                chunkToConfigure->GetCurrentOptimalNotePositionEntries();
+            
+            assert(newCurrentChunkFingering == candidateChunkFingering);
+            
+            cout <<  Chunk::PrintNoteIndices(currentChunkFingering) << "@ $" << currentCost << 
+                    " (current) vs " << Chunk::PrintNoteIndices(candidateChunkFingering) << "@ $" << candidateCost << endl;
+        }
+        
+        MarkChunkAsProcessed(candidateChunkFingering);   
+        
+    }
+} //end SelectOptimalFingering
+
+
+bool RotateVisitor::RotateNoteOrItsParent(
+    Chunk* candidateChunk, 
+    uint32_t& noteIndex, 
+    uint32_t& octaveShiftCost)
+{
+    bool baseCase = true;
+    
+    Note* const note = candidateChunk->GetElementWithIndex(noteIndex);
+    
+    if(note == nullptr)
+    {
+        candidateChunk->RemoveElement(note);
     }
     
-	return spacing;
-}
+    else
+    {
+        const uint32_t attemptedRepositions = note->get_current_note_index()+1;
+        const uint32_t possibleRepositions = note->GetNumberOfElements();
 
-
-bool IsFretSpacingValid(uint32_t candidateMaximumFret, uint32_t currentMaximumFret, uint32_t minimumDifferenceForReplacement)
-{
-	//If candidate spacing is wider than the current spacing by 2 frets, cancel candidate		
-
-	return ((candidateMaximumFret < currentMaximumFret) && 
-            ((currentMaximumFret - candidateMaximumFret) > minimumDifferenceForReplacement));
-}
-
-/*
- *	
- */	
-void RotateVisitor::CompareChunks(Chunk *candidateChunk, vector<pair <int, int> > currentNoteConfigurations) 
-{
-	//Test max fret spacing, determine which chunk is better between valid configurations
-	/*
-		If the spacings are equal, then choose the pair with the lower frets (determined by the sum of the frets)
-		If the spacings are different, go with the one with the less total spacing
-	*/
-	if (!InCache(currentNoteConfigurations))
-	{
-		ValidChunkConfigurations.push_back(currentNoteConfigurations);
-	
-		if (candidateChunk->get_optima_size() == currentNoteConfigurations.size())
-		{
-			int maximumFretInCurrentConfiguration = 0;
-			int maximumFretInCandidateChunk = 0;
+        const bool repositionParent = attemptedRepositions >= possibleRepositions;
+        
+        baseCase = (noteIndex == 0) && repositionParent;
+        
+        if(!baseCase) //(noteIndex != 0) || !repositionParentf
+        {
+            uint32_t parentIndex = noteIndex-1;
+            Note* const parentNote = candidateChunk->GetElementWithIndex(parentIndex);
             
-			int optima_spacing = getFretMaxAndOptimaSpacing(maximumFretInCurrentConfiguration,candidateChunk->_optima);
-			int candidate_spacing = getFretMaxAndOptimaSpacing(maximumFretInCandidateChunk,currentNoteConfigurations);
-			
-			//candidate will be discarded unless it is better than the current optima
-			bool candidateChunkIsMorePlayable = false; 
-			
-			if((abs(optima_spacing-candidate_spacing) < 3))
-			{
-				
-				if(maximumFretInCandidateChunk < maximumFretInCurrentConfiguration)
-				{
-					 candidateChunkIsMorePlayable = true;
-				}
-				
-				else
-				{
-					 candidateChunkIsMorePlayable = false;
-				}	
-			}
-			
-			else if(IsFretSpacingValid(candidate_spacing,optima_spacing,0))
-			{
-				candidateChunkIsMorePlayable = true;
-			}
-			
-			if(candidateChunkIsMorePlayable == false)
-			{
-				return;
-			}
-		}
+            //TODO: try shifting the note up and down an octave
+            //octaveShiftCost++;
+            
+            if((repositionParent) && (parentNote != nullptr))
+            {
+                baseCase = RotateNoteOrItsParent(candidateChunk, parentIndex, octaveShiftCost);
+                noteIndex++;// = parentIndex;
+            }
+        }
+        
+        note->DispatchVisitor(this);
+    }
+    
+    return baseCase;
+} //end RotateNoteOrItsParent
 
-		candidateChunk->set_optima(currentNoteConfigurations);
-	}	
+uint32_t RotateVisitor::CalculateConfigurationCost(
+        vector<NotePositionEntry > indices)
+{
+    uint32_t chunkCost = UINT32_MAX;
+    uint32_t maximumFretInCandidateChunk;
+    uint32_t fretSpacingInCandidateChunk;
+    uint32_t fretCenterInCandidateChunk;
+    vector<uint32_t> stringPositions;
+        
+    bool chunkValid = GetChunkFeatures(
+                        indices,
+                        maximumFretInCandidateChunk,
+                        fretSpacingInCandidateChunk, 
+                        fretCenterInCandidateChunk,
+                        stringPositions);
+    
+    //If the chunk is not valid, return the largest possible cost
+    if(chunkValid)
+    {
+        chunkCost =  EvaluateConfigurationFeatures(
+                        maximumFretInCandidateChunk,
+                        fretSpacingInCandidateChunk, 
+                        fretCenterInCandidateChunk,
+                        stringPositions);
+    }
+    
+    return chunkCost;
+    
+} //end CalculateConfigurationCost
+
+
+/*
+ * Find the maximum fret and total fret spacing in a vector of note grid positions.
+ * Return the fret spacing and maximum fret as output parameters
+*/
+bool RotateVisitor::GetChunkFeatures(
+        vector<NotePositionEntry > chunkIndices,
+        uint32_t& maximumFretInCandidateChunk,
+        uint32_t& fretSpacingInCandidateChunk,
+        uint32_t& fretCenterInCandidateChunk,
+        vector<uint32_t>& stringPositions)
+{
+    maximumFretInCandidateChunk = 0;
+	fretSpacingInCandidateChunk = 0;
+    fretCenterInCandidateChunk = 0;
+    
+    //Variables for finding the note center
+    uint32_t numberOfFrettedNotes = chunkIndices.size();
+    uint32_t fretSumForAverage = 0;
+    
+    //Variables for finding the note spacing and maximum
+	uint32_t minimumFretInChunkConfiguration = UINT32_MAX;
+    
+    const bool validChunk = (numberOfFrettedNotes != 0);
+    
+    if(validChunk)
+    {
+        for(NotePositionEntry notePositionEntry : chunkIndices)
+        {
+            const uint32_t notePositionIndex = notePositionEntry.first;
+            const uint32_t notePitchMidiValue = notePositionEntry.second;
+
+            const uint32_t currentFret = Note::get_fret_at(notePositionIndex,
+                                                     notePitchMidiValue);
+            
+            const uint32_t currentString = Note::get_string_at(notePositionIndex,
+                                                     notePitchMidiValue);
+            
+            stringPositions.push_back(currentString);
+
+            //Don't count 0 in the fret spacing calculation
+            if(currentFret != 0) 
+            {
+                fretSumForAverage += currentFret;
+                numberOfFrettedNotes++;
+
+                //Find the new minimum and maximum for this iteration
+                maximumFretInCandidateChunk = 
+                        std::max(maximumFretInCandidateChunk, currentFret);
+
+                minimumFretInChunkConfiguration = 
+                        std::min(minimumFretInChunkConfiguration,currentFret);
+            }
+        } //end loop
+
+        if(numberOfFrettedNotes != 0)
+        {
+            fretCenterInCandidateChunk = fretSumForAverage / numberOfFrettedNotes;
+        }
+        
+        //Spacing cannot go below 0
+        if(minimumFretInChunkConfiguration <= maximumFretInCandidateChunk)
+        {
+            fretSpacingInCandidateChunk = maximumFretInCandidateChunk - 
+                                            minimumFretInChunkConfiguration;
+        }
+        
+    } //end if valid chunk
+    
+    else
+    {
+        uint32_t numberOfFrettedNotes = chunkIndices.size();
+        //Todo: some chunks are invalid still, this shouldn't be so
+    }
+    
+    return validChunk;
+} //end GetChunkFeatures
+
+
+uint32_t RotateVisitor::EvaluateConfigurationFeatures(
+        uint32_t maximumFretInCandidateChunk,
+        uint32_t fretSpacingInCandidateChunk,
+        uint32_t fretCenterInCandidateChunk,
+        vector<uint32_t> stringPositions)
+{
+    
+    
+    uint32_t maximumFretCost = 0;
+    uint32_t fretSpanCost = 0;
+    uint32_t interChunkSpacingCost = 0;
+    uint32_t stringOverlapCost = 0;
+    
+    Chunk * const previousChunk = PreviousChunk;
+    
+    uint32_t candidateCost = 0;
+
+    //Increase the cost of this chunk if its note center is far from the 
+    //previous chunk 
+    if(previousChunk != nullptr)
+    {
+        bool previousChunkValid = true;
+        
+        vector<NotePositionEntry > previousChunkIndices = 
+            PreviousChunk->GetCurrentNotePositionEntries();
+        
+        uint32_t maximumFretInPreviousChunk;
+        uint32_t fretSpacingInPreviousChunk;
+        uint32_t fretCenterInPreviousChunk;
+        vector<uint32_t> stringPositionsInPreviousChunk;
+        
+        previousChunkValid = GetChunkFeatures(previousChunkIndices,
+                                              maximumFretInPreviousChunk,
+                                              fretSpacingInPreviousChunk,
+                                              fretCenterInPreviousChunk,
+                                              stringPositionsInPreviousChunk);
+    
+        if(previousChunkValid)
+        {        
+            vector<uint32_t> duplicateStrings;
+            const uint32_t candidateSpacingFromLastChunk = 
+                std::abs((int32_t)fretCenterInCandidateChunk - (int32_t)fretCenterInPreviousChunk);
+            
+            std::set_intersection(stringPositionsInPreviousChunk.begin(),
+                                  stringPositionsInPreviousChunk.end(),
+                                  stringPositions.begin(),
+                                  stringPositions.end(),
+                                  std::back_inserter(duplicateStrings));
+            
+            interChunkSpacingCost = candidateSpacingFromLastChunk*InterChunkSpacingScalar;
+            stringOverlapCost = duplicateStrings.size() * StringOverlapScalar;
+        }        
+    }
+    
+    //Increase the cost as the maximum fret and fret spacing increases 
+    maximumFretCost = maximumFretInCandidateChunk*MaximumFretScalar;
+    fretSpanCost = fretSpacingInCandidateChunk*FretSpanScalar;
+    
+    candidateCost = maximumFretCost + fretSpanCost + 
+                     interChunkSpacingCost + stringOverlapCost;
+    
+    cout << "Costs: " << "MaxFret:" << maximumFretCost << " FretSpan:" << fretSpanCost \
+                      << " Adjacency:" << interChunkSpacingCost << " Independence:" \
+                      << stringOverlapCost << endl;
+    
+    return candidateCost;
+    
+} //end EvaluateConfigurationFeatures
+
+
+vector<uint32_t> RotateVisitor::GetStringPositionsOfIndices(
+        vector<NotePositionEntry > chunkIndices)
+{
+    vector<uint32_t> stringPositions;
+    
+    for(NotePositionEntry notePositionEntry : chunkIndices)
+    {
+        const uint32_t notePositionIndex = notePositionEntry.first;
+        const uint32_t notePitchMidiValue = notePositionEntry.second;
+        const uint32_t currentString = Note::get_string_at(notePositionIndex,
+                                                 notePitchMidiValue);
+
+        stringPositions.push_back(currentString);
+    }
+    
+    return stringPositions;
+}
+
+uint32_t RotateVisitor::CountStringIntersectionsBetweenTwoChunkConfigurations(
+    vector<NotePositionEntry> notePositions1, 
+    vector<NotePositionEntry> notePositions2)
+{
+    vector<uint32_t> duplicateStrings;
+    
+    vector<uint32_t> stringPositions1 = GetStringPositionsOfIndices(notePositions1);
+    vector<uint32_t> stringPositions2 = GetStringPositionsOfIndices(notePositions2);
+
+    std::set_intersection(stringPositions1.begin(),
+                          stringPositions1.end(),
+                          stringPositions2.begin(),
+                          stringPositions2.end(),
+                          std::back_inserter(duplicateStrings));
+    
+    return duplicateStrings.size();
 }
 
 /*
- *	"Rotate" note when vvisiting (move it one position forward through its available fret+string
- *	positions.
- */	
-void RotateVisitor::VisitNote(Note* n) 
+ * Reposition a note on the fretboard
+ */
+void RotateVisitor::VisitNote(Note* noteToReposition) 
 {
-  n->increment_note_index();
+    noteToReposition->increment_note_index();
 }
 
-
-	
-bool RotateVisitor::InCache(vector<pair<int, int> > input)
+bool RotateVisitor::MarkChunkAsProcessed(
+        vector<NotePositionEntry > processedChunkConfiguration)
 {
-	/*
-	*	Determine if the chunk configuration is already present in the chunk cache
-	*/
-
-	bool ret = false;
-	
-	for(auto entry : ValidChunkConfigurations)
-	{
-		if(entry == input) 
-		{
-			ret = true;
-		}
-	}
-	
-	return ret;
+    bool chunkAlreadyProcessed = WasChunkProcessed(processedChunkConfiguration);
+    
+    if(!chunkAlreadyProcessed)
+    {
+        ProcessedChunkConfigurations.push_back(processedChunkConfiguration);
+    }
 }
+ /*
+  *	Determine if the chunk configuration has already been evaluated as an optimum
+  */	
+bool RotateVisitor::WasChunkProcessed(
+        vector<NotePositionEntry > input)
+{
+    const bool foundEntryInProcessedConfiguration =
+        std::end(ProcessedChunkConfigurations) != 
+        (std::find(std::begin(ProcessedChunkConfigurations), 
+                   std::end(ProcessedChunkConfigurations), input));
+
+    return foundEntryInProcessedConfiguration;
+}
+
 
 /*
- *	Empty cache of optimum chunk configurations
+ *	Empty cache of already checked configurations
  */	
-void RotateVisitor::ClearCache(void)
+void RotateVisitor::ResetMarkedChunks(void)
 {
-	ValidChunkConfigurations.clear();
+	ProcessedChunkConfigurations.clear();
 }

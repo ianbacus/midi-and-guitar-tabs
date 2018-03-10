@@ -1,205 +1,201 @@
 #include "base.h"
-
-#include "note.h"
-#include "bar.h"
-#include "chunk.h"
-
 #include "tuning.h"
 
 #define ACCEPTABLE  5
 //Note should have a vector of possible string positions (which depend on the tuning in the tab matrix) by default
-// hold an index to tabmatrix, update by incrementing 
+// hold an index to tab matrix, update by incrementing 
 
-//At compile time: generate the pitch to fret mapping
-PitchMap Note::pitch_to_frets_map = ConfigurePitchMap();
-int Note::noteslost = 0;
+/*
+ *	Print out initialization map
+ */
+void print_initmap(std::map<int,vector< pair<int,int> > > initmap)
+{
+	for(std::map<int,vector< pair<int,int> > >::iterator iter = initmap.begin(); iter != initmap.end(); ++iter)
+	{
+		int k =  iter->first;
+		//ignore value
+		vector< pair<int,int> > v = iter->second;
+		cout << k;
+		for(auto p : v)
+		{
+			cout << "(" << p.first << "s," << p.second << "f), ";
+		}
+		cout << endl;
+	}
+}
 
+/*
+ *	Configure the pitch map: maps midi pitch values to pairs of string and fret positions.
+ *	note index indicates which fret+string position is currently being used
+ */
+PitchMap config()
+{
+    PitchMap initmap;
 
+    int value;
+
+    for(int string_ind = SIZEOF_TUNING-1;string_ind>= 0;string_ind--)
+    {        
+        for(int fret_ind = 0; fret_ind<=12; fret_ind++)
+        {
+            {
+                value = tuning[string_ind] + fret_ind;
+				pair<int,int> map_point = make_pair(string_ind,fret_ind);
+                
+                //Insert sorted by fret number
+                initmap[value].insert(std::upper_bound( initmap[value].begin(), initmap[value].end(), map_point, \
+                [](const std::pair<int,int> &left, const std::pair<int,int> &right) { return left.second < right.second; }),map_point ); 
+            }
+            
+        }
+    }
+    
+    return initmap;
+}
 
 /*
  *	Construct a note with pitch, delta, track number
  */
-Note::Note(int pitch, int delta, int trackNumber) : Pitch(pitch), Delta(delta), TrackNumber(trackNumber), NotePositionPitchMapIndex(0) 
+Note::Note(int pitch, int duration, int trackNumber) : 
+    PitchMidiValue(pitch), 
+    NoteDurationBeats(duration), 
+    Repositions(0),
+    TrackNumber(trackNumber), CurrentPitchMapRepositionIndex(0) 
 {
 	//Negative delta values are used to represent triples
 	//Negative pitch values represent rests
-
-	if ( (pitch >= 0) && (pitch_to_frets_map.find(pitch)) == pitch_to_frets_map.end()) 
+	if(pitch < 0)
 	{
-		noteslost++;
+		//TODO: Handle triplets
+	} 
+    
+	else if ((PitchToFretMap.find(pitch)) == PitchToFretMap.end()) 
+	{
+		DeletedNotesCount++;
 	}
-}
-
-Note::~Note(void)
-{
-    //Nothing
 }
 
 /*
  *	Get track number note was taken from
  */
-int Note::get_track_number() const
+int Note::get_track_num() const
 {
 	return TrackNumber;
 }
 
-/*
- *	Get fret for the current note index
- */
-int Note::get_fret(void) 
-{
-    int pitch = get_pitch();
-	return get_fret_at(NotePositionPitchMapIndex, pitch);
-}
 
 /*
- *	Get the fret for a given note index and pitch
+ *	Get string for a given note index and pitch. The pitch is used to index
+ *  into the main fretboard map, and the note index is used to determine which
+ *  of the possible fretboard positions is currently in use.
+ * 
  */
-int Note::get_fret_at(int note_index, int pitch)
+int Note::get_fret() const
 {
-	int fret = -1;
+
+    return get_fret_at(CurrentPitchMapRepositionIndex, PitchMidiValue);
+}
+
+
+/*
+ *	Get string for a given note index and pitch. The pitch is used to index
+ *  into the main fretboard map, and the note index is used to determine which
+ *  of the possible fretboard positions is currently in use.
+ * 
+ */
+int Note::get_fret_at(const int currentPitchMapRepositionIndex, const int pitchMidiValue)
+{    
+    uint32_t fretAtIndex = 0;
+    uint32_t offsetIndex = 0;
+	int octaveIndex = 0;
     
-	if(pitch >= 0)
+	if(pitchMidiValue<0) 
     {
-        int temporaryNoteOffset = 0;
-        int maximumOctavesCount = MaximumOctavesCount;
-        
-        while(maximumOctavesCount-- > 10) 
-        {
-            try 
-            {
-                fret = pitch_to_frets_map.at(pitch+temporaryNoteOffset)[note_index].second;
-                return fret;
-            }
-            
-            catch (const std::out_of_range& oor) 
-            {
-                if(pitch < tuningMinimum)
-                { 
-                    temporaryNoteOffset += PitchOctave;
-                }
-                
-                else
-                { 
-                    temporaryNoteOffset -= PitchOctave;
-                }
-            }
-        }
+        return -1;
     }
     
-    return fret;
-}
-
-/*
- *	Get string for the current note index
- */
-int Note::get_string() 
-{
-    return get_string_at(NotePositionPitchMapIndex, Pitch);
-    
-}
-
-/*
- *	Get string for a given note index and pitch
- */
-int Note::get_string_at(int note_index, int pitch)
-{
-	int noteString = 0;
-    int noteTemporaryOffset = 0;
-    
-	int maximumOctavesCount = MaximumOctavesCount;
-        
-    while(maximumOctavesCount-- > 10) 
+	while(++octaveIndex < MaximumNumberOfOctaves) 
     {
+		const uint32_t adjustedPitchMidiValue = pitchMidiValue+offsetIndex;
+        
 		try 
         {
-			noteString = pitch_to_frets_map.at(pitch+noteTemporaryOffset)[note_index].first;
-            
-			return noteString;
+			fretAtIndex = PitchToFretMap.at(adjustedPitchMidiValue)
+                    [currentPitchMapRepositionIndex].second;
+			break;
 		}
         
 		catch (const std::out_of_range& oor) 
         {
-			if(pitch < tuningMinimum)
-            {
-                noteTemporaryOffset += PitchOctave;
+			if(pitchMidiValue<tuningMinimum)
+            { 
+                offsetIndex += OctaveValueMidiPitches;
             }
             
 			else
-            {
-                noteTemporaryOffset -= PitchOctave;
+            { 
+                offsetIndex -= OctaveValueMidiPitches;
             }
 		}
 	}
     
-    return noteString;
+    return fretAtIndex;
+}
+
+
+/*
+ *	Get string for a given note index and pitch. The pitch is used to index
+ *  into the main fretboard map, and the note index is used to determine which
+ *  of the possible fretboard positions is currently in use.
+ * 
+ */
+int Note::get_string() const
+{
+    return get_string_at(CurrentPitchMapRepositionIndex, PitchMidiValue);
 }
 
 /*
- *	Get the number of fret positions for this note. Try 10 different octave offsets
+ *	Get string for a given note index and pitch. The pitch is used to index
+ *  into the main fretboard map, and the note index is used to determine which
+ *  of the possible fretboard positions is currently in use.
+ * 
  */
-int Note::get_children_size() const
+int Note::get_string_at(
+        int currentPitchMapRepositionIndex, 
+        int pitchMidiValue)
 {
-    int childrenSize = 0;
-    int pitch = get_pitch();
+	uint32_t stringAtIndex = 0;
+    uint32_t offsetIndex = 0;
+	int octaveIndex = 0;
     
-	if(pitch >= 0) 
+	while(++octaveIndex < MaximumNumberOfOctaves) 
     {
-        int noteTemporaryOffset = 0;
+		const uint32_t adjustedPitchMidiValue = pitchMidiValue+offsetIndex;
         
-        int maximumOctavesCount = MaximumOctavesCount;
-            
-        while(maximumOctavesCount-- > 10) 
+		try 
         {
-            try 
-            {
-                childrenSize = pitch_to_frets_map.at(pitch+noteTemporaryOffset).size();
-                break;
+			stringAtIndex = PitchToFretMap.at(adjustedPitchMidiValue)
+                    [currentPitchMapRepositionIndex].first;
+                    
+            break;
+                    
+		}
+        
+		catch (const std::out_of_range& oor) 
+        {
+			if(pitchMidiValue<tuningMinimum)
+            { 
+                offsetIndex += OctaveValueMidiPitches;
             }
             
-            catch (const std::out_of_range& oor) 
-            {
-                if(pitch<tuningMinimum)
-                {
-                    noteTemporaryOffset += PitchOctave;
-                }
-                
-                else
-                { 
-                    noteTemporaryOffset -= PitchOctave;	
-                }
+			else
+            { 
+                offsetIndex -= OctaveValueMidiPitches;
             }
-        }
-    }
+		}
+	}
     
-    return childrenSize;
-}
-
-/*
- *	Transpose a note down by one octave
- */
-void Note::decrement_octave()
-{
-    Pitch -= PitchOctave;
-    NumberOfOctaveOffsets--;
-}
-
-/*
- *	Transpose a note up by one octave
- */
-void Note::increment_octave()
-{
-    Pitch += PitchOctave;
-    NumberOfOctaveOffsets++;
-}
-
-/*
- *	Return a note to its original position
- */
-void Note::rebalance_note()
-{
-    Pitch -= NumberOfOctaveOffsets*PitchOctave;
-    NumberOfOctaveOffsets = 0;
+    return stringAtIndex;
 }
 
 /*
@@ -207,16 +203,50 @@ void Note::rebalance_note()
  */		
 void Note::increment_note_index()
 {
-	int sizetemp = get_children_size();
-	NotePositionPitchMapIndex = (NotePositionPitchMapIndex+1)%(sizetemp);
+	const uint32_t numberOfPossiblePositions = GetNumberOfElements();
+    
+	CurrentPitchMapRepositionIndex = (CurrentPitchMapRepositionIndex+1)%
+                                        (numberOfPossiblePositions);
+    
+    Repositions++;
+}
+
+
+uint32_t Note::GetAttemptedRepositions(void) const
+{
+    return Repositions;
+}
+
+void Note::ResetAttemptedRepositions(void)
+{
+    Repositions = 0;
+}
+/*
+ *	Get the number of fret positions for this note. Try 10 different octave offsets
+ */
+int Note::GetNumberOfElements() const
+{
+	int ret,n=0;
+	if(PitchMidiValue<0) return 0;
+	int i = 0;
+	while(++i<MaximumNumberOfOctaves) {
+		try {
+			ret = PitchToFretMap.at(PitchMidiValue+n).size();
+			return ret;
+		}
+		catch (const std::out_of_range& oor) {
+			if(PitchMidiValue<tuningMinimum){n +=12;}
+			else{ n -=12;	}
+		}
+	}
 }
 
 /*
- *	Get the number of notes that were attempted to be used which did not exist in the pitch map
+ *	Get the number of deleted notes (notes whose pitch was not mapped)
  */	
 int Note::get_noteslost() const 
 {
-	return noteslost;
+	return DeletedNotesCount;
 }
 
 /*
@@ -224,15 +254,15 @@ int Note::get_noteslost() const
  */
 void Note::set_note_index(int n) 
 {
-	NotePositionPitchMapIndex = n;
+	CurrentPitchMapRepositionIndex = n;
 }
 
 /*
  *	Get note index for note fret+string positions
  */
-int Note::get_note_position_pitch_map_index() const 
+int Note::get_current_note_index() const 
 {
-	return NotePositionPitchMapIndex;
+	return CurrentPitchMapRepositionIndex;
 }
 	
 /*
@@ -240,7 +270,7 @@ int Note::get_note_position_pitch_map_index() const
  */	
 int Note::get_pitch() const 
 {
-	return Pitch;
+	return PitchMidiValue;
 }
 
 /*
@@ -248,7 +278,7 @@ int Note::get_pitch() const
  */
 void Note::alter_pitch(int n)
 {
-	Pitch +=n; 
+	PitchMidiValue +=n; 
 }
 
 /*
@@ -256,48 +286,19 @@ void Note::alter_pitch(int n)
  */
 int Note::get_delta()  const
 {
-	return Delta;
+	return NoteDurationBeats;
 }
 
 /*
  *	Visit note
  */
-void Note::accept(Visitor* visitor) 
+void Note::DispatchVisitor(Visitor* v) 
 {
-    if(visitor != nullptr)
-    {
-        visitor->VisitNote(this);
-    }
+	v->VisitNote(this);
 }
 
-/*
- *	Configure the pitch map: maps midi pitch values to pairs of string and fret positions.
- *	note index indicates which fret+string position is currently being used
- */
-PitchMap Note::ConfigurePitchMap()
-{
-    PitchMap initialMap;
 
-    int value;
-
-    for(int string_ind = SIZEOF_TUNING-1;string_ind>= 0;string_ind--)
-    {
-        for(int fret_ind = 0; fret_ind<14; fret_ind++)
-        {
-            {
-                value = tuning[string_ind] + fret_ind;
-				pair<int,int> map_point = make_pair(string_ind,fret_ind);
-                
-                //Insert sorted by fret number
-                initialMap[value].insert(std::upper_bound( initialMap[value].begin(), initialMap[value].end(), map_point, 
-                [](const std::pair<int,int> &left, const std::pair<int,int> &right) { return left.second < right.second; }),
-                map_point ); 
-            }
-            
-        }
-    }
-    
-    return initialMap;
-}
-
+//At compile time: generate the pitch to fret mapping
+PitchMap Note::PitchToFretMap = config();
+int Note::DeletedNotesCount = 0;
 

@@ -7,7 +7,7 @@ from collections import Counter
 
 import json
 
-note_offsets = (00,00,00,00,00,00,00,00,00,00,00,00,00,00)
+note_offsets = (00,00,00,00,00,00,00,00,00,00,00,00)
 
 #Limit the TickToPitchMidiValueDictionaryal resolution. This value also affects the scaling of time values in terms of beats
 MaximumNotesPerBeat = 8.0
@@ -30,28 +30,63 @@ timeSignatureEvents = {}
 TickToPitchMidiValueDictionary = collections.OrderedDict()
 		
 
-def BuildTickToPitchMidiValueDictionary(midiTracks,trackFilterCondition):
+def BuildTickToPitchMidiValueDictionary(midiTracks,maximumNumberOfTracks):
 	
 	active_notes = {}
         resolution = float(midiTracks.resolution)
+	
+	sortedTracks = range(len(midiTracks))
+	trackNumberList = {i:0 for i in range(len(midiTracks))}
+	
+	if (maximumNumberOfTracks > 0):
+		global MaximumChunkSize
+		MaximumChunkSize = maximumNumberOfTracks
+	elif (maximumNumberOfTracks == 1337):
+		#preprocess tracks, sort by their average pitch value
+		for currentTrackNumber, track in enumerate(midiTracks):
+			numberOfNotes = 0
+			noteSum = 0	
+			highestPitchMidiValue = 0
+			lowestPitchMidiValue = 200
+			
+			for midiEvent in track:
+				if type(midiEvent) is midi.events.NoteOnEvent:
+					pitchMidiValue = midiEvent.get_pitch()
+	
+					#Track info: Determine if this pitch surpasses the current minimum or maximum value
+					lowestPitchMidiValue = min(lowestPitchMidiValue,pitchMidiValue)
+					highestPitchMidiValue = max(highestPitchMidiValue,pitchMidiValue)
+					noteSum += pitchMidiValue
+					numberOfNotes += 1
+			if(numberOfNotes == 0):
+				del trackNumberList[currentTrackNumber]
+			else:
+				noteAverage = noteSum / numberOfNotes
+				trackNumberList[currentTrackNumber] = noteAverage
+
+		sortedTracks = sorted(trackNumberList, key=trackNumberList.get)
+		print(str(sortedTracks) +" "+ str(len(sortedTracks)) +" "+ str(maximumNumberOfTracks))
+		print(len(sortedTracks) + maximumNumberOfTracks)
+		
+		while(len(sortedTracks) > maximumNumberOfTracks):
+			middleIndex = len(sortedTracks)/2
+			sortedTracks.pop(middleIndex)
+
+	print(sortedTracks)
+		
 	for currentTrackNumber,track in enumerate(midiTracks):
-		lowestPitchMidiValue = 200
-		highestPitchMidiValue = 0
+		#only process unfiltered tracks
+		if currentTrackNumber not in sortedTracks:
+			continue
+		
 		currentEventTickValue = 0
                 track.make_ticks_abs()
                 for midiEvent in track:	
                         initialValue = midiEvent.tick
 
-			#nextTickValue = ((midiEvent.tick*MaximumNotesPerBeat)/midiTracks.resolution)
 			nextTickValue =  2*(midiEvent.tick*(MaximumNotesPerBeat/float(midiTracks.resolution)))
 
 			currentEventTickValue = round(nextTickValue)
-                        '''
-			if(nextTickValue<1) and (float_eq(round(nextTickValue,3),0.666)):
-				nextTickValue = 0.66
-			else:
-				nextTickValue = round(nextTickValue,1)
-			'''
 
 			#Time signature events are added to a separate data structure
 			if type(midiEvent) is midi.events.TimeSignatureEvent:
@@ -70,10 +105,6 @@ def BuildTickToPitchMidiValueDictionary(midiTracks,trackFilterCondition):
 			
                                         active_notes[pitchMidiValue] = currentEventTickValue
 					
-					#Track info: Determine if this pitch surpasses the current minimum or maximum value
-					lowestPitchMidiValue = min(lowestPitchMidiValue,pitchMidiValue)
-					highestPitchMidiValue = max(highestPitchMidiValue,pitchMidiValue)
-					
 					pitchMidiValueEntry = {'pitch':pitchMidiValue, 'trackNumber':currentTrackNumber}
 
 					try:
@@ -82,7 +113,7 @@ def BuildTickToPitchMidiValueDictionary(midiTracks,trackFilterCondition):
 					except KeyError:
 						TickToPitchMidiValueDictionary[currentEventTickValue] = [pitchMidiValueEntry]
 
-				#Note off events: update the note durations of notes as they expire
+				#Note off events: update the durations of notes as they expire
 				'''
 				elif (type(midiEvent) is midi.events.NoteOffEvent):
 
@@ -185,13 +216,13 @@ def WriteExtractedMidiDataToIntermediateFile(newfile):
 
 	#end of file writing
 
-def make(newfile,infile,condition,note_offsets):
-	
+def make(newfile,infile,maximumNumberOfTracks, note_offsets):
+
 	#Read midi file, translate it into track objects
 	midiTracks = midi.read_midifile(infile)
 	
 	#Extract useful information (time signature changes, note on and off events) into a dictionary
-	BuildTickToPitchMidiValueDictionary(midiTracks,condition)
+	BuildTickToPitchMidiValueDictionary(midiTracks,int(maximumNumberOfTracks))
 
 	#Write the output to an intermediate file
 	WriteExtractedMidiDataToIntermediateFile(newfile)

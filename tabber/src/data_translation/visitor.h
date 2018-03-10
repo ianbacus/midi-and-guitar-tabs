@@ -1,10 +1,9 @@
 #ifndef __VISITOR__
 #define __VISITOR__
 
-#include <string>
-#include <vector>
-#include <map>
-#include <stack>
+#include <bar.h>
+#include <chunk.h>
+#include <note.h>
 
 //Forward declarations to allow inheritance of this class and methods that act on pointers \
 to the base class:
