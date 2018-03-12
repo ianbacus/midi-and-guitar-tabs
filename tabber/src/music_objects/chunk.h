@@ -9,41 +9,16 @@
 #include <map>
 #include <stack>
 
- //   uint32_t RepositioningIndex;
- //   uint32_t PitchMidiValue;
-  
-/*
-struct NotePositionEntry
-{
-    uint32_t first;
-    uint32_t second;
-    
-    NotePositionEntry() = default;
-    
-    NotePositionEntry(Note *note)
-    {
-        first = note->get_current_note_index();
-        second = note->get_pitch(); 
-    }
-    
-    inline bool operator==(const NotePositionEntry& rhs)
-    { 
-        return (second == rhs.second) && 
-            (first == rhs.first);
-    }
-};*/
-
-typedef pair<int, int> NotePositionEntry; //first = index, second = pitch
+using std::vector;
+using std::string;
 
 class Chunk : public Base 
 {
     private:
 
-        stack<Note*> NoteComparisonStack;
         int Delta;
         int _recursion_lock;
-        vector<Note*> ChunkNotes;
-        //Optimized chunks
+        vector<Note*> Notes;
         
         vector<NotePositionEntry > CurrentOptimalNotePositionEntries;
 
@@ -52,8 +27,8 @@ class Chunk : public Base
         static string PrintNoteIndices(vector<NotePositionEntry > currentNoteConfigurations);
         
         //Temporary note storage
-        void PushElement(Note* n);
-        void RemoveElement(Note* n);
+        void PushElement(Note* note);
+        void RemoveElement(Note* note);
         
         void SetOptimalNotePositions(vector<NotePositionEntry > set);
         void ResetAllNotesRepositions(void);
@@ -65,12 +40,13 @@ class Chunk : public Base
         uint32_t GetNumberOfPositionPermutations(void) const;
         
         //Note access
-        Note* GetElementWithIndex(int i) const;
+        vector<Note*> GetElements(void) const;
+        Note* GetElementWithIndex(uint32_t index) const;
         Note* GetMostMobileNote(void) const; 
         int GetDelta() const;
         
 
-        virtual int GetNumberOfElements() const ;
+        virtual uint32_t GetNumberOfElements() const ;
         virtual void DispatchVisitor(Visitor* v) ;
 
         Chunk(int delta=0);

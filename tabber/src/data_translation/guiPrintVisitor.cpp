@@ -65,7 +65,7 @@ void GUIPrintVisitor::visitChunk(Chunk* c)
 	}
 	for(int j=0; j<c->GetNumberOfElements(); j++)
 	{
-		delta += c->GetElementWithIndex(j)->get_delta();
+		delta += c->GetElementWithIndex(j)->GetNoteDurationBeats();
 	}
 	for(int i=0;i<=delta;i++)
 		string_buffer.back()[0] += "p," ;
@@ -91,7 +91,7 @@ void GUIPrintVisitor::visitChunk(Chunk* c)
 void GUIPrintVisitor::visitNote(Note* n)
 {
 	int delta = 0;
-	std::string result = "TabNote(" + std::to_string(n->get_string()) + "," + std::to_string(n->get_fret()) + "),";	
+	std::string result = "TabNote(" + std::to_string(n->GetStringIndexForCurrentNotePosition()) + "," + std::to_string(n->GetFretForCurrentNotePosition()) + "),";	
 	//This is where the padding takes place for notes based on their note duration
 	if(delta >= 0)
 	{

@@ -1,4 +1,6 @@
 #include "print_visitor.h"
+#include <sstream>
+#include <assert.h>
 
 using std::cout;
 using std::endl;
@@ -7,289 +9,319 @@ map<int,int> beat_value = {{1,32},{2,16},{4,8},{8,4},{16,2},{32,1}};
 //Note length indications to print above the notes
 std::map<int,string> quaver_map = 
 {
-	{1, " S"}, {2," T"},{4, " s"},{6," s"},{8," e"},{14," e"},{16, " q"},{24, " q"},{32," h"},{56," h"},{64, " w"},
+	{1, " S"}, {2, " T"},  
+    {4, " s"}, {6, " s"},
+    {8, " e"}, {14," e"}, 
+    {16," q"}, {24," q"},
+    {32," h"}, {56," h"}, 
+    {64," w"},
 };
+
 
 /*
  *	Initialize print Visitor with output file and columns per row
  */	
-PrintVisitor::PrintVisitor(std::string ofile, int cset) : string_print_index(0), \
-							strings_closed(false), tripled(false), outfile(ofile), columnSet(cset)
+PrintVisitor::PrintVisitor(uint32_t maximumLineWidth, 
+                           vector<string> instrumentStringNames) 
+    : 
+        CurrentLineWidth(0),
+        InstrumentStringNames(instrumentStringNames),
+        MaximumLineWidthCharacters(maximumLineWidth)
 {
-	string_buffer.push_back(vector<string>(SIZEOF_TUNING+2));
 }
 
-/*
- *	
- */	
-void PrintVisitor::VisitBar(Bar* b)
+
+PrintVisitor::~PrintVisitor(void) 
 {
-    for(string_print_index=SIZEOF_TUNING; string_print_index>= 0; string_print_index--)
+    TablatureBuffer.erase(std::begin(TablatureBuffer), 
+                          std::end(TablatureBuffer));
+}
+
+
+string PrintVisitor::TempVisitNote(Note *note)
+{
+    string result;
+    std::stringstream sstream;
+    int fret = note->GetFretForCurrentNotePosition();
+
+    if (fret < 0) //rest note
     {
-    	if(string_print_index == SIZEOF_TUNING) 
-    	{
-    		string_buffer.back()[SIZEOF_TUNING] += "   ";
-    		continue;
-    	}
+        sstream << std::string(NoteTokenWidth,TablaturePadding);;
+    }
 
-    	(string_buffer.back())[string_print_index] += "|-";
-		for(int j=0; j<b->GetNumberOfElements(); j++)
-		{
+    else if(fret < 16)
+    {
+        sstream << TablaturePadding <<  std::hex << std::uppercase << fret;
+    }
+    
+    else
+    {
+        sstream <<  std::hex << std::uppercase << fret;
+    }   
+    
+    result = sstream.str();
+    return result;
+}
 
-			b->GetElementWithIndex(j)->DispatchVisitor(this);
-			int delta=0;
-			Chunk*  Nextchunk;
-		
-			if(j<(b->GetNumberOfElements()-1))
-			{
-				Nextchunk = b->GetElementWithIndex(j+1);
-				
-				int nextchunksize = Nextchunk->GetNumberOfElements();
-				if(nextchunksize == 0)
-					continue;
-				for(int j=0; j<nextchunksize; j++)
-				{
-					delta+= Nextchunk->GetElementWithIndex(j)->get_delta();;
-				}
-				if(string_print_index == 0)
-				{
-					addSpaces(delta);
-//					if(!tripled)
-//					{ 
-//						addSpaces(delta);
-//					}
-//					else if(string_print_index == 0) string_buffer.back()[SIZEOF_TUNING] += " t";
-				}
-			}
-		}
-		(string_buffer.back())[string_print_index] += "-";
-		tripled = false;	
-	}
+vector<string> PrintVisitor::GenerateTablatureStartColumn(void)
+{
+    const uint32_t numberOfTablatureRows = InstrumentStringNames.size();
+    const uint32_t numberOfTablaturePrintRows = 
+        NumberOfPaddingRows + numberOfTablatureRows;
+    
+    
+	vector<string> columnOfStringData(numberOfTablaturePrintRows);
+    
+    for(uint32_t instrumentCourseIndex = 0; 
+            instrumentCourseIndex<numberOfTablaturePrintRows;
+            instrumentCourseIndex++)
+    {
+        const uint32_t widthOfStartColumn = 3;
+        string rowData = string(" ", widthOfStartColumn);
+        
+        if(instrumentCourseIndex >= NumberOfPaddingRows)
+        {
+            stringstream dataS;
+            
+            //Adjust for padding
+            const uint32_t adjustedIndex = instrumentCourseIndex - NumberOfPaddingRows;
+            //rowData = "|" + InstrumentStringNames[adjustedIndex] + "|";
+            
+            dataS << adjustedIndex << "cats";
+            rowData = dataS.str();
+            //rowData = adjustedIndex + "|";
+        }
+        
+        cout << rowData << endl;
+        //columnOfStringData[instrumentCourseIndex] = rowData;
+    }
+    
+    return columnOfStringData;
+} //end GenerateTablatureStartRow
+
+vector<string> PrintVisitor::GenerateTablatureColumn(Chunk *chunk)
+{
+    const uint32_t numberOfTablatureRows = InstrumentStringNames.size();
+    const uint32_t numberOfTablaturePrintRows = 
+        NumberOfPaddingRows + numberOfTablatureRows;
+
+    const uint32_t offset = numberOfTablatureRows;
+    
+	vector<string> columnOfStringData(numberOfTablaturePrintRows);
+        
+    vector<uint32_t> unmodifiedStringIndices;
+    const int32_t chunkDelta = chunk->GetDelta();
+    string quaverString = TranslateDeltaAndAppendQuaverCodes(chunkDelta);
+    
+    string chunkDeltaScaledPadding(chunkDelta,TablaturePadding);
+    
+    for(uint32_t instrumentCourseIndex = 0;
+            instrumentCourseIndex<numberOfTablatureRows;
+            instrumentCourseIndex++)
+    {
+        unmodifiedStringIndices.push_back(instrumentCourseIndex);
+    }
+    
+    for (Note *note : chunk->GetElements())
+    {
+        const uint32_t courseIndex = note->GetStringIndexForCurrentNotePosition();
+        const string rowData = TempVisitNote(note);
+        const uint32_t columnAdjustedOffset = offset-courseIndex;
+        
+        unmodifiedStringIndices.erase(std::remove(unmodifiedStringIndices.begin(), 
+            unmodifiedStringIndices.end(), courseIndex), unmodifiedStringIndices.end()); 
+        
+        cout << columnAdjustedOffset << endl;;
+        columnOfStringData[columnAdjustedOffset] = rowData + chunkDeltaScaledPadding;
+    }
+    
+    for (uint32_t courseIndex : unmodifiedStringIndices)
+    {
+        const uint32_t columnAdjustedOffset = offset-courseIndex;
+        const string paddingPlaceholder(NoteTokenWidth,TablaturePadding);
+        cout << columnAdjustedOffset << endl;;
+        columnOfStringData[columnAdjustedOffset] = paddingPlaceholder + chunkDeltaScaledPadding;
+    }
+    
+    //columnOfStringData[0] = quaverString;
+    
+    for(auto x : columnOfStringData)
+    {
+        cout << x << endl;
+    }
+    return columnOfStringData;
+    
+} //end GenerateTablatureColumn
+
+//Concatenate a range of row groupings
+vector<string> PrintVisitor::ConcatenateColumnsIntoMeasureStrings(vector<vector<string> > columns)
+{
+    const uint32_t rowGroupNumberOfRows = columns.back().size();
+    
+    vector<string> rowGroup(rowGroupNumberOfRows);
+    
+    for(vector<string> column : columns)
+    {        
+        for(uint32_t rowIndex = 0; rowIndex<rowGroupNumberOfRows;rowIndex++)
+        {
+            string rowData = column[rowIndex];
+            rowGroup[rowIndex] += rowData;
+        }
+    }
+    
+    return rowGroup;
+    
+} //end ConcatenateColumnsIntoMeasureStrings
+
+//Concatenate two row groupings
+vector<string> PrintVisitor::ConcatenateRowGroups(
+        const vector<string> rows0,
+        const vector<string> rows1)
+{
+    vector<string> rowGroup;
+    
+    uint32_t rows0Size = rows0.size();
+    uint32_t rows1Size = rows1.size();
+    
+    if(rows0Size == rows1Size)
+    {
+        for(uint32_t rowIndex=0; rowIndex < rows1Size; rowIndex++)
+        {
+            string rowData0 = rows0[rowIndex];
+            string rowData1 = rows1[rowIndex];
+
+            rowGroup.push_back(rowData0+rowData1);
+        }
+    }
+    
+    return rowGroup;
+    
+} //end ConcatenateRowGroups
+
+void PrintVisitor::VisitBar(Bar* currentBar)
+{
+    const uint32_t numberOfTablatureRows = InstrumentStringNames.size();
+    
+    vector<Chunk*> chunks = currentBar->GetElements();
+    
+    vector<string> breakColumn(numberOfTablatureRows+1, "|");
+    vector<vector<string> > tablatureColumns;
+    
+    for(Chunk *chunk : chunks)
+    {
+        vector<string> chunkColumn = GenerateTablatureColumn(chunk);
+        
+        tablatureColumns.push_back(chunkColumn);
+    }
+    
+    tablatureColumns.push_back(breakColumn);
+    
+    vector <string> tablatureRows = ConcatenateColumnsIntoMeasureStrings(tablatureColumns);
+        
+    const uint32_t measureLength = tablatureRows[0].size();
+    const uint32_t newLineWidth = (measureLength + CurrentLineWidth);
+    const bool createNewRow = newLineWidth > MaximumLineWidthCharacters;
+    
+    if(createNewRow || TablatureBuffer.size() == 0)
+    {
+        vector<string> startRow = GenerateTablatureStartColumn();
+        tablatureColumns.insert(std::begin(tablatureColumns), startRow);
+        
+        vector <string> newTablatureRows =  
+            ConcatenateColumnsIntoMeasureStrings(tablatureColumns);
+        
+        for( auto x : tablatureRows)
+            cout << "q" << newTablatureRows << endl; 
+        
+        TablatureBuffer.push_back(newTablatureRows);
+        CurrentLineWidth = measureLength;
+    }
+    
+    else
+    {
+        vector<string> currentTablatureRows = TablatureBuffer.back();
+        
+        currentTablatureRows = ConcatenateRowGroups(currentTablatureRows, 
+                                                    tablatureRows);
+        
+        TablatureBuffer.back() = currentTablatureRows;
+        CurrentLineWidth = newLineWidth;
+    }
+    
+} //end VisitBar
+
+
+void PrintVisitor::VisitChunk(Chunk* currentBar)
+{
+    
+}
+
+void PrintVisitor::VisitNote(Note* currentBar)
+{
+    
 }
 
 /*
  *	Add padding to the string buffers based on the given delta
  */
-void PrintVisitor::addSpaces(int &delta)
+string PrintVisitor::TranslateDeltaAndAppendQuaverCodes(int delta)
 {
-
+    string quaverCodeString;
+    
 	//Case 1: the delay between the chunks can be represented with one of the defined note duration codes
 	if(quaver_map.find(delta) != quaver_map.end()) 
 	{
-		string_buffer.back()[SIZEOF_TUNING] += quaver_map[delta]+ std::string(delta,' ');
+		quaverCodeString = quaver_map[delta] + std::string(delta,' ');
 	}
 	
-	//Case 2: a triplet
+	//Case 2: a triplet (todo: handle this better)
 	else if(delta<0)
 	{
-		
-		//Replace tuplet delta indications with an appropriate amount of spacing
-		//delta *= -2;
-		//string_buffer.back()[SIZEOF_TUNING] += quaver_map[delta] + std::string(delta,' ');
-	
-		string_buffer.back()[SIZEOF_TUNING] += " t";// + std::string(2,' ');
+		quaverCodeString = "^ ";
 	}
 	
 	
-	//Case 2: the delay between chunks is the result of one or more rests, and a normal note duration
+	//Case 3: the delay between chunks is the result of one or more rests, and a normal note duration
 	else
 	{
 		int extra_delta=0;
+        int resultingDelta = 0;
 
 		while(quaver_map.find(delta) == quaver_map.end())
 		{
 			delta--;
 			extra_delta++;
 		}
+        
+        resultingDelta = delta+extra_delta;
 		
-		string_buffer.back()[SIZEOF_TUNING] += quaver_map[delta] + std::string(delta,' ');
-		string_buffer.back()[SIZEOF_TUNING] += std::string(extra_delta,' ');
-	}
-}
-
-/*
- *	Get columns per row
- */	
-int PrintVisitor::get_columnSet(void)
-{
-	return columnSet;
-}
-
-/*
- *	Reset bar ticks
- */	
-void PrintVisitor::bar_ticks_reset(void) 
-{
-	bar_ticks = 0;
-}
-
-/*
- *	Increment bar ticks d times
- */	
-void PrintVisitor::bar_ticks_increment(int d) 
-{
-	bar_ticks+=d;
-}
- 
-/*
- *	Add newlines 
- */	   
-void PrintVisitor::newlines(bool fresh=false) 
-{ 
-	if(fresh == false)
-	{
-		for(string_print_index=SIZEOF_TUNING+1; string_print_index>= 0; string_print_index--)
-		{
-			if(string_print_index>=SIZEOF_TUNING) string_buffer.back()[string_print_index] += " ";
-			else
-				string_buffer.back()[string_print_index] += "|";
-		}
-		string_buffer.push_back(vector<string>(SIZEOF_TUNING+2) );
-	}
-	
-	//Push open string values for the new lines
-	for(string_print_index=SIZEOF_TUNING+1; string_print_index>= 0; string_print_index--)
-	{
-		if(string_print_index>=SIZEOF_TUNING) 
-		{
-			string_buffer.back()[string_print_index] += " ";
-		}
-		else
-		{
-			string_buffer.back()[string_print_index] += "|";
-			string_buffer.back()[string_print_index].push_back(ptuning[(string_print_index)]);
-		}
-	}
-}
-
-/*
- *	Visit a chunk and iterate through all of its notes. Only Visit notes which are on the currently set
- *	string index, which each enclosing bar decrements through.
-*/
-void PrintVisitor::VisitChunk(Chunk* c)
-{
-	strings_closed=false;
-	bool locked = false;
-	
-	int delta = 0;
-	string result;
-	Note* current_note;
-	int j = c->GetNumberOfElements();
-	
-	if(c->GetNumberOfElements() == 0)
-	{
-		return;
-	}
-
-	for(int j=0; j<c->GetNumberOfElements(); j++)
-	{
-		current_note = c->GetElementWithIndex(j);
-		if(!strings_closed)
-		{
-			current_note->DispatchVisitor(this);
-		}
-
-		if(strings_closed && !locked)
-		{
-			int fret = current_note->get_fret();
-			int pitch = current_note->get_pitch();
-
-			if (fret < 0) //rest note
-			{
-				result = "--";
-			}
-
-			else if(fret < 16)
-			{
-				std::stringstream sstream;
-				sstream << "-" <<  std::hex << std::uppercase << fret;
-				result = sstream.str();
-			}
-
-
-			locked = true;
-		}
-
-		delta += current_note->get_delta();
-	}
-
-	//Notes were not printed in this column, place "note filler" dashes
-	if(!strings_closed)
-	{
-		result = "--" ;
-	}
-	
-
-	//This is where the padding takes place for notes based on their note duration
-
-	string_buffer.back()[string_print_index] += result;
-	if(delta >= 0)
-	{
-		string_buffer.back()[string_print_index] += std::string(delta,'-');
-	}
-
-/*
-	if(delta >= 0){
-		
-		string_buffer.back()[string_print_index] += result+ std::string(delta,'-');
-	}
-
-	else 
-	{
-		//triplets case
-		tripled = true;
-		string_buffer.back()[string_print_index] +=  result;
-	}
-*/
-
-}
-
-
-/*
- *	Claim a string for a given note
- */	
-void PrintVisitor::VisitNote(Note* n)
-{
-	if(n->get_string() == string_print_index)
-	{
-    	strings_closed = true; 
-	}
+		quaverCodeString = quaver_map[delta] + std::string(resultingDelta,' ');
+	}    
+    
+    return quaverCodeString;
 }
 
 /*
  *	Print the contents of the string buffer to the chosen file
  */	
-void PrintVisitor::print_out(void)
+void PrintVisitor::WriteTablatureToOutputFile(string fileName)
 {
-	ofstream ofile;
-	ofile.open(outfile);
-	stringstream ss;
-	int cindex = 0;
-	bool freshlines = false;
-	for(std::vector< vector<string> >::iterator it = string_buffer.begin() ; it != string_buffer.end(); ++it) 
-	{
-		if((cindex+((*it)[1]).size()) > columnSet)
-		{
-			freshlines = true;
-			cindex = 0;
-		}
-		for(int i=SIZEOF_TUNING; i>=0; i--)
-		{
-			#ifdef brokenstring
-			if(i == brokenstring)
-			{
-				ss << " " << '\n';
-			}
-			#endif
-			if(freshlines)
-			{
-				//(*it)[i].push_back('\n');
-				 //ss << '\n';
-			}
-			ss << (*it)[i] << '\n';
-		}
-		ss << '\n';
-	}
-	ofile << ss.rdbuf();
-	ofile.close();
-}
+	ofstream outputFileStream;
+	stringstream tablatureStringStream;
+    
+    for(vector<string> tablatureRow: TablatureBuffer)
+    {
+        
+        for(string tablatureRowData : tablatureRow)
+        {
+            tablatureStringStream << tablatureRowData << "\r\n";
+        }
+        
+        tablatureStringStream << "\r\n";
+    }
+    
+	outputFileStream.open(fileName);
+	outputFileStream << tablatureStringStream.rdbuf();
+	outputFileStream.close();
+    
+} //end WriteTablatureToOutputFile

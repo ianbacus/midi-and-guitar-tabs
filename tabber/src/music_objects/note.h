@@ -3,59 +3,103 @@
 
 #include "base.h"
 #include "tuning.h"
+#include <map>
+#include <vector>
 
-typedef struct
+using std::vector;
+
+typedef struct FretboardPosition_t
 {
-    uint32_t StringValue;
-    uint32_t FretValue;
+    uint32_t StringIndex;//StringValue;
+    uint32_t FretNumber;//FretValue;
+    
+    FretboardPosition_t(uint32_t string, uint32_t fret)
+        :
+            StringIndex(string), FretNumber(fret)
+    {
+        
+    }
     
 } FretboardPosition;
 
-typedef std::map <int, vector< pair<int,int> >  > PitchMap;
+
+typedef struct NotePositionEntry_t
+{
+    uint32_t RepositioningIndex; 
+    uint32_t PitchMidiValue; 
+    
+    NotePositionEntry_t() = default;
+    
+    inline bool operator==(const NotePositionEntry_t& rhs)
+    { 
+        return (PitchMidiValue == rhs.PitchMidiValue) && 
+            (RepositioningIndex == rhs.RepositioningIndex);
+    }
+    
+} NotePositionEntry;
+
+inline bool operator==(const NotePositionEntry_t& lhs, const NotePositionEntry_t& rhs)
+{ 
+    return (lhs.PitchMidiValue == rhs.PitchMidiValue) && 
+        (lhs.RepositioningIndex == rhs.RepositioningIndex);
+}
+
+
+typedef std::map <uint32_t, vector< FretboardPosition >  > PitchMap;
 
 class Note : public Base 
 {
-	private:
-            static const uint32_t MaximumNumberOfOctaves = 30;
-            static const uint32_t OctaveValueMidiPitches = 12;
-            
-            int TrackNumber;
-            int PitchMidiValue;
-            int NoteDurationBeats;
-            int CurrentPitchMapRepositionIndex;
-            uint32_t Repositions;
-                
-	public:
-            static PitchMap PitchToFretMap;
-            static int DeletedNotesCount;
+    private:
+        static const uint32_t MaximumNumberOfOctaves = 30;
+        static const uint32_t OctaveValueMidiPitches = 12;
 
-            //Read pitchmap
-            static int get_fret_at(const int mapIndex,const int pitchMidiValue);
-            static int get_string_at(const int mapIndex, const int pitchMidiValue);
+        int TrackNumber;
+        int PitchMidiValue;
+        int NoteDurationBeats;
+        int CurrentPitchMapRepositionIndex;
 
-            Note(int pitch, int duration, int trackNumber); 
-            virtual ~Note() {}
+        static uint32_t TuningMinimum;
+        uint32_t Repositions;
 
-            //Getters
-            int get_fret() const;
-            int get_string() const;
-            int get_current_note_index() const;
-            int get_noteslost() const ;
-            int get_delta()  const;
-            int get_track_num() const;
-            int get_pitch() const ;
-            uint32_t GetAttemptedRepositions(void) const;
-            virtual int GetNumberOfElements() const;
 
-            //Setters
-            void set_note_index(int mapIndex) ;
-            void increment_note_index();
-            void ResetAttemptedRepositions(void);
+        //Setters
 
-            void alter_pitch(int n);
+        void AddOffsetToPitchMidiValue(int n);
 
-            virtual void DispatchVisitor(Visitor* v);
+    public:
+        static PitchMap PitchToFretMap;
+        static int DeletedNotesCount;
+        static PitchMap GeneratePitchToFretMap(
+            vector<uint16_t> instrumentCoursePitchValues, 
+            const uint32_t numberOfFrets,
+            const uint32_t capoFret);
 
+        //Read pitchmap
+        static uint32_t GetFretForNotePositionEntry(NotePositionEntry notePositionEntry);
+        static uint32_t GetStringForNotePositionEntry(NotePositionEntry notePositionEntry);
+
+        Note(int pitch, int duration, int trackNumber); 
+        virtual ~Note() {}
+
+        //Getters
+        uint32_t GetFretForCurrentNotePosition() const;
+        uint32_t GetStringIndexForCurrentNotePosition() const;
+        NotePositionEntry GetCurrentNotePosition() const;
+        uint32_t GetCurrentPitchmapIndex() const;
+        uint32_t GetNotesLostCounterValue() const ;
+        int GetNoteDurationBeats()  const;
+        uint32_t GetTrackNumber() const;
+        uint32_t GetPitch() const ;
+        uint32_t GetAttemptedRepositions(void) const;
+        virtual uint32_t GetNumberOfElements() const;
+
+
+        virtual void DispatchVisitor(Visitor* v);
+
+        void ReconfigureToNextPitchmapPosition();
+        void SetPitchmapPositionIndex(uint32_t mapIndex) ;
+        void ResetAttemptedRepositions(void);
 };
+
 
 #endif

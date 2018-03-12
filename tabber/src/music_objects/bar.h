@@ -8,7 +8,7 @@
 class Bar : public Base
 {
     private:
-        vector<Chunk*> ChunkElements;
+        vector<Chunk*> Chunks;
 
     public:
         virtual ~Bar();
@@ -17,11 +17,12 @@ class Bar : public Base
         void RemoveElement(Chunk* c);
 
         //retrieve a chunk from the bar by its index
-        Chunk* GetElementWithIndex(int i);
-        Chunk* GetLastElement();
+        Chunk* GetElementWithIndex(uint32_t i) const;
+        Chunk* GetLastElement(void) const;
+        vector<Chunk*> GetElements(void) const;
 
         virtual void DispatchVisitor(Visitor*v);
-        virtual int GetNumberOfElements() const;
+        virtual uint32_t GetNumberOfElements() const;
 };
 
 #endif

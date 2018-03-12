@@ -10,102 +10,53 @@
 #include <vector>
 #include <iostream>
 
-
-class test1
-{
-public:
-    vector<pair<int,int> > X;
-    
-    void setX(vector<pair<int,int> >  x)
-    {
-        X = x;
-    }
-    vector<pair<int,int> > getX(void)
-    {
-        return X;
-    }
-};
-
-void test2(test1* qqq)
-{
-    vector<pair<int,int> > a = {{1,2},{1,3}};
-    qqq->setX(a);
-}
-
-vector<pair<int,int> > test3(test1* qqq)
-{
-    return qqq->getX();
-}
-
-//    vector<pair<int,int> > a = {{1,2},{1,3}};
-//    test1 mmm;
-//    test2(&mmm);
-//    vector<pair<int,int> > b = test3(&mmm);
-//    
-//    cout << endl;
-//    for(auto i:a)
-//        cout << "(" << i.first << "," << i.second << "),";
-//     
-//    cout << endl;
-//    for(auto i:b)
-//        cout << "(" << i.first << "," << i.second << "),";
-//    
-//    cout << endl;
-
-
-
 void GenerateTab(
         string outputFile, vector<Bar*> score, 
-        int upperBound, int lowerBound, 
-        int format_count_initial)
+        uint32_t upperBound, uint32_t lowerBound)
 {
-    int measureIndex = 0;
-    int format_count = format_count_initial;
+    uint32_t measureIndex = 0;
+    TabberSettings tabSettings;
+    
+    memset(&tabSettings, 0, sizeof(tabSettings));
+    
+    ParseTabberSettingsFile("src/tabberSettings.txt", tabSettings);
+    
+    Note::PitchToFretMap = Note::GeneratePitchToFretMap(
+            tabSettings.InstrumentInfo.StringIndexedMidiPitches, 
+            tabSettings.InstrumentInfo.NumberOfFrets,
+            tabSettings.InstrumentInfo.CapoFret);
 
-    RotateVisitor* const TablatureRearranger = new RotateVisitor();
-    PrintVisitor* const TablaturePrinter = new PrintVisitor(outputFile,80);
+    RotateVisitor TablatureRearranger;
+    PrintVisitor TablaturePrinter(
+            tabSettings.Formatting.NumberOfLinesPerTabRow,
+            tabSettings.InstrumentInfo.StringIndexedNoteNames);
 
-    std::cout << "done.\r\n tabbing " 
-              << (upperBound - lowerBound)
-              << " measures  from " 
-              << lowerBound << " to " << upperBound << "...";
+    std::cout << outputFile << ": Optimizing and printing "  << (upperBound - lowerBound)+1
+        << " measures: m"  << lowerBound << " to m" << upperBound << endl;
 
     //Iterate through each bar, recursively apply the visitor pattern to fix note positions
-    for (std::vector< Bar* >::iterator it = score.begin() ; it < score.end(); it++,measureIndex++)
-    {	
-        if(format_count == format_count_initial)
-        {
-           TablaturePrinter->newlines((it==score.begin()));
-           format_count = 0;
-        }
-
+    for (Bar* currentBar : score)
+    {
         if((lowerBound <= measureIndex) && (measureIndex <= upperBound))
         {
-                (*it)->DispatchVisitor(TablatureRearranger);
-                (*it)->DispatchVisitor(TablaturePrinter);
-                format_count++;
+            currentBar->DispatchVisitor(&TablatureRearranger);
+            currentBar->DispatchVisitor(&TablaturePrinter);
         }
+        
+        measureIndex++;
     }
 
-    TablaturePrinter->print_out();
-    TablaturePrinter->set_outfile("data/outTab.txt");
-    TablaturePrinter->print_out();
+    TablaturePrinter.WriteTablatureToOutputFile(outputFile);
+    TablaturePrinter.WriteTablatureToOutputFile("data/outTab.txt");
 
-    std::cout << "done. " << std::endl;
-
-    delete TablatureRearranger;
-    delete TablaturePrinter; 
-
+    std::cout << "Done. " << std::endl;
 }
 
 
 int ParseFileIntoTab(const string inputFile, const string outputFile,
-        int noteOffset, const int format_count_initial, int lowerBound,
+        int noteOffset, int lowerBound,
         unsigned int upperBound, const unsigned int align) 
 {
-	std::cout << "scanning " << inputFile << "...";
-	vector<Bar*> score = ParseIntermediateFile(inputFile,noteOffset,align);
-	
 	//Limit transpositions to +/- 127 pitches 
 	if (noteOffset < -127) 
 	{
@@ -117,7 +68,10 @@ int ParseFileIntoTab(const string inputFile, const string outputFile,
 		noteOffset = 127;
 		std::cout << "Note shift exceeds bounds: set to 127" << std::endl;
 	}
+    
 
+	vector<Bar*> score = ParseIntermediateFile(inputFile,noteOffset,align);
+    
 	//Swap bounds if they are incorrect
 	if (upperBound < lowerBound)
 	{
@@ -132,51 +86,44 @@ int ParseFileIntoTab(const string inputFile, const string outputFile,
 		upperBound = score.size();
 	}
 
-	GenerateTab(outputFile, score, upperBound, lowerBound, format_count_initial);
+	GenerateTab(outputFile, score, upperBound, lowerBound);
   
-	for (std::vector< Bar* >::iterator it = score.begin() ; it != score.end(); ++it)
-	{
-		delete (*it);
-  	}
+    score.clear();
 
-	return 0;
-  
+	return 1;
 }
 
 int main(int argc, char* argv[])
 {
-    bool Debug = false;
-            
-    if(Debug)
+    bool Debug = true;
+
+    if(argc != 7)
     {
-        return ParseFileIntoTab("data/intermediates/test_for_tabber.txt", 
-                                "data/tabs/outTab.txt", 12, 4, 0, -1, -1);
-    }
-    
-    else
-    {
-        if(argc != 8)
+        cout << "Invalid entry. use the following format:\n";
+        cout << ">> ./gen <inputFile> <outputFile> <pitchShift#>,";
+        cout << " <measuresPerRow#> <startMeasure#> <endMeasure#>" << endl;
+        
+        if(Debug)
         {
-            cout << "Invalid entry. use the following format:\n";
-            cout << ">> ./gen <inputFile> <outputFile> <pitchShift#>,";
-            cout << " <measuresPerRow#> <startMeasure#> <endMeasure#>" << endl;
-            return 0;
+            return ParseFileIntoTab("data/intermediates/bach-invention-01.txt", 
+                                    "data/tabs/outTab.txt", 0, 0, -1, -1);
         }
 
-        const int pitchOffset = 24;
-
-        const string inputFile = argv[1]; //name of input file
-        const string outputFile = argv[2];
-
-        int noteOffset=pitchOffset - atoi(argv[3]); 
-        const int format_count_initial = atoi(argv[4]);
-
-        int lowerBound=atoi(argv[5]);
-        unsigned int upperBound=atoi(argv[6]);
-
-        const unsigned int align = atoi(argv[7]);
-
-        return ParseFileIntoTab(inputFile, outputFile, noteOffset, format_count_initial, lowerBound, upperBound, align);
+        return 0;
     }
+
+    const string inputFile = argv[1]; //name of input file
+    const string outputFile = argv[2];
+
+    int noteOffset=atoi(argv[3]); 
+
+    int lowerBound=atoi(argv[4]);
+    unsigned int upperBound=atoi(argv[5]);
+
+    const unsigned int align = atoi(argv[6]);
+
+    return ParseFileIntoTab(inputFile, outputFile, noteOffset, 
+                            lowerBound, upperBound, align);
+
     
 }

@@ -2,6 +2,8 @@
 #include <sstream>
 #include <assert.h>
 
+using namespace std;
+
 string Chunk::PrintNoteIndices(vector<NotePositionEntry > noteConfiguration)
 {
     std::stringstream sstream;
@@ -11,14 +13,10 @@ string Chunk::PrintNoteIndices(vector<NotePositionEntry > noteConfiguration)
     //Print the fret and string of each note in the current chunk configuration	
 	for(NotePositionEntry notePositionEntry: noteConfiguration)
 	{
-        const uint32_t repositioningIndex = notePositionEntry.first;
-        const uint32_t pitchMidiValue = notePositionEntry.second;
+		const uint32_t noteFret = Note::GetFretForNotePositionEntry(notePositionEntry);
+        const uint32_t noteString = Note::GetStringForNotePositionEntry(notePositionEntry);
         
-		const uint32_t noteFret = Note::get_fret_at(repositioningIndex, pitchMidiValue);
-        const uint32_t noteString = Note::get_string_at(repositioningIndex, pitchMidiValue);
-        const char stringAbbreviation = ptuning[noteString];
-        
-		sstream << noteFret << "+" << stringAbbreviation << "|";
+		sstream << noteFret << "+" << noteString << "|";
 	}
     
     return sstream.str();
@@ -34,21 +32,21 @@ Chunk::Chunk(int d)
 Chunk::~Chunk()
 {		
     
-	for (std::vector< Note* >::iterator it = ChunkNotes.begin() ; 
-            it != ChunkNotes.end(); ++it)
+	for (std::vector< Note* >::iterator it = Notes.begin() ; 
+            it != Notes.end(); ++it)
     {
 		delete (*it);
     }
     
-	ChunkNotes.clear();
+	Notes.clear();
 }
 
 /* 
  *	Get length of chord/chunk (in notes)
  */
-int Chunk::GetNumberOfElements() const 
+uint32_t Chunk::GetNumberOfElements() const 
 {
-	return ChunkNotes.size();
+	return Notes.size();
 }
 
 /* 
@@ -69,8 +67,8 @@ vector<NotePositionEntry > Chunk::GetCurrentNotePositionEntries(void) const
         if(note != nullptr)
         {       
             NotePositionEntry noteData;
-            noteData.second = note->get_pitch();
-            noteData.first = note->get_current_note_index();
+            noteData.PitchMidiValue = note->GetPitch();
+            noteData.RepositioningIndex = note->GetCurrentPitchmapIndex();
 
             indices.push_back(noteData);
         }
@@ -99,13 +97,14 @@ void Chunk::DispatchVisitor(Visitor* v)
 void Chunk::PushElement(Note* note) 
 {
 	//insert at iterator to first element with a pitch-map entry larger than the candidate note
-	ChunkNotes.insert(std::upper_bound( ChunkNotes.begin(), ChunkNotes.end(), note,  
+	Notes.insert(std::upper_bound( Notes.begin(), Notes.end(), note,  
         [](Note *a, Note*b) 
         { 															 
             return (a->GetNumberOfElements() < b->GetNumberOfElements()); 				 
         }),
         note); 
-    
+        
+    assert(note != nullptr);
 }
 
 /* 
@@ -113,20 +112,26 @@ void Chunk::PushElement(Note* note)
  */
 void Chunk::RemoveElement(Note* note) 
 {
-	ChunkNotes.erase(std::remove(ChunkNotes.begin(), 
-                    ChunkNotes.end(), note), ChunkNotes.end()); 
+	Notes.erase(std::remove(Notes.begin(), 
+                    Notes.end(), note), Notes.end()); 
+}
+
+
+vector<Note*> Chunk::GetElements() const
+{
+    return Notes;
 }
 
 /* 
  *	Get ith note in this chunk
  */
-Note* Chunk::GetElementWithIndex(int noteIndex) const
+Note* Chunk::GetElementWithIndex(uint32_t noteIndex) const
 {
     Note *note = nullptr;
     
-    if(noteIndex<ChunkNotes.size())
+    if(noteIndex<Notes.size())
     {
-        note = ChunkNotes[noteIndex];
+        note = Notes[noteIndex];
     }
     
     return note;
@@ -139,9 +144,9 @@ Note* Chunk::GetMostMobileNote(void) const
 {
     Note *note = nullptr;
     
-    if(0 < ChunkNotes.size())
+    if(0 < Notes.size())
     {
-        note = ChunkNotes.back();
+        note = Notes.back();
     }
     
     return note;
@@ -195,12 +200,12 @@ void Chunk::RepositionNotesToCurrentOptimalPositions(void)
             NotePositionEntry notePositionEntry = 
                     CurrentOptimalNotePositionEntries[noteIndex];
             
-            uint32_t noteRepositioningIndex = notePositionEntry.first;
+            uint32_t noteRepositioningIndex = notePositionEntry.RepositioningIndex;
             
 			Note* note = GetElementWithIndex(noteIndex);
             if(note != nullptr)
             {
-                note->set_note_index(noteRepositioningIndex);
+                note->SetPitchmapPositionIndex(noteRepositioningIndex);
             }
         }
 	}

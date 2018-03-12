@@ -3,9 +3,9 @@
 
 Bar::~Bar()
 {
-	for (std::vector< Chunk* >::iterator it = ChunkElements.begin() ; it != ChunkElements.end(); ++it)
+	for (std::vector< Chunk* >::iterator it = Chunks.begin() ; it != Chunks.end(); ++it)
 		delete (*it);
-	ChunkElements.clear();
+	Chunks.clear();
 }
 
 /* 
@@ -13,7 +13,7 @@ Bar::~Bar()
  */
 void Bar::PushBackElement(Chunk* c) 
 {
-	ChunkElements.push_back(c);
+	Chunks.push_back(c);
 }
 
 /* 
@@ -21,26 +21,30 @@ void Bar::PushBackElement(Chunk* c)
  */
 void Bar::RemoveElement(Chunk* c) 
 { 
-	ChunkElements.erase(std::find(ChunkElements.begin(),ChunkElements.end(),c)); 
+	Chunks.erase(std::find(Chunks.begin(),Chunks.end(),c)); 
 }
 
 /* 
  *	Get the ith chunk in the bar
  */
-Chunk* Bar::GetElementWithIndex(int i) 
+Chunk* Bar::GetElementWithIndex(uint32_t i) const
 {
-	return ChunkElements[i];
+	return Chunks[i];
 }
 
 
 /* 
  *	Get the last chunk by default
  */
-Chunk* Bar::GetLastElement() 
+Chunk* Bar::GetLastElement() const
 {
-	return ChunkElements.back();
+	return Chunks.back();
 }
 
+vector<Chunk*> Bar::GetElements(void) const
+{
+    return Chunks;
+}
 /* 
  *	Dispatch Visitor code
  */
@@ -52,7 +56,7 @@ void Bar::DispatchVisitor(Visitor*v)
 /* 
  *	Get number of chunks in the current bar
  */
-int Bar::GetNumberOfElements() const 
+uint32_t Bar::GetNumberOfElements() const 
 {
-	return ChunkElements.size();
+	return Chunks.size();
 }
