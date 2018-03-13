@@ -33,6 +33,7 @@ class PrintVisitor : public Visitor
         vector< vector<string> > TablatureBuffer;
         
         
+        uint32_t GetNumberOfTablaturePrintRows(void);
         vector<string> ConcatenateColumnsIntoMeasureStrings(vector<vector<string> >);
         
         string TranslateDeltaAndAppendQuaverCodes(int delta);

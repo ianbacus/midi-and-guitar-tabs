@@ -38,8 +38,7 @@ PitchMap Note::GeneratePitchToFretMap(
     const uint32_t numberOfStrings = instrumentCoursePitchValues.size();
 
     for(uint32_t stringIndex =0;stringIndex<numberOfStrings;stringIndex++)
-    {        
-        cout << "SI" << stringIndex << endl;
+    {
         //Assume that the frets are separated by a semitone
         for(uint32_t fretNumber = capoFret; fretNumber < numberOfFrets; fretNumber++)
         {
@@ -60,7 +59,6 @@ PitchMap Note::GeneratePitchToFretMap(
     }
     PitchToFretMap = initMap;
     return initMap;
-    
 }
 
 /*

@@ -2,8 +2,7 @@
 #include <sstream>
 #include <assert.h>
 
-using std::cout;
-using std::endl;
+using namespace std;
 map<int,int> beat_value = {{1,32},{2,16},{4,8},{8,4},{16,2},{32,1}};
 
 //Note length indications to print above the notes
@@ -63,47 +62,47 @@ string PrintVisitor::TempVisitNote(Note *note)
     return result;
 }
 
-vector<string> PrintVisitor::GenerateTablatureStartColumn(void)
+uint32_t PrintVisitor::GetNumberOfTablaturePrintRows(void)
 {
+    
     const uint32_t numberOfTablatureRows = InstrumentStringNames.size();
     const uint32_t numberOfTablaturePrintRows = 
         NumberOfPaddingRows + numberOfTablatureRows;
     
+    return numberOfTablaturePrintRows;
+}
+
+vector<string> PrintVisitor::GenerateTablatureStartColumn(void)
+{
+    const uint32_t numberOfTablaturePrintRows = GetNumberOfTablaturePrintRows();
+    const uint32_t numberOfTablatureRows = InstrumentStringNames.size();
+    const uint32_t widthOfStartColumn = 3;
     
 	vector<string> columnOfStringData(numberOfTablaturePrintRows);
     
-    for(uint32_t instrumentCourseIndex = 0; 
-            instrumentCourseIndex<numberOfTablaturePrintRows;
-            instrumentCourseIndex++)
+    uint32_t maxIndex = numberOfTablatureRows;
+    columnOfStringData[0] = "|  ";
+    
+    for(int32_t instrumentCourseIndex = numberOfTablatureRows-1; 
+            instrumentCourseIndex >= 0;
+            instrumentCourseIndex--)
     {
-        const uint32_t widthOfStartColumn = 3;
-        string rowData = string(" ", widthOfStartColumn);
         
-        if(instrumentCourseIndex >= NumberOfPaddingRows)
-        {
-            stringstream dataS;
-            
-            //Adjust for padding
-            const uint32_t adjustedIndex = instrumentCourseIndex - NumberOfPaddingRows;
-            //rowData = "|" + InstrumentStringNames[adjustedIndex] + "|";
-            
-            dataS << adjustedIndex << "cats";
-            rowData = dataS.str();
-            //rowData = adjustedIndex + "|";
-        }
+        const uint32_t reverseAdjustedOffset = maxIndex-instrumentCourseIndex;
+          
+        string rowData = "|" + InstrumentStringNames[instrumentCourseIndex] + "|";
         
-        cout << rowData << endl;
-        //columnOfStringData[instrumentCourseIndex] = rowData;
+        columnOfStringData[reverseAdjustedOffset] = rowData;
     }
     
     return columnOfStringData;
-} //end GenerateTablatureStartRow
+    
+} //end GenerateTablatureStartColumn
 
 vector<string> PrintVisitor::GenerateTablatureColumn(Chunk *chunk)
 {
+    const uint32_t numberOfTablaturePrintRows = GetNumberOfTablaturePrintRows();
     const uint32_t numberOfTablatureRows = InstrumentStringNames.size();
-    const uint32_t numberOfTablaturePrintRows = 
-        NumberOfPaddingRows + numberOfTablatureRows;
 
     const uint32_t offset = numberOfTablatureRows;
     
@@ -111,7 +110,10 @@ vector<string> PrintVisitor::GenerateTablatureColumn(Chunk *chunk)
         
     vector<uint32_t> unmodifiedStringIndices;
     const int32_t chunkDelta = chunk->GetDelta();
-    string quaverString = TranslateDeltaAndAppendQuaverCodes(chunkDelta);
+    const string quaverString = TranslateDeltaAndAppendQuaverCodes(chunkDelta);
+    
+    //Insert padding rows
+    columnOfStringData[0] = quaverString;
     
     string chunkDeltaScaledPadding(chunkDelta,TablaturePadding);
     
@@ -126,12 +128,13 @@ vector<string> PrintVisitor::GenerateTablatureColumn(Chunk *chunk)
     {
         const uint32_t courseIndex = note->GetStringIndexForCurrentNotePosition();
         const string rowData = TempVisitNote(note);
+        
+        //The strings are stored in reverse order, and offset by the padding row(s)
         const uint32_t columnAdjustedOffset = offset-courseIndex;
         
         unmodifiedStringIndices.erase(std::remove(unmodifiedStringIndices.begin(), 
             unmodifiedStringIndices.end(), courseIndex), unmodifiedStringIndices.end()); 
         
-        cout << columnAdjustedOffset << endl;;
         columnOfStringData[columnAdjustedOffset] = rowData + chunkDeltaScaledPadding;
     }
     
@@ -139,16 +142,11 @@ vector<string> PrintVisitor::GenerateTablatureColumn(Chunk *chunk)
     {
         const uint32_t columnAdjustedOffset = offset-courseIndex;
         const string paddingPlaceholder(NoteTokenWidth,TablaturePadding);
-        cout << columnAdjustedOffset << endl;;
+        
         columnOfStringData[columnAdjustedOffset] = paddingPlaceholder + chunkDeltaScaledPadding;
     }
     
-    //columnOfStringData[0] = quaverString;
     
-    for(auto x : columnOfStringData)
-    {
-        cout << x << endl;
-    }
     return columnOfStringData;
     
 } //end GenerateTablatureColumn
@@ -157,6 +155,7 @@ vector<string> PrintVisitor::GenerateTablatureColumn(Chunk *chunk)
 vector<string> PrintVisitor::ConcatenateColumnsIntoMeasureStrings(vector<vector<string> > columns)
 {
     const uint32_t rowGroupNumberOfRows = columns.back().size();
+    
     
     vector<string> rowGroup(rowGroupNumberOfRows);
     
@@ -168,7 +167,6 @@ vector<string> PrintVisitor::ConcatenateColumnsIntoMeasureStrings(vector<vector<
             rowGroup[rowIndex] += rowData;
         }
     }
-    
     return rowGroup;
     
 } //end ConcatenateColumnsIntoMeasureStrings
@@ -224,14 +222,13 @@ void PrintVisitor::VisitBar(Bar* currentBar)
     
     if(createNewRow || TablatureBuffer.size() == 0)
     {
-        vector<string> startRow = GenerateTablatureStartColumn();
-        tablatureColumns.insert(std::begin(tablatureColumns), startRow);
+        vector<string> startColumn = GenerateTablatureStartColumn();
+        tablatureColumns.insert(std::begin(tablatureColumns), startColumn);
+        
         
         vector <string> newTablatureRows =  
             ConcatenateColumnsIntoMeasureStrings(tablatureColumns);
         
-        for( auto x : tablatureRows)
-            cout << "q" << newTablatureRows << endl; 
         
         TablatureBuffer.push_back(newTablatureRows);
         CurrentLineWidth = measureLength;

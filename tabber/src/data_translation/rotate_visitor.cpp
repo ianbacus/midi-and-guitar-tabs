@@ -31,16 +31,21 @@ void RotateVisitor::VisitChunk(Chunk* candidateChunk)
     uint32_t permutationIndex = 0;
     uint32_t currentLowestCost = UINT32_MAX;
     
+    bool morePermutations = true;
     
-    while(permutationIndex < permutationsForThisChunk)
+    while(morePermutations)
     {
         permutationIndex++;
         
+        //Reconfigure or "rotate" the chunk until it is in another configuration
+        ReconfigureChunk(candidateChunk,noteConfigurationIndex,morePermutations);
+        
+        
+        morePermutations = morePermutations && 
+                            (permutationIndex < permutationsForThisChunk);
+        
         //Compare the current best chunk configuration against the reconfigured one
         SelectOptimalFingering(candidateChunk, currentLowestCost);	
-        
-        //Reconfigure or "rotate" the chunk until it is in another configuration
-        ReconfigureChunk(candidateChunk,noteConfigurationIndex);
 
     }
     
@@ -61,43 +66,33 @@ void RotateVisitor::VisitChunk(Chunk* candidateChunk)
 //been checked yet. Skip configurations with impossible fingerings. 
 uint32_t RotateVisitor::ReconfigureChunk(
         Chunk* candidateChunk, 
-        uint32_t& noteConfigurationIndex)
+        uint32_t noteConfigurationIndex,
+        bool& morePermutations)
 {
     uint32_t octaveShiftCost = 0;
-    bool stringsOverlap = false;
-    bool currentNotePositionsAlreadyTried = true;
-    bool allNotePositionsTried = false;
+    
+    volatile bool shouldContinue = true;
     
     do
     {
-        allNotePositionsTried = RotateNoteOrItsParent(candidateChunk,
+        volatile const bool exhaustedAllPermutations = !RotateNoteOrItsParent(candidateChunk,
                 noteConfigurationIndex,octaveShiftCost);
+        
+        morePermutations = morePermutations && exhaustedAllPermutations;
         
         vector<NotePositionEntry> currentNotePositionsEntries =
                 candidateChunk->GetCurrentNotePositionEntries();
+       
+        const bool stringsOverlap = CountStringOverlaps(currentNotePositionsEntries);
         
-        vector<uint32_t> stringIndices = GetStringPositionsOfIndices(currentNotePositionsEntries);
-        uint32_t numberOfStringIndices = stringIndices.size();
-        unordered_map<uint32_t, uint32_t> stringToOverlapCountMap;
-        for(uint32_t index=0; index<numberOfStringIndices; index++)
-        {
-            uint32_t stringIndex = stringIndices[index];
-            stringToOverlapCountMap[stringIndex]++;
-        }
-        for(auto keyVal : stringToOverlapCountMap)
-        {
-            stringsOverlap = stringsOverlap || (keyVal.second > 1);
-        }
-        
-        currentNotePositionsAlreadyTried = 
+        const bool currentNotePositionsAlreadyTried = 
                 WasChunkProcessed(candidateChunk->GetCurrentNotePositionEntries());
         
-        if(stringsOverlap)
-        {
-            MarkChunkAsProcessed(currentNotePositionsEntries);
-        }
-
-    } while((stringsOverlap && currentNotePositionsAlreadyTried) && !allNotePositionsTried);
+        shouldContinue = stringsOverlap ||  (currentNotePositionsAlreadyTried && 
+                                             morePermutations);
+    } while(shouldContinue);
+    
+    
     
     return octaveShiftCost;
     
@@ -120,7 +115,7 @@ void RotateVisitor::SelectOptimalFingering(
         const uint32_t candidateCost = CalculateConfigurationCost(candidateChunkFingering);
         
         if(candidateCost < currentLowestCost)
-        {
+        {            
             chunkToConfigure->SetOptimalNotePositions(candidateChunkFingering);
             chunkToConfigure->RepositionNotesToCurrentOptimalPositions();
             
@@ -175,6 +170,31 @@ bool RotateVisitor::RotateNoteOrItsParent(
     
     return baseCase;
 } //end RotateNoteOrItsParent
+
+ //Count string overlaps in a chunk
+bool RotateVisitor::CountStringOverlaps(vector<NotePositionEntry> notePositionsEntries)
+{
+    bool stringsOverlap;
+    
+    vector<uint32_t> stringIndices = GetStringPositionsOfIndices(notePositionsEntries);
+    uint32_t numberOfStringIndices = stringIndices.size();
+    unordered_map<uint32_t, uint32_t> stringToOverlapCountMap;
+    
+    for(uint32_t index=0; 
+        (index<numberOfStringIndices)&&(!stringsOverlap); index++)
+    {
+        uint32_t stringIndex = stringIndices[index];
+        stringToOverlapCountMap[stringIndex]++;
+        
+        stringsOverlap = stringToOverlapCountMap[stringIndex] > 1;
+    }
+    
+    for (auto kv : stringToOverlapCountMap)
+    {
+    }
+    
+    return stringsOverlap;
+}
 
 uint32_t RotateVisitor::CalculateConfigurationCost(
         vector<NotePositionEntry > indices)

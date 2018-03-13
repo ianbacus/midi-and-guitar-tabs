@@ -39,6 +39,8 @@ class RotateVisitor : public Visitor
             Chunk* candidateChunk);
         
         
+        bool CountStringOverlaps(vector<NotePositionEntry> notePositionsEntries);
+        
         uint32_t EvaluateConfigurationFeatures(
             uint32_t maximumFretInCandidateChunk,
             uint32_t fretSpacingInCandidateChunk,
@@ -52,7 +54,10 @@ class RotateVisitor : public Visitor
         bool RotateNoteOrItsParent(Chunk* candidateChunk, 
                 const uint32_t noteIndex, uint32_t& octaveShiftCost);
         
-        uint32_t ReconfigureChunk(Chunk* c, uint32_t& noteConfigurationIndex);
+        uint32_t ReconfigureChunk(Chunk* chunk, 
+                uint32_t noteConfigurationIndex,
+                bool& morePermutations);
+        
         void SelectOptimalFingering(Chunk *chunkToConfigure, uint32_t& currentLowestCost);
 
     public:
