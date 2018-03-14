@@ -1,11 +1,34 @@
 #include "rotate_visitor.h"
 #include <algorithm>
+#include <sstream>
 #include <unordered_map>
 #include <assert.h>
 
 using namespace std;
 
+//ostream& LogStream = cout;
 ostream LogStream(nullptr);
+
+
+RotateVisitor::RotateVisitor(
+        uint32_t maximumFretScalar,
+        uint32_t fretSpanScalar,
+        uint32_t interChunkSpacingScalar,
+        uint32_t stringOverlapScalar) 
+    : 
+        MaximumFretScalar(maximumFretScalar),
+        FretSpanScalar(fretSpanScalar),
+        InterChunkSpacingScalar(interChunkSpacingScalar),
+        StringOverlapScalar(stringOverlapScalar),
+        PreviousChunk(nullptr)        
+         
+{
+    
+}
+
+RotateVisitor::~RotateVisitor(void) 
+{
+}
 
 //Go through all of the chunks in a given bar and reconfigure them
 void RotateVisitor::VisitBar(Bar* bar) 
@@ -14,19 +37,15 @@ void RotateVisitor::VisitBar(Bar* bar)
     {
         Chunk* candidateChunk = bar->GetElementWithIndex(barIndex);
         candidateChunk->DispatchVisitor(this);
-        
     }
 }
 
 //Visit a chunk, and re-arrange all of its notes until they are valid/playable
 void RotateVisitor::VisitChunk(Chunk* candidateChunk) 
 {
-    const uint32_t chunkSize = candidateChunk->GetNumberOfElements() ;
-
     const uint32_t permutationsForThisChunk = 
         candidateChunk->GetNumberOfPositionPermutations();
 
-    uint32_t noteConfigurationIndex = chunkSize-1;
 
     uint32_t permutationIndex = 0;
     uint32_t currentLowestCost = UINT32_MAX;
@@ -38,7 +57,7 @@ void RotateVisitor::VisitChunk(Chunk* candidateChunk)
         permutationIndex++;
         
         //Reconfigure or "rotate" the chunk until it is in another configuration
-        ReconfigureChunk(candidateChunk,noteConfigurationIndex,morePermutations);
+        ReconfigureChunk(candidateChunk,permutationIndex,morePermutations);
         
         
         morePermutations = morePermutations && 
@@ -46,17 +65,18 @@ void RotateVisitor::VisitChunk(Chunk* candidateChunk)
         
         //Compare the current best chunk configuration against the reconfigured one
         SelectOptimalFingering(candidateChunk, currentLowestCost);	
+        
 
     }
     
     candidateChunk->RepositionNotesToCurrentOptimalPositions();
     uint32_t chunkFretCenter = GetChunkFretCenter(candidateChunk);
-    if(chunkFretCenter != 0)
+    //if(chunkFretCenter != 0)
     {
         PreviousChunk = candidateChunk;
     }
     
-    LogStream << "Optimized chunk: " << Chunk::PrintNoteIndices(candidateChunk->GetCurrentNotePositionEntries());
+    LogStream << "Optimized chunk: " << Chunk::PrintNoteIndices(candidateChunk->GetCurrentNotePositionEntries()) << endl;
     
     ResetMarkedChunks();
 
@@ -66,10 +86,18 @@ void RotateVisitor::VisitChunk(Chunk* candidateChunk)
 //been checked yet. Skip configurations with impossible fingerings. 
 uint32_t RotateVisitor::ReconfigureChunk(
         Chunk* candidateChunk, 
-        uint32_t noteConfigurationIndex,
+        uint32_t permutationCount,
         bool& morePermutations)
 {
+    uint32_t errorCount = 0;
     uint32_t octaveShiftCost = 0;
+    
+    //todo: don't count all permutations worst case
+    const uint32_t permutationsForThisChunk = 
+        candidateChunk->GetNumberOfPositionPermutations();
+    
+    const uint32_t chunkSize = candidateChunk->GetNumberOfElements() ;
+    uint32_t noteConfigurationIndex = chunkSize-1;
     
     volatile bool shouldContinue = true;
     
@@ -90,8 +118,15 @@ uint32_t RotateVisitor::ReconfigureChunk(
         
         shouldContinue = stringsOverlap ||  (currentNotePositionsAlreadyTried && 
                                              morePermutations);
-    } while(shouldContinue);
-    
+        
+        if(exhaustedAllPermutations)
+        {
+            //todo: prevent this from happening by cleaning chunks properly
+            errorCount++;
+            LogStream << "\tError " <<errorCount << " " << Chunk::PrintNoteIndices(currentNotePositionsEntries) << " " << stringsOverlap << " " << currentNotePositionsAlreadyTried << " " << morePermutations << endl;
+        }
+        
+    } while(shouldContinue && (permutationCount < permutationsForThisChunk) && errorCount < 10);
     
     
     return octaveShiftCost;
@@ -216,6 +251,7 @@ uint32_t RotateVisitor::CalculateConfigurationCost(
     
     Chunk * const previousChunk = PreviousChunk;
 
+    LogStream << "\tFeaturesTrace: Candidate chunk." << endl;
     bool chunkValid = GetChunkFeatures(
         indices, maximumFretInCandidateChunk,
         fretSpacingInCandidateChunk,fretCenterInCandidateChunk,
@@ -228,14 +264,13 @@ uint32_t RotateVisitor::CalculateConfigurationCost(
         vector<NotePositionEntry > previousChunkIndices = 
             previousChunk->GetCurrentNotePositionEntries();
         
+        LogStream << "\tFeaturesTrace: Previous chunk." << endl;
         previousChunkValid = GetChunkFeatures(previousChunkIndices,
                 maximumFretInPreviousChunk, fretSpacingInPreviousChunk,
                 fretCenterInPreviousChunk, stringPositionsInPreviousChunk);
     
         if(previousChunkValid)
-        {        
-            vector<uint32_t> duplicateStrings;
-            
+        {
             //If either fret center is 0, the fret center is not a good measure of 
             //how far the hand has to move between the two chunks
             if((fretCenterInCandidateChunk != 0) && 
@@ -255,7 +290,7 @@ uint32_t RotateVisitor::CalculateConfigurationCost(
     //If the chunk is not valid, return the largest possible cost
     if(chunkValid)
     {
-        LogStream << "CostTrace:" << Chunk::PrintNoteIndices(indices) << endl;
+        LogStream << "\tCostTrace:" << Chunk::PrintNoteIndices(indices) << endl;
         chunkCost =  EvaluateConfigurationFeatures(
             maximumFretInCandidateChunk,fretSpacingInCandidateChunk, 
             candidateSpacingFromLastChunk,duplicateStrings);
@@ -356,11 +391,25 @@ bool RotateVisitor::GetChunkFeatures(
                                             minimumFretInChunkConfiguration;
         }
         
-        LogStream << Chunk::PrintNoteIndices(chunkIndices) << " FeaturesTrace:" << 
-            "\r\n\tMax Fret:" << maximumFretInCandidateChunk << " " 
-            "\r\n\tSpan:" <<fretSpacingInCandidateChunk << " " <<
-            "\r\n\tFret Center:" << fretCenterInCandidateChunk << " = " << fretSumForAverage << "/" << numberOfFrettedNotes << endl;
-            
+        //Trace
+        {
+            stringstream stringIndices;
+
+            stringIndices<< "|";
+
+            for(uint32_t stringIndex : stringPositions)
+            {
+                stringIndices<< stringIndex << " ";
+            }
+
+            stringIndices<< "|";
+
+            LogStream << "\t" << Chunk::PrintNoteIndices(chunkIndices) << "FeaturesTrace:" << 
+                "\r\n\t\tMax Fret:" << maximumFretInCandidateChunk << " " 
+                "\r\n\t\tSpan:" <<fretSpacingInCandidateChunk << " " <<
+                "\r\n\t\tFret Center:" << fretCenterInCandidateChunk << " = " << fretSumForAverage << "/" << numberOfFrettedNotes <<
+                "\r\n\t\tString positions:" << stringIndices.str() << endl;
+        } 
         
     } //end if valid chunk
     
@@ -374,7 +423,7 @@ uint32_t RotateVisitor::EvaluateConfigurationFeatures(
         uint32_t fretSpacingInCandidateChunk,
         uint32_t distanceFromPreviousChunk,
         vector<uint32_t> stringIntersections)
-{    
+{
     const uint32_t interChunkSpacingCost = distanceFromPreviousChunk*InterChunkSpacingScalar;
     const uint32_t stringOverlapCost = stringIntersections.size() * StringOverlapScalar;
     
@@ -384,9 +433,11 @@ uint32_t RotateVisitor::EvaluateConfigurationFeatures(
     const uint32_t candidateCost = maximumFretCost + fretSpanCost + 
                      interChunkSpacingCost + stringOverlapCost;
     
-    LogStream << "CostTrace: $" << candidateCost << "\r\n\tMaxFret:" << maximumFretCost << "\r\n\tFretSpan:" << fretSpanCost \
-                      << "\r\n\tAdjacency:" << interChunkSpacingCost << "\r\n\tIndependence:" \
-                      << stringOverlapCost << endl;
+    LogStream << "\tCostTrace: $" << candidateCost << 
+            "\r\n\t\tMaxFret:" << maximumFretCost << 
+            "\r\n\t\tFretSpan:" << fretSpanCost << 
+            "\r\n\t\tAdjacency:" << interChunkSpacingCost << 
+            "\r\n\t\tIndependence:" << stringOverlapCost << endl;
     
     return candidateCost;
     

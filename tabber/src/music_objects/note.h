@@ -2,7 +2,6 @@
 #define __NOTE__
 
 #include "base.h"
-#include "tuning.h"
 #include <map>
 #include <vector>
 
@@ -52,13 +51,17 @@ class Note : public Base
     private:
         static const uint32_t MaximumNumberOfOctaves = 30;
         static const uint32_t OctaveValueMidiPitches = 12;
+        static vector<std::string> StringIndexedNoteNames;
 
         int TrackNumber;
         int PitchMidiValue;
         int NoteDurationBeats;
         int CurrentPitchMapRepositionIndex;
 
+        uint32_t PitchOffset;
+        
         static uint32_t TuningMinimum;
+        static uint32_t TuningMaximum;
         uint32_t Repositions;
 
 
@@ -70,6 +73,7 @@ class Note : public Base
         static PitchMap PitchToFretMap;
         static int DeletedNotesCount;
         static PitchMap GeneratePitchToFretMap(
+            vector<std::string> stringNames,
             vector<uint16_t> instrumentCoursePitchValues, 
             const uint32_t numberOfFrets,
             const uint32_t capoFret);
@@ -77,11 +81,15 @@ class Note : public Base
         //Read pitchmap
         static uint32_t GetFretForNotePositionEntry(NotePositionEntry notePositionEntry);
         static uint32_t GetStringForNotePositionEntry(NotePositionEntry notePositionEntry);
+        static std::string PrintNote(NotePositionEntry notePositionEntry);
+        static bool GetPlayablePitch(uint32_t& numberOfOctaves, uint32_t& pitch);
 
         Note(int pitch, int duration, int trackNumber); 
         virtual ~Note() {}
+        virtual void DispatchVisitor(Visitor* v);
 
         //Getters
+        vector<FretboardPosition> GetNotePositions() const;
         uint32_t GetFretForCurrentNotePosition() const;
         uint32_t GetStringIndexForCurrentNotePosition() const;
         NotePositionEntry GetCurrentNotePosition() const;
@@ -90,11 +98,12 @@ class Note : public Base
         int GetNoteDurationBeats()  const;
         uint32_t GetTrackNumber() const;
         uint32_t GetPitch() const ;
+        
+        uint32_t GetPitchOffset() const;
+        void MakeNoteMorePlayable();
+        
         uint32_t GetAttemptedRepositions(void) const;
         virtual uint32_t GetNumberOfElements() const;
-
-
-        virtual void DispatchVisitor(Visitor* v);
 
         void ReconfigureToNextPitchmapPosition();
         void SetPitchmapPositionIndex(uint32_t mapIndex) ;

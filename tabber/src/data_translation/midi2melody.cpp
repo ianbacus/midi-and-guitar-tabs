@@ -168,6 +168,8 @@ vector<Bar*> ParseIntermediateFile(std::string infile, int pitchOffset,int align
                 {
                     Chunk* const currentChunk = currentMeasure->GetLastElement();
                     
+                    //currentChunk->CleanChunk();
+                    
                     vector<NotePositionEntry> currentNotePositionEntires = 
                       currentChunk->GetCurrentNotePositionEntries();
 

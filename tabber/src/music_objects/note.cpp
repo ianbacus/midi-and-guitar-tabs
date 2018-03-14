@@ -1,6 +1,5 @@
 #include "base.h"
 #include "note.h"
-#include "tuning.h"
 #include <iostream>
 #include <sstream>
 #include <algorithm>
@@ -10,29 +9,37 @@ using namespace std;
 
 int Note::DeletedNotesCount = 0;
 uint32_t Note::TuningMinimum = 0;
+uint32_t Note::TuningMaximum = 0;
 PitchMap Note::PitchToFretMap;
+vector<string> Note::StringIndexedNoteNames;
 /*
  *	Configure the pitch map: maps midi pitch values to pairs of string and fret positions.
  *	note index indicates which fret+string position is currently being used
  */
 PitchMap Note::GeneratePitchToFretMap(
+        vector<string> stringIndexedNoteNames,
         vector<uint16_t> instrumentCoursePitchValues, 
         const uint32_t numberOfFrets,
         const uint32_t capoFret)
 {
     PitchMap initMap;
    
+    StringIndexedNoteNames = stringIndexedNoteNames;
+    
     auto minimumElementIterator = 
         min_element(begin(instrumentCoursePitchValues),end(instrumentCoursePitchValues));
+    
+    auto maximumElementIterator = 
+        max_element(begin(instrumentCoursePitchValues),end(instrumentCoursePitchValues));
     
     if(minimumElementIterator != end(instrumentCoursePitchValues))
     {
         TuningMinimum = (*minimumElementIterator)+capoFret;
     }
     
-    else
+    if(maximumElementIterator != end(instrumentCoursePitchValues))
     {
-        TuningMinimum = 0;
+        TuningMaximum = (*maximumElementIterator)+numberOfFrets;
     }
     
     const uint32_t numberOfStrings = instrumentCoursePitchValues.size();
@@ -89,14 +96,14 @@ string PrintPitchMap(PitchMap pitchMap)
 Note::Note(int pitch, int duration, int trackNumber) : 
     PitchMidiValue(pitch), 
     NoteDurationBeats(duration), 
-    Repositions(0),
+    Repositions(0),PitchOffset(0),
     TrackNumber(trackNumber), CurrentPitchMapRepositionIndex(0) 
 {
 	//Negative delta values are used to represent triples
 	//Negative pitch values represent rests
 	if(pitch < 0)
 	{
-		//TODO: Handle triplets
+		//TODO: Handle triplets and rests
 	} 
     
 	else if ((PitchToFretMap.find(pitch)) == PitchToFretMap.end()) 
@@ -113,7 +120,48 @@ uint32_t Note::GetTrackNumber() const
 	return TrackNumber;
 }
 
+uint32_t Note::GetPitchOffset() const
+{
+	return PitchOffset;
+}
 
+void Note::MakeNoteMorePlayable()
+{
+    const uint32_t pitchMidiValue = GetPitch();
+    const uint32_t differenceFromTuningMinimum = abs((int)(pitchMidiValue - TuningMinimum));
+    const uint32_t differenceFromTuningMaximum = abs((int)(pitchMidiValue - TuningMaximum));
+    
+    
+    if(differenceFromTuningMinimum < differenceFromTuningMaximum)
+    {
+        PitchOffset +=OctaveValueMidiPitches;
+    }
+
+    else
+    {
+        PitchOffset -=OctaveValueMidiPitches;	
+    }
+    
+}
+
+
+vector<FretboardPosition> Note::GetNotePositions() const
+{
+    uint32_t octaveCount = 0;
+    
+    uint32_t pitchMidiValue = GetPitch();
+    vector<FretboardPosition> notePositions;
+    
+	const bool success = GetPlayablePitch(octaveCount,pitchMidiValue);
+    
+    if(success)
+    {
+        notePositions = PitchToFretMap[pitchMidiValue];
+    }
+    
+    return notePositions;
+}
+        
 /*
  *	Get string for a given note index and pitch. The pitch is used to index
  *  into the main fretboard map, and the note index is used to determine which
@@ -131,7 +179,7 @@ NotePositionEntry Note::GetCurrentNotePosition(void) const
 {
     NotePositionEntry notePosition;
     
-    notePosition.PitchMidiValue = PitchMidiValue;
+    notePosition.PitchMidiValue = GetPitch();
     notePosition.RepositioningIndex = CurrentPitchMapRepositionIndex;
     
     return notePosition;
@@ -146,43 +194,19 @@ NotePositionEntry Note::GetCurrentNotePosition(void) const
 uint32_t Note::GetFretForNotePositionEntry(
         NotePositionEntry notePositionEntry)
 {
+    uint32_t fretAtIndex;
+    uint32_t octaveCount = 0;
     
     uint32_t currentPitchMapRepositionIndex = notePositionEntry.RepositioningIndex;
-    int32_t pitchMidiValue = notePositionEntry.PitchMidiValue;
+    uint32_t pitchMidiValue = notePositionEntry.PitchMidiValue;
     
-    uint32_t fretAtIndex = 0;
-    uint32_t offsetIndex = 0;
-	int octaveIndex = 0;
+	const bool success = GetPlayablePitch(octaveCount,pitchMidiValue);
     
-	if(pitchMidiValue<0) 
+    if(success)
     {
-        return -1;
+        fretAtIndex = PitchToFretMap[pitchMidiValue]
+                    [currentPitchMapRepositionIndex].FretNumber;;
     }
-    
-	while(++octaveIndex < MaximumNumberOfOctaves) 
-    {
-		const uint32_t adjustedPitchMidiValue = pitchMidiValue+offsetIndex;
-        
-		try 
-        {
-			fretAtIndex = PitchToFretMap.at(adjustedPitchMidiValue)
-                    [currentPitchMapRepositionIndex].FretNumber;
-			break;
-		}
-        
-		catch (const std::out_of_range& oor) 
-        {
-			if(pitchMidiValue<TuningMinimum)
-            { 
-                offsetIndex += OctaveValueMidiPitches;
-            }
-            
-			else
-            { 
-                offsetIndex -= OctaveValueMidiPitches;
-            }
-		}
-	}
     
     return fretAtIndex;
 }
@@ -210,44 +234,60 @@ uint32_t Note::GetStringIndexForCurrentNotePosition() const
 uint32_t Note::GetStringForNotePositionEntry(
         NotePositionEntry notePositionEntry)
 {
+    uint32_t stringIndex;
+    uint32_t octaveCount = 0;
     
     uint32_t currentPitchMapRepositionIndex = notePositionEntry.RepositioningIndex;
     uint32_t pitchMidiValue = notePositionEntry.PitchMidiValue;
-        
-	uint32_t stringAtIndex = 0;
-    uint32_t offsetIndex = 0;
-	int octaveIndex = 0;
     
-	while(++octaveIndex < MaximumNumberOfOctaves) 
+	const bool success = GetPlayablePitch(octaveCount,pitchMidiValue);
+    
+    if(success)
     {
-		const uint32_t adjustedPitchMidiValue = pitchMidiValue+offsetIndex;
-        
-		try 
-        {
-			stringAtIndex = PitchToFretMap.at(adjustedPitchMidiValue)
-                    [currentPitchMapRepositionIndex].StringIndex;
-                    
-            break;
-                    
-		}
-        
-		catch (const std::out_of_range& oor) 
-        {
-			if(pitchMidiValue<TuningMinimum)
-            { 
-                offsetIndex += OctaveValueMidiPitches;
-            }
-            
-			else
-            { 
-                offsetIndex -= OctaveValueMidiPitches;
-            }
-		}
-	}
+        stringIndex = PitchToFretMap[pitchMidiValue]
+                    [currentPitchMapRepositionIndex].StringIndex;;
+    }
     
-    return stringAtIndex;
+    return stringIndex;
 }
 
+string Note::PrintNote(NotePositionEntry notePositionEntry)
+{
+    string resultString = "|XX|";
+    uint32_t octaveCount = 0;
+    
+    uint32_t pitchMidiValue = notePositionEntry.PitchMidiValue;
+    uint32_t currentPitchMapRepositionIndex = notePositionEntry.RepositioningIndex;
+    
+    const bool success = GetPlayablePitch(octaveCount,pitchMidiValue);
+    
+    if(success)
+    {
+        const FretboardPosition notePosition = PitchToFretMap[pitchMidiValue]
+                                             [currentPitchMapRepositionIndex];
+        
+        const uint32_t stringIndex = notePosition.StringIndex;
+        const uint32_t fretNumber = notePosition.FretNumber;
+        const string stringName = StringIndexedNoteNames[stringIndex];
+        
+        stringstream resultStream;
+        
+        if(octaveCount > 1)
+        {
+            resultStream << "/";
+        }
+        
+        else
+        {
+            resultStream << "|";
+        }
+        
+        resultStream << stringName << std::hex << fretNumber << "|" << currentPitchMapRepositionIndex;
+        resultString = resultStream.str();
+    }
+    
+    return resultString;
+}
 /*
  *	Rotate the note index forward: return to 0 if the note index exceeds the pitchmap entry
  */		
@@ -276,39 +316,16 @@ void Note::ResetAttemptedRepositions(void)
  */
 uint32_t Note::GetNumberOfElements() const
 {
-    int32_t noteOffset=0;
     uint32_t numberOfElements = 0;
-	
+    uint32_t octaveCount = 0;
+    uint32_t adjustedPitch = GetPitch();
     
-	int octaveOffsetCount = 0;
-	while(++octaveOffsetCount < MaximumNumberOfOctaves) 
+	const bool success = GetPlayablePitch(octaveCount,adjustedPitch);
+    
+    if(success)
     {
-		try 
-        {
-			numberOfElements = PitchToFretMap.at(PitchMidiValue+noteOffset).size();
-			break;
-		}
-        
-        //If this pitch is not frettable, try moving its pitch up or down
-		catch (const std::out_of_range& oor) 
-        {
-			if(PitchMidiValue<TuningMinimum)
-            {
-                noteOffset +=12;
-            }
-            
-			else if(PitchMidiValue>TuningMinimum)
-            {
-                noteOffset -=12;	
-            }
-            
-            else 
-            {
-                numberOfElements = 0;
-                break;
-            }
-		}
-	}
+        numberOfElements = PitchToFretMap[adjustedPitch].size();
+    }
     
     return numberOfElements;
 }
@@ -342,7 +359,47 @@ uint32_t Note::GetCurrentPitchmapIndex() const
  */	
 uint32_t Note::GetPitch() const 
 {
-	return PitchMidiValue;
+	return PitchMidiValue;//+PitchOffset;
+}
+
+bool Note::GetPlayablePitch(uint32_t& numberOfOctaves, uint32_t& pitchMidiValue) 
+{
+    uint32_t numberOfElements = 0;
+    numberOfOctaves = 0;
+    
+    bool success = true;
+    
+    while(numberOfOctaves < MaximumNumberOfOctaves) 
+    {
+		try 
+        {
+			(void)PitchToFretMap.at(pitchMidiValue);
+			break;
+		}
+        
+        //If this pitch is not frettable, try moving its pitch up or down
+		catch (const std::out_of_range& oor) 
+        {
+            numberOfOctaves++;
+			if(pitchMidiValue<=TuningMinimum)
+            {
+                pitchMidiValue +=OctaveValueMidiPitches;
+            }
+            
+			else if(pitchMidiValue>=TuningMaximum)
+            {
+                pitchMidiValue -=OctaveValueMidiPitches;	
+            }
+            
+            else 
+            {
+                numberOfElements = 0;
+                success = false;
+                break;
+            }
+		}
+	}
+	return success;
 }
 
 /*

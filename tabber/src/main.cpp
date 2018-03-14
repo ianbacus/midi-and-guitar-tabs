@@ -14,7 +14,16 @@ void GenerateTab(
         string outputFile, vector<Bar*> score, 
         uint32_t upperBound, uint32_t lowerBound)
 {
-    uint32_t measureIndex = 0;
+
+
+}
+
+
+int ParseFileIntoTab(const string inputFile, const string outputFile,
+        int noteOffset, uint32_t lowerBound,
+        uint32_t upperBound, const uint32_t align) 
+{
+        uint32_t measureIndex = 0;
     TabberSettings tabSettings;
     
     memset(&tabSettings, 0, sizeof(tabSettings));
@@ -22,17 +31,51 @@ void GenerateTab(
     ParseTabberSettingsFile("src/tabberSettings.txt", tabSettings);
     
     Note::PitchToFretMap = Note::GeneratePitchToFretMap(
+            tabSettings.InstrumentInfo.StringIndexedNoteNames,
             tabSettings.InstrumentInfo.StringIndexedMidiPitches, 
             tabSettings.InstrumentInfo.NumberOfFrets,
             tabSettings.InstrumentInfo.CapoFret);
 
-    RotateVisitor TablatureRearranger;
+    RotateVisitor TablatureRearranger(
+            tabSettings.CostScalars.NeckPositionCost,
+            tabSettings.CostScalars.SpanCost,
+            tabSettings.CostScalars.NeckDiffCost,
+            tabSettings.CostScalars.SuppressedSustainCost);
+    
     PrintVisitor TablaturePrinter(
             tabSettings.Formatting.NumberOfLinesPerTabRow,
             tabSettings.InstrumentInfo.StringIndexedNoteNames);
 
+    
+	//Limit transpositions to +/- 127 pitches 
+	if (noteOffset < -127) 
+	{
+		noteOffset = -127;
+	}
+    
+	if (noteOffset > 127)
+	{
+		noteOffset = 127;
+	}
+    
+	vector<Bar*> score= ParseIntermediateFile(inputFile,noteOffset,align);
+    
+	//Swap bounds if they are incorrect
+	if (upperBound < lowerBound)
+	{
+		const uint32_t tempBound = lowerBound;
+		lowerBound = upperBound;
+		upperBound = tempBound;
+	}
+	
+	//Set the default upper bound to the maximum value
+    if(upperBound > score.size())
+    {
+        upperBound = score.size();
+    }
+    
     std::cout << outputFile << ": Optimizing and printing "  << (upperBound - lowerBound)+1
-        << " measures: m"  << lowerBound << " to m" << upperBound << endl;
+    << " measures: m"  << lowerBound << " to m" << upperBound << endl;
 
     //Iterate through each bar, recursively apply the visitor pattern to fix note positions
     for (Bar* currentBar : score)
@@ -50,43 +93,6 @@ void GenerateTab(
     TablaturePrinter.WriteTablatureToOutputFile("data/outTab.txt");
 
     std::cout << "Done. " << std::endl;
-}
-
-
-int ParseFileIntoTab(const string inputFile, const string outputFile,
-        int noteOffset, int lowerBound,
-        unsigned int upperBound, const unsigned int align) 
-{
-	//Limit transpositions to +/- 127 pitches 
-	if (noteOffset < -127) 
-	{
-		noteOffset = -127;
-		std::cout << "Note shift exceeds bounds: set to -127" << std::endl;
-	}
-	if (noteOffset > 127)
-	{
-		noteOffset = 127;
-		std::cout << "Note shift exceeds bounds: set to 127" << std::endl;
-	}
-    
-
-	vector<Bar*> score = ParseIntermediateFile(inputFile,noteOffset,align);
-    
-	//Swap bounds if they are incorrect
-	if (upperBound < lowerBound)
-	{
-		const int tempBound = lowerBound;
-		lowerBound = upperBound;
-		upperBound = tempBound;
-	}
-	
-	//Set the default upper bound to the maximum value
-	if(upperBound > score.size())	
-	{
-		upperBound = score.size();
-	}
-
-	GenerateTab(outputFile, score, upperBound, lowerBound);
   
     score.clear();
 
@@ -117,8 +123,8 @@ int main(int argc, char* argv[])
 
     int noteOffset=atoi(argv[3]); 
 
-    int lowerBound=atoi(argv[4]);
-    unsigned int upperBound=atoi(argv[5]);
+    uint32_t lowerBound=atoi(argv[4]);
+    uint32_t upperBound=atoi(argv[5]);
 
     const unsigned int align = atoi(argv[6]);
 

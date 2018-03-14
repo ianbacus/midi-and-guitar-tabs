@@ -1,4 +1,5 @@
 #include "base.h"
+#include <set>
 #include <sstream>
 #include <assert.h>
 
@@ -8,15 +9,10 @@ string Chunk::PrintNoteIndices(vector<NotePositionEntry > noteConfiguration)
 {
     std::stringstream sstream;
     
-    sstream << "-|";
-    
     //Print the fret and string of each note in the current chunk configuration	
 	for(NotePositionEntry notePositionEntry: noteConfiguration)
 	{
-		const uint32_t noteFret = Note::GetFretForNotePositionEntry(notePositionEntry);
-        const uint32_t noteString = Note::GetStringForNotePositionEntry(notePositionEntry);
-        
-		sstream << noteFret << "+" << noteString << "|";
+		sstream << Note::PrintNote(notePositionEntry)<<" ";;
 	}
     
     return sstream.str();
@@ -82,6 +78,7 @@ vector<NotePositionEntry > Chunk::GetCurrentOptimalNotePositionEntries(void) con
 {
     return CurrentOptimalNotePositionEntries;
 }
+
 /* 
  *	Dispatch a Visitor on a chunk
  */
@@ -90,21 +87,114 @@ void Chunk::DispatchVisitor(Visitor* v)
 	v->VisitChunk(this);
 }
 
+
+bool ChunkIsValid(Chunk* chunk) 
+{
+
+    bool chunkValid = true;
+    vector<Note*> chunkNotes = chunk->GetElements();
+    uint32_t numberOfNotes = chunkNotes.size();
+
+    set<uint32_t> stringsUsed;
+
+    //Pigeon-hole principle: if there are more notes than fretted strings, in
+    //all possible configurations, this chunk cannot be reconfigured
+    
+    //Sort notes by mobility
+    for (Note* note : chunkNotes) 
+    {
+        vector<FretboardPosition> notePositions = note->GetNotePositions();
+
+        for (FretboardPosition notePosition : notePositions) 
+        {
+            uint32_t stringIndex = notePosition.StringIndex;
+
+            stringsUsed.insert(stringIndex);
+        }
+    }
+
+    uint32_t numberOfStringsUsed = stringsUsed.size();
+    if (numberOfStringsUsed < numberOfNotes) 
+    {
+        chunkValid = true;
+    }
+    
+    return chunkValid;
+}
+
+//add extra note positions for middle-voice notes with note position entries
+//of size 1 
+void Chunk::CleanChunk(void)
+{
+    while(!ChunkIsValid(this))
+    {
+        cout << "cleaning chunk." << endl;
+        vector<Note*> chunkNotes = GetElements();
+        
+        if(chunkNotes.size() > 0)
+        {
+            sort(begin(chunkNotes),end(chunkNotes), [](const Note* left, const Note* right)
+            {
+                return left->GetNumberOfElements() < right->GetNumberOfElements();
+            });
+
+            chunkNotes[0]->MakeNoteMorePlayable();
+        }
+    }
+}
+
+
+bool Chunk::CheckIfNoteIsAlreadyPresent(Note* note)
+{
+    uint32_t octaves = 0;
+    uint32_t candidateNotePitch = note->GetPitch();
+
+    bool duplicateNote = false;
+    bool success = Note::GetPlayablePitch(octaves, candidateNotePitch);
+
+    //Filter out duplicate notes
+    if(success)
+    {
+        vector<Note*> chunkNotes = GetElements();
+        for(Note* note : chunkNotes)
+        {
+            uint32_t pitch = note->GetPitch();
+            Note::GetPlayablePitch(octaves, pitch);
+
+            //todo: some notes bypass this
+            duplicateNote = (candidateNotePitch==pitch);
+            if(duplicateNote)
+            {
+                break;
+            }
+        }
+    }
+    
+    return duplicateNote;
+}
 /* 
  *	Insert a note into the vector of notes. Insert in sorted order by the number of frettable
  *	positions for that note.
  */
 void Chunk::PushElement(Note* note) 
 {
-	//insert at iterator to first element with a pitch-map entry larger than the candidate note
-	Notes.insert(std::upper_bound( Notes.begin(), Notes.end(), note,  
-        [](Note *a, Note*b) 
-        { 															 
-            return (a->GetNumberOfElements() < b->GetNumberOfElements()); 				 
-        }),
-        note); 
+    if(note != nullptr)
+    {
         
-    assert(note != nullptr);
+        bool duplicateNote = CheckIfNoteIsAlreadyPresent(note);
+        //CleanChunk();
+        
+        if(!duplicateNote)
+        {
+            //insert at iterator to first element with a pitch-map entry larger than the candidate note
+            Notes.insert(std::upper_bound( Notes.begin(), Notes.end(), note,  
+                [](Note *a, Note*b) 
+                { 															 
+                    return (a->GetNumberOfElements() < b->GetNumberOfElements()); 				 
+                }),
+                note); 
+        }   
+    }
 }
 
 /* 

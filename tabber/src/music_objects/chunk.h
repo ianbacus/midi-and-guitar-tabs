@@ -48,9 +48,12 @@ class Chunk : public Base
 
         virtual uint32_t GetNumberOfElements() const ;
         virtual void DispatchVisitor(Visitor* v) ;
+        bool CheckIfNoteIsAlreadyPresent(Note* note);
 
         Chunk(int delta=0);
         virtual ~Chunk(void);
+        
+        void CleanChunk(void);
         
 };
 

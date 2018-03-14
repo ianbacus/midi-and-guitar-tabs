@@ -63,19 +63,19 @@
         #Increases as the difference between the highest and lowest frets 
         #increases
         ##################################################################
-        SpanCost:150
+        SpanCost:500
 
         ###Neck Position cost
         ##################################################################
         #Increases as a chord or note moves up the neck
         ##################################################################
-        NeckPositionCost:300
+        NeckPositionCost:40
 
         ###Inter-Chord Neck Distance cost
         ##################################################################
         #Increases as the distance between adjacent chords or notes increases
         ##################################################################
-        NeckDiffCost:200
+        NeckDiffCost:400
 
         ###Inter-Chord String Overlap cost
         ##################################################################
@@ -83,7 +83,7 @@
         #of the same strings being held down. Increasing this cost will 
         #allow more sustain between notes.
         ##################################################################
-        SuppressedSustainCost:100
+        SuppressedSustainCost:9000
 
 
 
@@ -99,4 +99,4 @@
         #so if a measure does not fit on the current set of lines then a 
         #new tablature row will be created for it.
         ##################################################################
-        NumberOfLinesPerTabRow:210
+        NumberOfLinesPerTabRow:250
