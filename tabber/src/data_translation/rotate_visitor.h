@@ -22,8 +22,15 @@ class RotateVisitor : public Visitor
             vector<NotePositionEntry> stringPositions1, 
             vector<NotePositionEntry> stringPositions2);
         
+        uint32_t CountStringIntersectionsWithFrettedNotes(
+            vector<NotePositionEntry> notePositions);
+        
+        Chunk* PreviousFrettedChunk;
         Chunk* PreviousChunk;
         vector< vector<NotePositionEntry > > ProcessedChunkConfigurations;
+        
+        vector<uint32_t> StringIndexedRemainingDeltaTicks;
+        vector<uint32_t> StringIndexedFrettedNotes;
         
         uint32_t CalculateConfigurationCost(
             vector<NotePositionEntry > chunkIndices);
@@ -33,19 +40,27 @@ class RotateVisitor : public Visitor
             uint32_t& maximumFretInCandidateChunk,
             uint32_t& fretSpacingInCandidateChunk,
             uint32_t& fretCenterInCandidateChunk,
+            uint32_t& sustainedNoteInterruptions,
             vector<uint32_t>& stringPositions);
         
+        void GetStringOverlapStuff(
+            vector<NotePositionEntry> stringPositions, 
+            uint32_t maximumFretInCandidateChunk, 
+            uint32_t& candidateSpacingFromLastChunk,
+            uint32_t& intersectionsWithPreviousChunk);
+
         uint32_t GetChunkFretCenter(
             Chunk* candidateChunk);
         
         
-        bool CountStringOverlaps(vector<NotePositionEntry> notePositionsEntries);
+        bool ValidateStringOverlapsForNotePositions(vector<NotePositionEntry> notePositionsEntries);
         
         uint32_t EvaluateConfigurationFeatures(
             uint32_t maximumFretInCandidateChunk,
             uint32_t fretSpacingInCandidateChunk,
             uint32_t fretCenterDifferenceFromLastChunk,
-            vector<uint32_t> stringIntersections);
+            uint32_t sustainInterruptionsInCandidateChunk,
+            uint32_t stringIntersections);
         
         bool MarkChunkAsProcessed(vector<NotePositionEntry > processedChunkConfiguration);
         bool WasChunkProcessed(vector<NotePositionEntry > input);
@@ -58,10 +73,14 @@ class RotateVisitor : public Visitor
                 uint32_t noteConfigurationIndex,
                 bool& morePermutations);
         
-        void SelectOptimalFingering(Chunk *chunkToConfigure, uint32_t& currentLowestCost);
+        void SelectOptimalFingering(Chunk *chunkToConfigure, 
+                uint32_t& currentLowestCost);
+        
+        void UpdateStringIndexedRemainingDeltaTicks(Chunk* candidateChunk);
 
     public:
         RotateVisitor(
+            uint32_t numberOfStrings,
             uint32_t maximumFretScalar,
             uint32_t fretSpanScalar,
             uint32_t interChunkSpacingScalar,

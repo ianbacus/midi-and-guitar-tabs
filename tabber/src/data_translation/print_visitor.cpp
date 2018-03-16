@@ -23,6 +23,8 @@ std::map<int,string> quaver_map =
 PrintVisitor::PrintVisitor(uint32_t maximumLineWidth, 
                            vector<string> instrumentStringNames) 
     : 
+        PreviousChunk(nullptr),
+        StringIndexedRemainingDeltaTicks(instrumentStringNames.size()),
         CurrentLineWidth(0),
         InstrumentStringNames(instrumentStringNames),
         MaximumLineWidthCharacters(maximumLineWidth)
@@ -41,24 +43,22 @@ string PrintVisitor::TempVisitNote(Note *note)
 {
     string result;
     std::stringstream sstream;
-    int fret = note->GetFretForCurrentNotePosition();
+    
+    char paddingFill = TablatureUnfrettedPadding;
+    uint32_t fretNumber = note->GetFretForCurrentNotePosition();
 
-    if (fret < 0) //rest note
+    if(fretNumber < 16)
     {
-        sstream << std::string(NoteTokenWidth,TablaturePadding);;
-    }
-
-    else if(fret < 16)
-    {
-        sstream << TablaturePadding <<  std::hex << std::uppercase << fret;
+        sstream << paddingFill <<  std::hex << std::uppercase << fretNumber;
     }
     
     else
     {
-        sstream <<  std::hex << std::uppercase << fret;
+        sstream <<  std::hex << std::uppercase << fretNumber;
     }   
     
     result = sstream.str();
+    
     return result;
 }
 
@@ -76,14 +76,16 @@ vector<string> PrintVisitor::GenerateTablatureStartColumn(void)
 {
     const uint32_t numberOfTablaturePrintRows = GetNumberOfTablaturePrintRows();
     const uint32_t numberOfTablatureRows = InstrumentStringNames.size();
-    const uint32_t widthOfStartColumn = 3;
     
 	vector<string> columnOfStringData(numberOfTablaturePrintRows);
     
-    uint32_t maxIndex = numberOfTablatureRows;
-    columnOfStringData[0] = "|  ";
+    uint32_t maxIndex = numberOfTablaturePrintRows-1;
+    for(uint32_t paddingIndex =0; paddingIndex<NumberOfPaddingRows;paddingIndex++)
+    {
+        columnOfStringData[paddingIndex] = "|x ";
+    }
     
-    for(int32_t instrumentCourseIndex = numberOfTablatureRows-1; 
+    for(int32_t instrumentCourseIndex = (maxIndex-NumberOfPaddingRows); 
             instrumentCourseIndex >= 0;
             instrumentCourseIndex--)
     {
@@ -104,7 +106,7 @@ vector<string> PrintVisitor::GenerateTablatureColumn(Chunk *chunk)
     const uint32_t numberOfTablaturePrintRows = GetNumberOfTablaturePrintRows();
     const uint32_t numberOfTablatureRows = InstrumentStringNames.size();
 
-    const uint32_t offset = numberOfTablatureRows;
+    const uint32_t offset = numberOfTablaturePrintRows-1;
     
 	vector<string> columnOfStringData(numberOfTablaturePrintRows);
         
@@ -113,9 +115,15 @@ vector<string> PrintVisitor::GenerateTablatureColumn(Chunk *chunk)
     const string quaverString = TranslateDeltaAndAppendQuaverCodes(chunkDelta);
     
     //Insert padding rows
-    columnOfStringData[0] = quaverString;
+    if(NumberOfPaddingRows > 0)
+    {
+        columnOfStringData[0] = quaverString;
+    }
     
-    string chunkDeltaScaledPadding(chunkDelta,TablaturePadding);
+    if(NumberOfPaddingRows > 1)
+    {
+        columnOfStringData[1] = string(chunkDelta+NoteTokenWidth,TablatureUnfrettedPadding);
+    }
     
     for(uint32_t instrumentCourseIndex = 0;
             instrumentCourseIndex<numberOfTablatureRows;
@@ -126,8 +134,15 @@ vector<string> PrintVisitor::GenerateTablatureColumn(Chunk *chunk)
     
     for (Note *note : chunk->GetElements())
     {
+        string chunkDeltaScaledPadding(chunkDelta,TablatureSustainPadding);
+        const uint32_t noteDuration = note->GetNoteDurationBeats();
         const uint32_t courseIndex = note->GetStringIndexForCurrentNotePosition();
         const string rowData = TempVisitNote(note);
+        
+        if(chunkDelta >= noteDuration)
+        {
+            chunkDeltaScaledPadding = string(chunkDelta,TablatureUnfrettedPadding);
+        }
         
         //The strings are stored in reverse order, and offset by the padding row(s)
         const uint32_t columnAdjustedOffset = offset-courseIndex;
@@ -137,13 +152,31 @@ vector<string> PrintVisitor::GenerateTablatureColumn(Chunk *chunk)
         
         columnOfStringData[columnAdjustedOffset] = rowData + chunkDeltaScaledPadding;
     }
+
+    
+    UpdateStringIndexedRemainingDeltaTicks(chunk);
+    PreviousChunk = chunk;
     
     for (uint32_t courseIndex : unmodifiedStringIndices)
     {
         const uint32_t columnAdjustedOffset = offset-courseIndex;
-        const string paddingPlaceholder(NoteTokenWidth,TablaturePadding);
         
-        columnOfStringData[columnAdjustedOffset] = paddingPlaceholder + chunkDeltaScaledPadding;
+        string fillterPattern;
+        
+        const uint32_t remainingTicksForThisString = 
+            StringIndexedRemainingDeltaTicks[courseIndex];
+        
+        if(remainingTicksForThisString > 0)
+        {
+            fillterPattern = string(NoteTokenWidth+chunkDelta,TablatureSustainPadding);
+        }
+        
+        else
+        {
+            fillterPattern = string(NoteTokenWidth+chunkDelta,TablatureUnfrettedPadding);
+        }
+        
+        columnOfStringData[columnAdjustedOffset] += fillterPattern;
     }
     
     
@@ -202,11 +235,14 @@ void PrintVisitor::VisitBar(Bar* currentBar)
     
     vector<Chunk*> chunks = currentBar->GetElements();
     
-    vector<string> breakColumn(numberOfTablatureRows+1, "|");
+    vector<string> breakColumn(numberOfTablatureRows+NumberOfPaddingRows, "|");
     vector<vector<string> > tablatureColumns;
     
     for(Chunk *chunk : chunks)
     {
+//        UpdateStringIndexedRemainingDeltaTicks(chunk);
+//        PreviousChunk = chunk;
+        
         vector<string> chunkColumn = GenerateTablatureColumn(chunk);
         
         tablatureColumns.push_back(chunkColumn);
@@ -256,6 +292,52 @@ void PrintVisitor::VisitChunk(Chunk* currentBar)
 void PrintVisitor::VisitNote(Note* currentBar)
 {
     
+}
+
+
+void PrintVisitor::UpdateStringIndexedRemainingDeltaTicks(
+    Chunk* candidateChunk)
+{
+    Chunk* previousChunk = PreviousChunk;
+    
+    vector<Note*> chunkNotes = candidateChunk->GetElements();
+    
+    
+    if(previousChunk != nullptr)
+    {
+        uint32_t previousChunkDelta = previousChunk->GetDelta();
+        
+        
+        for(uint32_t stringIndex = 0; 
+                stringIndex<StringIndexedRemainingDeltaTicks.size();
+                stringIndex++)
+        {
+            uint32_t originalValue =
+                    StringIndexedRemainingDeltaTicks[stringIndex] ;
+            
+            uint32_t updatedValue = originalValue;
+                
+            if(originalValue > 0)
+            {
+                updatedValue -= min(originalValue, previousChunkDelta);
+            }
+            
+            StringIndexedRemainingDeltaTicks[stringIndex] = updatedValue;
+        }
+    }
+    
+    //get the delta diffs on intersecting notes!!
+    
+    for(Note* note : chunkNotes)
+    {
+        uint32_t stringIndex = note->GetStringIndexForCurrentNotePosition();
+        uint32_t noteDuration = note->GetNoteDurationBeats();
+        
+        if(noteDuration != 0)
+        {
+            StringIndexedRemainingDeltaTicks[stringIndex] = noteDuration;
+        }
+    }
 }
 
 /*
@@ -311,7 +393,7 @@ void PrintVisitor::WriteTablatureToOutputFile(string fileName)
         
         for(string tablatureRowData : tablatureRow)
         {
-            tablatureStringStream << tablatureRowData << "\r\n";
+            tablatureStringStream <<  tablatureRowData << "\r\n";
         }
         
         tablatureStringStream << "\r\n";

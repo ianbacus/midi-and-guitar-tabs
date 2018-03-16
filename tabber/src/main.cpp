@@ -37,6 +37,7 @@ int ParseFileIntoTab(const string inputFile, const string outputFile,
             tabSettings.InstrumentInfo.CapoFret);
 
     RotateVisitor TablatureRearranger(
+            tabSettings.InstrumentInfo.StringIndexedNoteNames.size(),
             tabSettings.CostScalars.NeckPositionCost,
             tabSettings.CostScalars.SpanCost,
             tabSettings.CostScalars.NeckDiffCost,
@@ -80,6 +81,8 @@ int ParseFileIntoTab(const string inputFile, const string outputFile,
     //Iterate through each bar, recursively apply the visitor pattern to fix note positions
     for (Bar* currentBar : score)
     {
+        //Todo: fix bug with one of the visitors that causes arithmetic exception 
+        //when there is a discontinuity between d0 and a1 low strings for drop d
         if((lowerBound <= measureIndex) && (measureIndex <= upperBound))
         {
             currentBar->DispatchVisitor(&TablatureRearranger);
@@ -111,7 +114,7 @@ int main(int argc, char* argv[])
         
         if(Debug)
         {
-            return ParseFileIntoTab("data/intermediates/bach-invention-01.txt", 
+            return ParseFileIntoTab("data/parsed_midi_data.txt", 
                                     "data/tabs/outTab.txt", 0, 0, -1, -1);
         }
 

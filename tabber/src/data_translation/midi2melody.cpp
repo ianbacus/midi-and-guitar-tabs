@@ -89,7 +89,7 @@ void ParseTabberSettingsFile(std::string infile, TabberSettings& tabSettings)
 
 vector<Bar*> ParseIntermediateFile(std::string infile, int pitchOffset,int align) 
 {
-    std::ifstream file( infile );
+    ifstream file( infile );
 
 	uint32_t ticksAccumulatedForCurrentMeasure = 0;
 	uint32_t ticksPerMeasure = 36;
@@ -97,15 +97,18 @@ vector<Bar*> ParseIntermediateFile(std::string infile, int pitchOffset,int align
 	
     scoreTree.push_back(new Bar());
     
-	std::string line;
+	string line;
     
     const int shift = 24 - pitchOffset;
 
     while( std::getline( file, line ) ) 
     {
        	const bool currentMeasureIsFull = (ticksAccumulatedForCurrentMeasure >= ticksPerMeasure); 
-		std::istringstream pitchDeltaInputStringStream( line );
-        std::string pitchString,deltaString,trackNumberString;
+		istringstream pitchDeltaInputStringStream( line );
+        string pitchString;
+        string deltaString;
+        string trackNumberString;
+        string noteDurationString;
         
         //Case 0: Time signature event
 		if(line == "SIGEVENT")
@@ -128,13 +131,15 @@ vector<Bar*> ParseIntermediateFile(std::string infile, int pitchOffset,int align
         //Case 1: pitch event
 		if( std::getline( pitchDeltaInputStringStream, pitchString , ',') && 
 			std::getline( pitchDeltaInputStringStream, deltaString, ',' ) && 
-			std::getline( pitchDeltaInputStringStream, trackNumberString) ) 
+			std::getline( pitchDeltaInputStringStream, trackNumberString, ',' ) && 
+			std::getline( pitchDeltaInputStringStream, noteDurationString) ) 
 		{
 			const uint32_t currentTrackNumber = stoi(trackNumberString);
 			const uint32_t delta = stoi(deltaString)*pow(2.0,align);
+			const uint32_t noteDuration = stoi(noteDurationString)*pow(2.0,align);
 			const uint32_t pitch = stoi(pitchString)- shift;
             
-            Note * const currentNote = new Note(pitch,delta,currentTrackNumber);
+            Note * const currentNote = new Note(pitch,noteDuration,currentTrackNumber);
             
 			//The bar is full, create a new measure with an empty initial chunk	
 			if(currentMeasureIsFull && (delta > 0))
@@ -167,8 +172,6 @@ vector<Bar*> ParseIntermediateFile(std::string infile, int pitchOffset,int align
                 if(currentMeasure->GetNumberOfElements() > 0)
                 {
                     Chunk* const currentChunk = currentMeasure->GetLastElement();
-                    
-                    //currentChunk->CleanChunk();
                     
                     vector<NotePositionEntry> currentNotePositionEntires = 
                       currentChunk->GetCurrentNotePositionEntries();

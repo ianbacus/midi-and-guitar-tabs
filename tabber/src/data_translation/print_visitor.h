@@ -24,12 +24,17 @@ class PrintVisitor : public Visitor
         //1 row for each string/course, and 1 row for duration info
         static const uint32_t NoteTokenWidth = 2;
         static const uint32_t NumberOfPaddingRows = 1;
-        static const char TablaturePadding = '-';
+        static const char TablatureUnfrettedPadding = '-';
+        static const char TablatureSustainPadding = '=';
+        
         const uint32_t MaximumLineWidthCharacters;
         
         uint32_t CurrentLineWidth;      
         vector<string> InstrumentStringNames;
+        vector<uint32_t> StringIndexedRemainingDeltaTicks;
+        
         vector< vector<string> > TablatureBuffer;
+        Chunk* PreviousChunk;
         
         
         uint32_t GetNumberOfTablaturePrintRows(void);
@@ -42,6 +47,9 @@ class PrintVisitor : public Visitor
         vector<string> ConcatenateRowGroups(
                 const vector<string> rows0,
                 const vector<string> rows1);
+        
+        
+        void UpdateStringIndexedRemainingDeltaTicks(Chunk* candidateChunk);
     
     public:
   	
@@ -57,4 +65,5 @@ class PrintVisitor : public Visitor
 };
 
 #endif
+
 

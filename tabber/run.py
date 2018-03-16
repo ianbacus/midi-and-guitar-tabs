@@ -8,15 +8,14 @@ import subprocess
 
 if __name__ == "__main__":
 
-
 	#set the order of input parameters here. They are ordered from left to right based on how frequently they are estimated to be used
 	inputParameters = OrderedDict(
-	[	('fileName', False),	\
-		('noteOffset', '0'),	\
-		('columnsPerRow', '4'),	\
-		('align', '1'),			\
-		('startMeasure', '0'),	\
-		('endMeasure', '-1'),	\
+	[	('fileName', False),		\
+		('noteOffset', '0'),		\
+		('align', '0'),			\
+		('maximumNumTracks', '-1'), 	\
+		('startMeasure', '0'),		\
+		('endMeasure', '-1'),		\
 		('condition', 'True')
 	])
 
@@ -27,6 +26,7 @@ if __name__ == "__main__":
 	    os.makedirs("./data/intermediates")
             os.makedirs("./data/input_files")
             os.makedirs("./data/tabs")
+
 	except OSError:
             pass
 
@@ -41,24 +41,25 @@ if __name__ == "__main__":
 
 	try:
 		fileName = inputParameters['fileName']
+
 		if False==fileName:
 			raise ValueError("Error: no file name entered. Enter a '.mid' file from data/input_files.")
+		parsedFileName = "data/parsed_midi_data.txt"
 
 		#Translate midi file into intermediate format with raw pitch/time information
-		generate_pitch_delta(	newfile="data/intermediates/"+fileName+".txt",	\
-								infile="data/input_files/"+fileName+".mid", 	\
-								condition=inputParameters['condition'],			\
-								note_offsets='(0,0,0,0,0,0)')
+		generate_pitch_delta(newfile=parsedFileName,                        		\
+						infile="data/input_files/"+fileName+".mid",                 \
+						maximumNumberOfTracks=inputParameters['maximumNumTracks'],  \
+						note_offsets='(0,0,0,0,0,0)')
 
 		#Invoke c++ tab optimizer to translate intermediate file to tabs
 		spstring= [	IntermediateFileToTabExecutable,		\
-				  	'data/intermediates/'+fileName+'.txt',	\
-				  	'data/tabs/'+fileName+'.txt',			\
-				  	inputParameters['noteOffset'],			\
-					inputParameters['columnsPerRow'],		\
-					inputParameters['startMeasure'],		\
-					inputParameters['endMeasure'],			\
-					inputParameters['align']				\
+				  	parsedFileName,						\
+				  	'data/tabs/'+fileName+'.txt',		\
+				  	inputParameters['noteOffset'],		\
+					inputParameters['startMeasure'],	\
+					inputParameters['endMeasure'],		\
+					inputParameters['align']			\
 				  ]
 		subprocess.call(spstring)
 

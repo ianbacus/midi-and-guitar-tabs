@@ -95,7 +95,7 @@ class Note : public Base
         NotePositionEntry GetCurrentNotePosition() const;
         uint32_t GetCurrentPitchmapIndex() const;
         uint32_t GetNotesLostCounterValue() const ;
-        int GetNoteDurationBeats()  const;
+        uint32_t GetNoteDurationBeats()  const;
         uint32_t GetTrackNumber() const;
         uint32_t GetPitch() const ;
         

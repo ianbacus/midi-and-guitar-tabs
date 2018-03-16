@@ -46,11 +46,13 @@ PitchMap Note::GeneratePitchToFretMap(
 
     for(uint32_t stringIndex =0;stringIndex<numberOfStrings;stringIndex++)
     {
+//        cout << StringIndexedNoteNames[stringIndex] <<  endl;
         //Assume that the frets are separated by a semitone
         for(uint32_t fretNumber = capoFret; fretNumber < numberOfFrets; fretNumber++)
         {
             const uint32_t pitchMidiValue = 
                 instrumentCoursePitchValues[stringIndex] + fretNumber;
+//                cout << "\t" << pitchMidiValue <<  endl;
             
             FretboardPosition map_point(stringIndex,fretNumber);
 
@@ -413,7 +415,7 @@ void Note::AddOffsetToPitchMidiValue(int offset)
 /*
  *	Get note delta
  */
-int Note::GetNoteDurationBeats()  const
+uint32_t Note::GetNoteDurationBeats()  const
 {
 	return NoteDurationBeats;
 }

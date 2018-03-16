@@ -20,11 +20,11 @@
 
         ##################################
         #6 string guitar with low D string, "drop D"
-        #Tuning:d0,a1,d2,g2,b2,e3
+        #Tuning:d1,a1,d2,g2,b2,e3
 
         ##################################
         #6 string guitar, "open G" 
-        #Tuning:d0,g0,a1,d2,g2,b2,e3
+        #Tuning:d1,g1,d2,g2,b2,e3
 
         ##################################
         #Ukulele
@@ -69,13 +69,13 @@
         ##################################################################
         #Increases as a chord or note moves up the neck
         ##################################################################
-        NeckPositionCost:40
+        NeckPositionCost:400
 
         ###Inter-Chord Neck Distance cost
         ##################################################################
         #Increases as the distance between adjacent chords or notes increases
         ##################################################################
-        NeckDiffCost:400
+        NeckDiffCost:800
 
         ###Inter-Chord String Overlap cost
         ##################################################################
@@ -83,11 +83,11 @@
         #of the same strings being held down. Increasing this cost will 
         #allow more sustain between notes.
         ##################################################################
-        SuppressedSustainCost:9000
+        SuppressedSustainCost:600
 
 
 
-    ##Instrument settings
+    ##Formatting settings
     ##################################################################
     These settings describe the instrument tuning, frets, and capo placement
     ##################################################################
