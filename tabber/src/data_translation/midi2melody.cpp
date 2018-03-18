@@ -72,11 +72,9 @@ void ParseTabberSettingsFile(std::string infile, TabberSettings& tabSettings)
             tabSettings.InstrumentInfo.StringIndexedMidiPitches = midiPitches;
             tabSettings.InstrumentInfo.StringIndexedNoteNames = midiPitchStrings;
         }
-        
        
         tabSettings.InstrumentInfo.NumberOfFrets = parsedConstants["Frets"];
         tabSettings.InstrumentInfo.CapoFret = parsedConstants["CapoFret"];
-        
         
         tabSettings.CostScalars.SpanCost = parsedConstants["SpanCost"];
         tabSettings.CostScalars.NeckPositionCost = parsedConstants["NeckPositionCost"];
@@ -87,15 +85,17 @@ void ParseTabberSettingsFile(std::string infile, TabberSettings& tabSettings)
     }
 }
 
-vector<Bar*> ParseIntermediateFile(std::string infile, int pitchOffset,int align) 
+vector<Chunk*> ParseIntermediateFile(std::string infile, int pitchOffset,int align) 
 {
     ifstream file( infile );
 
+    uint32_t measureIndex = 0;
+    uint32_t chunkIndex = 0;
+    
 	uint32_t ticksAccumulatedForCurrentMeasure = 0;
 	uint32_t ticksPerMeasure = 36;
-	vector<Bar*> scoreTree;
+	vector<Chunk*> scoreTree;
 	
-    scoreTree.push_back(new Bar());
     
 	string line;
     
@@ -141,53 +141,60 @@ vector<Bar*> ParseIntermediateFile(std::string infile, int pitchOffset,int align
             
             Note * const currentNote = new Note(pitch,noteDuration,currentTrackNumber);
             
-			//The bar is full, create a new measure with an empty initial chunk	
-			if(currentMeasureIsFull && (delta > 0))
-			{
-				Bar* const nextMeasure = new Bar();
-                
-				scoreTree.push_back(nextMeasure);
-
-				//Find the delta remainder and carry it over to the next bar. 
-                //Omit rests across all voices that last more than one bar.  
-				ticksAccumulatedForCurrentMeasure %= ticksPerMeasure;
-			}
+            Chunk* const currentChunk = (scoreTree.size() > 0 ) ? scoreTree.back() : nullptr;
+            
 			
 			//This note must be added to the current chunk in the current bar
-			if(delta == 0)
+			if((delta == 0) && (currentChunk != nullptr))
 			{
-				Bar* const currentMeasure = scoreTree.back(); 
-                Chunk* const currentChunk = currentMeasure->GetLastElement();
-
 				currentChunk->PushElement(currentNote);
 			}
 			
 			//A new chunk in the current bar is needed
 			else
-			{
-			 	Bar* const currentMeasure = scoreTree.back();
+			{                
+				//Chunk* const nextChunk = new Chunk(delta,measureIndex);
+				Chunk* const nextChunk = new Chunk(delta,chunkIndex);
                 
-                //Initialize the current optimal note positions to their default
-                //placements
-                if(currentMeasure->GetNumberOfElements() > 0)
+                chunkIndex++;
+                
+				nextChunk->PushElement(currentNote);
+ 				scoreTree.push_back(nextChunk);
+                
+                if(currentChunk != nullptr)
                 {
-                    Chunk* const currentChunk = currentMeasure->GetLastElement();
-                    
+                    //Initialize the current optimal note positions to their default
+                    //placements
                     vector<NotePositionEntry> currentNotePositionEntires = 
                       currentChunk->GetCurrentNotePositionEntries();
-
+                    
                     currentChunk->SetOptimalNotePositions(currentNotePositionEntires);
-                }     
-                
-				Chunk* const nextChunk = new Chunk(delta);
 
-				nextChunk->PushElement(currentNote);
- 				currentMeasure->PushBackElement(nextChunk);
+                    currentChunk->SetNextChunk(nextChunk);
+                    nextChunk->SetPreviousChunk(currentChunk);
+                    
+                    if(currentMeasureIsFull)
+                    {
+                        currentChunk->SetIsMeasureEnd(true);
+                    }
+                }
+                
+                //The bar is full, create a new measure with an empty initial chunk	
+                if(currentMeasureIsFull)
+                {
+                    //Find the delta remainder and carry it over to the next bar. 
+                    //Omit rests across all voices that last more than one bar.  
+                    measureIndex++;
+                    ticksAccumulatedForCurrentMeasure %= ticksPerMeasure;
+                }
+                
 			}	
 
 			ticksAccumulatedForCurrentMeasure += abs(delta);
 		}
 	}
+    
+    scoreTree.back()->SetIsMeasureEnd(true);
     
 	return scoreTree;
 }

@@ -16,15 +16,22 @@ class Chunk : public Base
 {
     private:
 
-        int Delta;
-        int _recursion_lock;
         vector<Note*> Notes;
-        
         vector<NotePositionEntry > CurrentOptimalNotePositionEntries;
+        
+        Chunk* PreviousChunk;
+        Chunk* NextChunk;
+        uint32_t Delta;
+        uint32_t MeasureIndex;
+        bool IsOptimized;
+        bool MeasureStart;
+        vector<FretboardPosition> SustainedFretboardPositions;
+        
 
     public:
 
-        static string PrintNoteIndices(vector<NotePositionEntry > currentNoteConfigurations);
+        static std::string PrintNoteIndices(vector<NotePositionEntry > currentNoteConfigurations);
+        static std::string PrintChunk(Chunk* chunk);
         
         //Temporary note storage
         void PushElement(Note* note);
@@ -44,13 +51,27 @@ class Chunk : public Base
         Note* GetElementWithIndex(uint32_t index) const;
         Note* GetMostMobileNote(void) const; 
         int GetDelta() const;
+        bool GetIsMeasureEnd(void);
+        
+        void SetIsOptimized(bool);
+        void SetPreviousChunk(Chunk* previousChunk);
+        void SetNextChunk(Chunk* nextChunk);
+        void SetIsMeasureEnd(bool);
+        void SetLockedStringIndices(vector<FretboardPosition> lockedStrings);
+        
+        Chunk* GetPreviousChunk(void);
+        Chunk* GetNextChunk(void);
+        bool GetIsOptimized(void);
+        uint32_t GetMeasureIndex(void);
+        uint32_t GetAveragePitch(void);
+        vector<FretboardPosition> GetSustainedFretboardPositions(void);
         
 
         virtual uint32_t GetNumberOfElements() const ;
         virtual void DispatchVisitor(Visitor* v) ;
         bool CheckIfNoteIsAlreadyPresent(Note* note);
 
-        Chunk(int delta=0);
+        Chunk(int delta, uint32_t measureIndex);
         virtual ~Chunk(void);
         
         void CleanChunk(void);

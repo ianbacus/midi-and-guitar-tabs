@@ -9,8 +9,8 @@ using std::vector;
 
 typedef struct FretboardPosition_t
 {
-    uint32_t StringIndex;//StringValue;
-    uint32_t FretNumber;//FretValue;
+    uint32_t StringIndex;
+    uint32_t FretNumber;
     
     FretboardPosition_t(uint32_t string, uint32_t fret)
         :
@@ -21,6 +21,11 @@ typedef struct FretboardPosition_t
     
 } FretboardPosition;
 
+inline bool operator==(const FretboardPosition& lhs, const FretboardPosition& rhs)
+{ 
+    return (lhs.StringIndex == rhs.StringIndex) && 
+        (lhs.FretNumber == rhs.FretNumber);
+}
 
 typedef struct NotePositionEntry_t
 {
@@ -98,6 +103,7 @@ class Note : public Base
         uint32_t GetNoteDurationBeats()  const;
         uint32_t GetTrackNumber() const;
         uint32_t GetPitch() const ;
+        uint32_t GetProximityToNearestTuningBoundary() const;
         
         uint32_t GetPitchOffset() const;
         void MakeNoteMorePlayable();
