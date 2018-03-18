@@ -114,14 +114,28 @@ vector<string> PrintVisitor::GenerateTablatureColumn(Chunk *chunk)
     const string quaverString = TranslateDeltaAndAppendQuaverCodes(chunkDelta);
     
     //Insert padding rows
-    if(NumberOfPaddingRows > 0)
-    {
-        columnOfStringData[0] = quaverString;
-    }
-    
     if(NumberOfPaddingRows > 1)
     {
-        columnOfStringData[1] = string(chunkDelta+NoteTokenWidth,TablatureUnfrettedPadding);
+        Chunk* previousChunk = chunk->GetPreviousChunk();
+        
+        string measureIndex = " ";
+        if((previousChunk != nullptr) && (previousChunk->GetIsMeasureEnd()))
+        {
+            stringstream data;
+            data << chunk->GetMeasureIndex();
+            measureIndex = data.str();
+        }
+        
+        uint32_t paddingWidth = chunkDelta+NoteTokenWidth-measureIndex.size();
+        
+        columnOfStringData[0] = measureIndex + string(paddingWidth,' ');
+            
+        columnOfStringData[1] = quaverString;
+    }
+    
+    else if(NumberOfPaddingRows > 0)
+    {
+        columnOfStringData[0] = quaverString;
     }
     
     for(uint32_t instrumentCourseIndex = 0;
@@ -302,7 +316,6 @@ void PrintVisitor::VisitChunk(Chunk* chunk)
         const uint32_t newLineWidth = (measureLength + CurrentLineWidth);
         const bool createNewRow = newLineWidth > MaximumLineWidthCharacters;
 
-
         if(createNewRow || TablatureBuffer.size() == 0)
         {
             const uint32_t measureIndex = chunk->GetMeasureIndex();
@@ -315,7 +328,8 @@ void PrintVisitor::VisitChunk(Chunk* chunk)
             vector <string> newTablatureRows =  
                 ConcatenateColumnsIntoMeasureStrings(tablatureColumns);
             
-            //newTablatureRows.insert(std::begin(newTablatureRows), indexRowStringStream.str());
+            ///newTablatureRows.insert(std::begin(newTablatureRows), indexRowStringStream.str());
+            //newTablatureRows.push_back(indexRowStringStream.str());
 
 
             TablatureBuffer.push_back(newTablatureRows);
@@ -328,6 +342,7 @@ void PrintVisitor::VisitChunk(Chunk* chunk)
 
             currentTablatureRows = ConcatenateRowGroups(currentTablatureRows, 
                                                         tablatureRows);
+            
 
             TablatureBuffer.back() = currentTablatureRows;
             CurrentLineWidth = newLineWidth;

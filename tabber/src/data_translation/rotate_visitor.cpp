@@ -9,9 +9,14 @@ using namespace std;
 
 stringstream fileStringStream;
     
-//ostream& LogStream = cout;
 ostream& LogStream = fileStringStream;
-//ostream LogStream(nullptr);
+ostream NullStream(nullptr);
+
+#define FEATURE_STREAM NullStream << "\tFeatures: "
+#define COST_STREAM NullStream << "\tCosts: "
+#define ERROR_STREAM NullStream<< "\tError: "
+#define RESULT_STREAM LogStream<< "Results: "
+
 
 
 RotateVisitor::RotateVisitor(
@@ -102,7 +107,7 @@ void RotateVisitor::VisitChunk(Chunk* candidateChunk)
         PreviousFrettedChunky = candidateChunk;
     }
     
-    LogStream << "Optimized chunk: " << Chunk::PrintNoteIndices(candidateChunk->GetCurrentNotePositionEntries()) << endl;
+    RESULT_STREAM << "Optimized chunk: " << Chunk::PrintNoteIndices(candidateChunk->GetCurrentNotePositionEntries()) << endl;
     
 
 } //end VisitChunk
@@ -162,10 +167,15 @@ Chunk* RotateVisitor::SearchForClosestOptimizedChunk(
         bool searchForward,
         bool frettedChunksOnly)
 {
+    const uint32_t maximumUnOptimizedSearchLength = 2;
+    
     Chunk* discoveredChunk = nullptr;
+    uint32_t searchCounter = 0;
     
     while(currentChunk != nullptr)
     {
+        searchCounter++;
+        
         if(searchForward)
         {
             currentChunk = currentChunk->GetNextChunk();
@@ -186,7 +196,7 @@ Chunk* RotateVisitor::SearchForClosestOptimizedChunk(
             }
         }
         
-        else
+        else if(searchCounter == maximumUnOptimizedSearchLength)
         {
             break;
         }
@@ -294,7 +304,7 @@ uint32_t RotateVisitor::ReconfigureChunk(
         {
             //todo: prevent this from happening by cleaning chunks properly
             errorCount++;
-            LogStream << "\tError: exhausted all permutations " <<errorCount << " " << 
+            ERROR_STREAM << "\tError: exhausted all permutations " <<errorCount << " " << 
                     Chunk::PrintNoteIndices(currentNotePositionsEntries) 
                     << ", overlap: " << stringsOverlap 
                     << ", alreadyTried: " << currentNotePositionsAlreadyTried 
@@ -303,7 +313,7 @@ uint32_t RotateVisitor::ReconfigureChunk(
         
         if(!(shouldContinue && errorCount < 10))
         {
-            LogStream << "\tExiting because " << 
+            ERROR_STREAM << "\tExiting because " << 
                     Chunk::PrintNoteIndices(currentNotePositionsEntries) 
                     << ", permutations = " << permutationCount << "/" << permutationsForThisChunk
                     << ", errors = " << "errorCount" << "/" << maxErrorsAllowed
@@ -481,7 +491,7 @@ void RotateVisitor::GetAdjacentChunkRelativeFeatures(Chunk* chunk,
         intersectionsWithNearestChunks = stringIntersectionsWithNext;
     }
     
-    LogStream << "\t" << "FeaturesTrace:" << 
+    FEATURE_STREAM <<
             "\r\n\t\tPrevious fretted chunk:" 
                 << Chunk::PrintChunk(previousFrettedChunk) 
                 << ", center = " << previousFrettedChunkFretCenter
@@ -512,10 +522,10 @@ uint32_t RotateVisitor::CalculateConfigurationCost(
     
     vector<NotePositionEntry > indices = chunk->GetCurrentNotePositionEntries();
     
-    LogStream << "\tFeaturesTrace: Candidate chunk." << endl;
+    FEATURE_STREAM << "Candidate chunk." << endl;
     GetChunkFeatures(chunk, candidateChunkFeatures);
 
-    LogStream << "\tCostTrace:" << Chunk::PrintNoteIndices(indices) << endl;
+    COST_STREAM << Chunk::PrintNoteIndices(indices) << endl;
     chunkCost =  EvaluateConfigurationFeatures(candidateChunkFeatures);
     
     
@@ -649,7 +659,7 @@ void RotateVisitor::GetChunkFeatures(
         stringIndices<< "|";
 
         
-        LogStream << "\t" << Chunk::PrintNoteIndices(chunkIndices) << "FeaturesTrace:" << 
+        FEATURE_STREAM << Chunk::PrintNoteIndices(chunkIndices) << 
             "\r\n\t\tMax Fret:" << chunkFeatures.maximumFretInCandidateChunk << " " 
             "\r\n\t\tSpan:" << chunkFeatures.fretSpacingInCandidateChunk << " " <<
             "\r\n\t\tFret Center:" << chunkFeatures.fretCenterInCandidateChunk << 
@@ -677,7 +687,7 @@ uint32_t RotateVisitor::EvaluateConfigurationFeatures(
                         maximumFretCost + fretSpanCost + interChunkSpacingCost; 
         
     
-    LogStream << "\tCostTrace: $" << candidateCost << 
+    COST_STREAM << "$" << candidateCost << 
             "\r\n\t\tMaxFret:" << maximumFretCost << 
             "\r\n\t\tFretSpan:" << fretSpanCost << 
             "\r\n\t\tAdjacency:" << interChunkSpacingCost << 

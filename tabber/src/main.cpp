@@ -101,13 +101,9 @@ int ParseFileIntoTab(const string inputFile, const string outputFile,
                 return lhs->GetProximityToNearestTuningBoundary() <
                        rhs->GetProximityToNearestTuningBoundary();
             });
-        
-//        uint32_t leastMobileNotePlacementsLeft = leastMobileNoteLeft->GetNumberOfElements();
-//        uint32_t leastMobileNotePlacementsRight = leastMobileNoteRight->GetNumberOfElements();
             
         uint32_t leastMobileNotePlacementsLeft = leastMobileNoteLeft->GetProximityToNearestTuningBoundary();
         uint32_t leastMobileNotePlacementsRight = leastMobileNoteRight->GetProximityToNearestTuningBoundary();
-        
         
         if(leastMobileNotePlacementsLeft == leastMobileNotePlacementsRight)
         {
@@ -123,6 +119,7 @@ int ParseFileIntoTab(const string inputFile, const string outputFile,
     
     for (Chunk* currentChunk : sortedScore)
     {
+        cout << Chunk::PrintChunk(currentChunk) << endl;
         uint32_t measureIndex = currentChunk->GetMeasureIndex();
         if((lowerBound <= measureIndex) && (measureIndex <= upperBound))
         {
