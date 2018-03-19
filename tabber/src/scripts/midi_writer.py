@@ -12,11 +12,11 @@ MaximumNotesPerBeat = 8.0
 MaximumChunkSize = 6
 RoundTo = 100
 
-lowest = 0
-maxNote = 0
+LowestNote = 0
+MaximumNote = 0
 
 
-def float_eq( a, b, eps=0.5):
+def float_eq( a, b, eps=0.65):
     return abs(a - b) <= eps
     
 
@@ -76,8 +76,15 @@ def ProcessNote(midiEvent, currentEventTickValue,currentTrackNumber):
             pass
 
 
-def RemoveMiddleMidiTracks():
+def PreprocessTracks(midiTracks):
     
+    deleteTracks = False
+    trackNumberList = {i:0 for i in range(len(midiTracks))}
+
+    sumOfAverages = 0
+    maxNoteForAllTracks = 0
+    minNoteForAllTracks = 200
+
     #preprocess tracks, sort by their average pitch value
     for currentTrackNumber, track in enumerate(midiTracks):
         numberOfNotes = 0
@@ -85,6 +92,7 @@ def RemoveMiddleMidiTracks():
         highestPitchMidiValue = 0
         lowestPitchMidiValue = 200
         
+        #Get the average note information for this track
         for midiEvent in track:
             if type(midiEvent) is midi.events.NoteOnEvent:
                 pitchMidiValue = midiEvent.get_pitch()
@@ -94,17 +102,26 @@ def RemoveMiddleMidiTracks():
                 highestPitchMidiValue = max(highestPitchMidiValue,pitchMidiValue)
                 noteSum += pitchMidiValue
                 numberOfNotes += 1
+                
         if(numberOfNotes == 0):
             del trackNumberList[currentTrackNumber]
         else:
             noteAverage = noteSum / numberOfNotes
             trackNumberList[currentTrackNumber] = noteAverage
+            
+            lowestPitchMidiValue = min(lowestPitchMidiValue,minNoteForAllTracks)
+            highestPitchMidiValue = max(highestPitchMidiValue,maxNoteForAllTracks)
 
     sortedTracks = sorted(trackNumberList, key=trackNumberList.get)
-    
-    while(len(sortedTracks) > maximumNumberOfTracks):
-        middleIndex = len(sortedTracks)/2
-        sortedTracks.pop(middleIndex)
+    sortedAverages = [trackNumberList[trackIndex] for trackIndex in sortedTracks]
+        
+    if(deleteTracks):
+        while(len(sortedTracks) > maximumNumberOfTracks):
+            middleIndex = len(sortedTracks)/2
+            sortedTracks.pop(middleIndex)
+
+    averageOfAllTracks = sum(sortedAverages)/len(sortedAverages)
+    return minNoteForAllTracks,maxNoteForAllTracks,averageOfAllTracks
 
 
 
@@ -117,8 +134,7 @@ def BuildTickToPitchMidiValueDictionary(midiTracks,maximumNumberOfTracks):
 
     resolution = pulsesPerQuarterNote
     
-    sortedTracks = range(len(midiTracks))
-    trackNumberList = {i:0 for i in range(len(midiTracks))}
+    minNoteForAllTracks,maxNoteForAllTracks,averageOfAllTracks = PreprocessTracks(midiTracks)
     
     if (maximumNumberOfTracks > 0):
         global MaximumChunkSize
@@ -128,9 +144,6 @@ def BuildTickToPitchMidiValueDictionary(midiTracks,maximumNumberOfTracks):
         RemoveMiddleMidiTracks()
         
     for currentTrackNumber,track in enumerate(midiTracks):
-        #only process unfiltered tracks
-        if currentTrackNumber not in sortedTracks:
-            continue
         
         currentEventTickValue = 0
         track.make_ticks_abs()
@@ -150,7 +163,8 @@ def BuildTickToPitchMidiValueDictionary(midiTracks,maximumNumberOfTracks):
                 ProcessNote(midiEvent, currentEventTickValue,currentTrackNumber)
             
         #end of track
-    #end of all tracks 
+    #end of all tracks
+    return averageOfAllTracks
 
 
 def HandleSpecialDeltaValues(delta):
@@ -188,11 +202,14 @@ def ProcessChunk(chunk,chunkDuration,iof):
     chunkDelta = HandleSpecialDeltaValues(chunkDuration)
 
     #Remove middle voices if the chunk is too large
-    while len(chunk) > MaximumChunkSize: 
-        chunk.pop(len(chunk)/2)
+    sortedChunk = sorted(chunk, key=lambda k: k['pitch'])
+
+    while len(sortedChunk) > MaximumChunkSize: 
+        popIndex = len(sortedChunk)/2
+        sortedChunk.pop(popIndex)
 
     #Extract the data for each note
-    for event in chunk:
+    for event in sortedChunk:
 
         noteMidiPitch = event['pitch']
         noteDuration = event['duration']
@@ -256,10 +273,12 @@ def make(newfile,infile,maximumNumberOfTracks, note_offsets):
     midiTracks = midi.read_midifile(infile)
     
     #Extract useful information (time signature changes, note on and off events) into a dictionary
-    BuildTickToPitchMidiValueDictionary(midiTracks,int(maximumNumberOfTracks))
+    averagePitch = BuildTickToPitchMidiValueDictionary(midiTracks,int(maximumNumberOfTracks))
 
     #Write the output to an intermediate file
     WriteExtractedMidiDataToIntermediateFile(newfile)
+    
+    return averagePitch
 
 
 

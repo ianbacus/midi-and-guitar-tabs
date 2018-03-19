@@ -9,10 +9,10 @@ map<int,int> beat_value = {{1,32},{2,16},{4,8},{8,4},{16,2},{32,1}};
 std::map<int,string> quaver_map = 
 {
 	{1, " S"}, {2, " T"},  
-    {4, " s"}, {6, " s"},
-    {8, " e"}, {14," e"}, 
-    {16," q"}, {24," q"},
-    {32," h"}, {56," h"}, 
+    {4, " s"}, {6, "'s"},
+    {8, " e"}, {14,"'e"}, 
+    {16," q"}, {24,"'q"},
+    {32," h"}, {56,"'h"}, 
     {64," w"},
 };
 
@@ -75,14 +75,13 @@ uint32_t PrintVisitor::GetNumberOfTablaturePrintRows(void)
 vector<string> PrintVisitor::GenerateTablatureStartColumn(void)
 {
     const uint32_t numberOfTablaturePrintRows = GetNumberOfTablaturePrintRows();
-    const uint32_t numberOfTablatureRows = InstrumentStringNames.size();
     
 	vector<string> columnOfStringData(numberOfTablaturePrintRows);
     
     uint32_t maxIndex = numberOfTablaturePrintRows-1;
     for(uint32_t paddingIndex =0; paddingIndex<NumberOfPaddingRows;paddingIndex++)
     {
-        columnOfStringData[paddingIndex] = "|x ";
+        columnOfStringData[paddingIndex] = "|  ";
     }
     
     for(int32_t instrumentCourseIndex = (maxIndex-NumberOfPaddingRows); 
@@ -115,14 +114,28 @@ vector<string> PrintVisitor::GenerateTablatureColumn(Chunk *chunk)
     const string quaverString = TranslateDeltaAndAppendQuaverCodes(chunkDelta);
     
     //Insert padding rows
-    if(NumberOfPaddingRows > 0)
-    {
-        columnOfStringData[0] = quaverString;
-    }
-    
     if(NumberOfPaddingRows > 1)
     {
-        columnOfStringData[1] = string(chunkDelta+NoteTokenWidth,TablatureUnfrettedPadding);
+        Chunk* previousChunk = chunk->GetPreviousChunk();
+        
+        string measureIndex = " ";
+        if((previousChunk != nullptr) && (previousChunk->GetIsMeasureEnd()))
+        {
+            stringstream data;
+            data << chunk->GetMeasureIndex();
+            measureIndex = data.str();
+        }
+        
+        uint32_t paddingWidth = chunkDelta+NoteTokenWidth-measureIndex.size();
+        
+        columnOfStringData[0] = measureIndex + string(paddingWidth,' ');
+            
+        columnOfStringData[1] = quaverString;
+    }
+    
+    else if(NumberOfPaddingRows > 0)
+    {
+        columnOfStringData[0] = quaverString;
     }
     
     for(uint32_t instrumentCourseIndex = 0;
@@ -239,10 +252,7 @@ void PrintVisitor::VisitBar(Bar* currentBar)
     vector<vector<string> > tablatureColumns;
     
     for(Chunk *chunk : chunks)
-    {
-//        UpdateStringIndexedRemainingDeltaTicks(chunk);
-//        PreviousChunk = chunk;
-        
+    {        
         vector<string> chunkColumn = GenerateTablatureColumn(chunk);
         
         tablatureColumns.push_back(chunkColumn);
@@ -255,6 +265,7 @@ void PrintVisitor::VisitBar(Bar* currentBar)
     const uint32_t measureLength = tablatureRows[0].size();
     const uint32_t newLineWidth = (measureLength + CurrentLineWidth);
     const bool createNewRow = newLineWidth > MaximumLineWidthCharacters;
+    
     
     if(createNewRow || TablatureBuffer.size() == 0)
     {
@@ -284,9 +295,61 @@ void PrintVisitor::VisitBar(Bar* currentBar)
 } //end VisitBar
 
 
-void PrintVisitor::VisitChunk(Chunk* currentBar)
+void PrintVisitor::VisitChunk(Chunk* chunk)
 {
+    static vector<vector<string> > tablatureColumns;
+    bool measureEnd = chunk->GetIsMeasureEnd();    
+
+    vector<string> chunkColumn = GenerateTablatureColumn(chunk);
+
+    tablatureColumns.push_back(chunkColumn);  
     
+    
+    if(measureEnd)
+    {
+        const uint32_t numberOfTablatureRows = InstrumentStringNames.size();
+        vector<string> breakColumn(numberOfTablatureRows+NumberOfPaddingRows, "|");
+        tablatureColumns.push_back(breakColumn);
+        vector <string> tablatureRows = ConcatenateColumnsIntoMeasureStrings(tablatureColumns);
+        
+        const uint32_t measureLength = tablatureRows[0].size();
+        const uint32_t newLineWidth = (measureLength + CurrentLineWidth);
+        const bool createNewRow = newLineWidth > MaximumLineWidthCharacters;
+
+        if(createNewRow || TablatureBuffer.size() == 0)
+        {
+            const uint32_t measureIndex = chunk->GetMeasureIndex();
+            stringstream indexRowStringStream;
+            indexRowStringStream << measureIndex;
+            
+            vector<string> startColumn = GenerateTablatureStartColumn();
+            tablatureColumns.insert(std::begin(tablatureColumns), startColumn);
+
+            vector <string> newTablatureRows =  
+                ConcatenateColumnsIntoMeasureStrings(tablatureColumns);
+            
+            ///newTablatureRows.insert(std::begin(newTablatureRows), indexRowStringStream.str());
+            //newTablatureRows.push_back(indexRowStringStream.str());
+
+
+            TablatureBuffer.push_back(newTablatureRows);
+            CurrentLineWidth = measureLength;
+        }
+
+        else
+        {
+            vector<string> currentTablatureRows = TablatureBuffer.back();
+
+            currentTablatureRows = ConcatenateRowGroups(currentTablatureRows, 
+                                                        tablatureRows);
+            
+
+            TablatureBuffer.back() = currentTablatureRows;
+            CurrentLineWidth = newLineWidth;
+        }
+        
+        tablatureColumns.erase(begin(tablatureColumns), end(tablatureColumns));
+    }
 }
 
 void PrintVisitor::VisitNote(Note* currentBar)
@@ -390,7 +453,6 @@ void PrintVisitor::WriteTablatureToOutputFile(string fileName)
     
     for(vector<string> tablatureRow: TablatureBuffer)
     {
-        
         for(string tablatureRowData : tablatureRow)
         {
             tablatureStringStream <<  tablatureRowData << "\r\n";

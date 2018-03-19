@@ -1,5 +1,6 @@
 #include "base.h"
 #include <set>
+#include <unordered_map>
 #include <sstream>
 #include <assert.h>
 
@@ -18,9 +19,37 @@ string Chunk::PrintNoteIndices(vector<NotePositionEntry > noteConfiguration)
     return sstream.str();
 }
 
-Chunk::Chunk(int d) 
+string Chunk::PrintChunk(Chunk* chunk)
+{
+    std::stringstream sstream;
+    
+    if(chunk != nullptr)
+    {
+        vector<NotePositionEntry > noteConfiguration = chunk->GetCurrentNotePositionEntries();
+
+        //Print the fret and string of each note in the current chunk configuration	
+        for(NotePositionEntry notePositionEntry: noteConfiguration)
+        {
+            sstream << Note::PrintNote(notePositionEntry)<<" ";
+        }
+    }
+    
+    else
+    {
+        sstream << "|null|";
+    }
+    
+    return sstream.str();
+}
+
+Chunk::Chunk(int d,uint32_t measureIndex) 
     : 
-        Delta(d), _recursion_lock(0) 
+        Delta(d),
+        MeasureIndex(measureIndex),
+        IsOptimized(false),
+        MeasureStart(false),
+        PreviousChunk(nullptr),
+        NextChunk(nullptr)
 {
 
 }
@@ -88,6 +117,43 @@ void Chunk::DispatchVisitor(Visitor* v)
 }
 
 
+bool ChunkHasUnConfigurableNotesOnOneString(Chunk* chunk) 
+{
+    bool chunkValid = true;
+    vector<Note*> chunkNotes = chunk->GetElements();
+    
+    vector<uint32_t> stringIndices;
+    unordered_map<uint32_t, uint32_t> stringToOverlapCountMap;
+    
+    
+    //Pigeon-hole principle: if there are more notes than fretted strings, in
+    //all possible configurations, this chunk cannot be reconfigured
+    
+    for (Note* note : chunkNotes) 
+    {
+        vector<FretboardPosition> notePositions = note->GetNotePositions();
+        
+        if(notePositions.size() == 1)
+        {
+            uint32_t stringIndex = notePositions.back().StringIndex;
+            stringToOverlapCountMap[stringIndex]++;
+
+            chunkValid = stringToOverlapCountMap[stringIndex] <= 1;
+        }
+        
+        if(!chunkValid)
+        {
+            break;
+        }
+    }
+    
+    for (auto kv : stringToOverlapCountMap)
+    {
+    }
+    
+    return chunkValid;
+}
+
 bool ChunkIsValid(Chunk* chunk) 
 {
 
@@ -100,7 +166,6 @@ bool ChunkIsValid(Chunk* chunk)
     //Pigeon-hole principle: if there are more notes than fretted strings, in
     //all possible configurations, this chunk cannot be reconfigured
     
-    //Sort notes by mobility
     for (Note* note : chunkNotes) 
     {
         vector<FretboardPosition> notePositions = note->GetNotePositions();
@@ -112,8 +177,9 @@ bool ChunkIsValid(Chunk* chunk)
             stringsUsed.insert(stringIndex);
         }
     }
-
+    
     uint32_t numberOfStringsUsed = stringsUsed.size();
+
     if (numberOfStringsUsed < numberOfNotes) 
     {
         chunkValid = true;
@@ -122,22 +188,74 @@ bool ChunkIsValid(Chunk* chunk)
     return chunkValid;
 }
 
+uint32_t Chunk::GetAveragePitch(void)
+{
+    vector<Note*> chunkNotes = GetElements();
+    uint32_t chunkSize = chunkNotes.size();
+    uint32_t averagePitch = 0;
+    
+    if(chunkSize > 0)
+    {
+        //Find average pitch in this note
+        for(Note* note : chunkNotes)
+        {
+            uint32_t octave = 0;
+            uint32_t pitch = 0;
+            note->GetPlayablePitch(octave,pitch);
+            averagePitch += pitch;
+        }
+
+        averagePitch = averagePitch/chunkSize;
+    }
+    return averagePitch;
+}
+
 //add extra note positions for middle-voice notes with note position entries
 //of size 1 
 void Chunk::CleanChunk(void)
 {
-    while(!ChunkIsValid(this))
+    while(!ChunkHasUnConfigurableNotesOnOneString(this))
     {
-        cout << "cleaning chunk." << endl;
+        cout << "Cleaning chunk." << endl;
         vector<Note*> chunkNotes = GetElements();
+        uint32_t chunkSize = chunkNotes.size();
         
-        if(chunkNotes.size() > 0)
-        {
-            sort(begin(chunkNotes),end(chunkNotes), [](const Note* left, const Note* right)
+        if(chunkSize > 0)
+        {            
+            uint32_t averagePitch = GetAveragePitch();
+            cout << "Unsorted |";
+            for (Note* x : chunkNotes)
             {
-                return left->GetNumberOfElements() < right->GetNumberOfElements();
+                cout << Note::PrintNote(x->GetCurrentNotePosition()) << " ";
+            }
+            
+            sort(begin(chunkNotes),end(chunkNotes), [averagePitch](const Note* left, const Note* right)
+            {
+                uint32_t lhsPositions = left->GetNumberOfElements();
+                uint32_t rhsPositions = right->GetNumberOfElements();
+                
+                //Make sure the center-most notes come first
+                if(lhsPositions == rhsPositions)
+                {
+                    return abs((left->GetPitch()) - averagePitch) < 
+                           abs(right->GetPitch() - averagePitch);
+                }
+                
+                //Make sure the more immobile notes come first
+                else
+                {
+                    return lhsPositions < rhsPositions;
+                }
             });
-
+            
+            cout << "| Sorted |";
+            for (auto x : chunkNotes)
+            {
+                cout << x << " ";
+            }
+            cout << "|" << endl;
+            
+            //Make the least playable note more playable by shifting it up an octave
             chunkNotes[0]->MakeNoteMorePlayable();
         }
     }
@@ -172,6 +290,7 @@ bool Chunk::CheckIfNoteIsAlreadyPresent(Note* note)
     
     return duplicateNote;
 }
+
 /* 
  *	Insert a note into the vector of notes. Insert in sorted order by the number of frettable
  *	positions for that note.
@@ -250,6 +369,11 @@ int Chunk::GetDelta(void) const
 	return Delta;
 }
 
+bool Chunk::GetIsMeasureEnd(void)
+{
+    return MeasureStart;
+}
+
 uint32_t Chunk::GetNumberOfPositionPermutations(void) const
 {
     const uint32_t numberOfNotes = GetNumberOfElements();
@@ -268,6 +392,77 @@ uint32_t Chunk::GetNumberOfPositionPermutations(void) const
     return notePermutations;
 }
 
+void Chunk::SetIsOptimized(bool isOptimized)
+{
+    IsOptimized = isOptimized;
+}
+
+void Chunk::SetPreviousChunk(Chunk* previousChunk)
+{
+    //Only change the previous chunk if it has not been set
+    if(PreviousChunk == nullptr)
+    {
+        PreviousChunk = previousChunk;
+    }
+}
+
+void Chunk::SetNextChunk(Chunk* nextChunk)
+{
+    //Only change the next chunk if it has not been set
+    if(NextChunk == nullptr)
+    {
+        NextChunk = nextChunk;
+    }
+}
+
+void Chunk::SetIsMeasureEnd(bool isMeasureStart)
+{
+    MeasureStart = isMeasureStart;
+}
+
+//Set locked strings without clearing others
+void Chunk::SetLockedStringIndices(vector<FretboardPosition> lockedStrings)
+{    
+    for(FretboardPosition fretPosition : lockedStrings)
+    {
+        for(FretboardPosition currentFretPosition : SustainedFretboardPositions)
+        {
+            if(currentFretPosition.StringIndex == fretPosition.StringIndex)
+            {
+                replace(begin(SustainedFretboardPositions),
+                        end(SustainedFretboardPositions),
+                        currentFretPosition,fretPosition);
+            }
+        }
+    }
+}
+
+Chunk* Chunk::GetPreviousChunk(void)
+{
+    return PreviousChunk;    
+}
+
+Chunk* Chunk::GetNextChunk(void)
+{
+    return NextChunk;
+}
+
+bool Chunk::GetIsOptimized(void)
+{
+    return IsOptimized;
+}
+        
+uint32_t Chunk::GetMeasureIndex(void)
+{
+    return MeasureIndex;
+}
+
+
+vector<FretboardPosition> Chunk::GetSustainedFretboardPositions(void)
+{
+    return SustainedFretboardPositions;
+}
+        
 
 /* 
  *	Get the number of fret+string positions in the current optima

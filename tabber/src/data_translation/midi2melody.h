@@ -28,7 +28,7 @@ struct TabberSettings
         uint32_t NumberOfFrets;
         uint32_t CapoFret;
         vector<uint16_t> StringIndexedMidiPitches;
-        vector<string> StringIndexedNoteNames;
+        vector<std::string> StringIndexedNoteNames;
         
     } InstrumentInfo;
     
@@ -39,8 +39,8 @@ struct TabberSettings
     } Formatting;
 };
 
-vector<Bar*> ParseIntermediateFile(string infile,int,int);
-void ParseTabberSettingsFile(string infile, TabberSettings& tabSettings);
+vector<Chunk*> ParseIntermediateFile(std::string infile,int,int);
+void ParseTabberSettingsFile(std::string infile, TabberSettings& tabSettings);
 
 
 

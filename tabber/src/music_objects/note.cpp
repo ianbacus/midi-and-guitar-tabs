@@ -364,6 +364,29 @@ uint32_t Note::GetPitch() const
 	return PitchMidiValue;//+PitchOffset;
 }
 
+
+uint32_t Note::GetProximityToNearestTuningBoundary() const
+{
+    uint32_t proximityToNearestTuningBoundary = UINT32_MAX;
+    uint32_t octave;
+    uint32_t pitchMidiValue = GetPitch();
+    bool success = GetPlayablePitch(octave, pitchMidiValue);
+    
+    if(success)
+    {
+        const uint32_t differenceFromTuningMinimum = 
+            abs((int)(pitchMidiValue - TuningMinimum));
+        
+        const uint32_t differenceFromTuningMaximum = 
+            abs((int)(pitchMidiValue - TuningMaximum));
+        
+        proximityToNearestTuningBoundary = 
+                min(differenceFromTuningMinimum,differenceFromTuningMaximum);
+    }
+    
+    return proximityToNearestTuningBoundary;
+}
+
 bool Note::GetPlayablePitch(uint32_t& numberOfOctaves, uint32_t& pitchMidiValue) 
 {
     uint32_t numberOfElements = 0;

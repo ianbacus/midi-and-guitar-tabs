@@ -1,13 +1,22 @@
 #include "rotate_visitor.h"
 #include <algorithm>
 #include <sstream>
+#include <fstream>
 #include <unordered_map>
 #include <assert.h>
 
 using namespace std;
 
-//ostream& LogStream = cout;
-ostream LogStream(nullptr);
+stringstream fileStringStream;
+    
+ostream& LogStream = fileStringStream;
+ostream NullStream(nullptr);
+
+#define FEATURE_STREAM NullStream << "\tFeatures: "
+#define COST_STREAM NullStream << "\tCosts: "
+#define ERROR_STREAM NullStream<< "\tError: "
+#define RESULT_STREAM LogStream<< "Results: "
+
 
 
 RotateVisitor::RotateVisitor(
@@ -19,19 +28,25 @@ RotateVisitor::RotateVisitor(
     : 
         StringIndexedFrettedNotes(numberOfStrings),
         StringIndexedRemainingDeltaTicks(numberOfStrings),
+        NumberOfStrings(numberOfStrings),
         MaximumFretScalar(maximumFretScalar),
         FretSpanScalar(fretSpanScalar),
         InterChunkSpacingScalar(interChunkSpacingScalar),
         StringOverlapScalar(stringOverlapScalar),
-        PreviousChunk(nullptr),
-        PreviousFrettedChunk(nullptr)
+        PreviousChunky(nullptr),
+        PreviousFrettedChunky(nullptr)
          
 {
     
 }
 
 RotateVisitor::~RotateVisitor(void) 
-{
+{    
+    ofstream outputFileStream;
+    
+	outputFileStream.open("debugOutput.txt");
+	outputFileStream << LogStream.rdbuf();
+	outputFileStream.close();
 }
 
 //Go through all of the chunks in a given bar and reconfigure them
@@ -40,6 +55,8 @@ void RotateVisitor::VisitBar(Bar* bar)
     for(uint32_t barIndex=0; barIndex < bar->GetNumberOfElements(); barIndex++)
     {
         Chunk* candidateChunk = bar->GetElementWithIndex(barIndex);
+        
+        candidateChunk->CleanChunk();
         candidateChunk->DispatchVisitor(this);
     }
 }
@@ -54,6 +71,7 @@ void RotateVisitor::VisitChunk(Chunk* candidateChunk)
     uint32_t currentLowestCost = UINT32_MAX;
     uint32_t chunkFretCenter = 0;
     
+    candidateChunk->CleanChunk();
     bool morePermutations = true;
     
     while(morePermutations)
@@ -76,18 +94,20 @@ void RotateVisitor::VisitChunk(Chunk* candidateChunk)
     ResetMarkedChunks();
     
     candidateChunk->RepositionNotesToCurrentOptimalPositions();
+    candidateChunk->SetIsOptimized(true);
     chunkFretCenter = GetChunkFretCenter(candidateChunk);
     
-    UpdateStringIndexedRemainingDeltaTicks(candidateChunk);
+    //UpdateStringIndexedRemainingDeltaTicks(candidateChunk);
+    LockStringsInTheNextFewChunksForThisConfiguration(candidateChunk);
 
-    PreviousChunk = candidateChunk;
+    PreviousChunky = candidateChunk;
     
     if(chunkFretCenter != 0)
     {
-        PreviousFrettedChunk = candidateChunk;
+        PreviousFrettedChunky = candidateChunk;
     }
     
-    LogStream << "Optimized chunk: " << Chunk::PrintNoteIndices(candidateChunk->GetCurrentNotePositionEntries()) << endl;
+    RESULT_STREAM << "Optimized chunk: " << Chunk::PrintNoteIndices(candidateChunk->GetCurrentNotePositionEntries()) << endl;
     
 
 } //end VisitChunk
@@ -95,7 +115,7 @@ void RotateVisitor::VisitChunk(Chunk* candidateChunk)
 void RotateVisitor::UpdateStringIndexedRemainingDeltaTicks(
     Chunk* candidateChunk)
 {
-    Chunk* previousChunk = PreviousChunk;
+    Chunk * const previousChunk = SearchForClosestOptimizedChunk(candidateChunk, false, false);//PreviousChunk;
     
     vector<Note*> chunkNotes = candidateChunk->GetElements();
     
@@ -141,6 +161,108 @@ void RotateVisitor::UpdateStringIndexedRemainingDeltaTicks(
     }
 }
 
+//Get the closest adjacent optimized chunk
+Chunk* RotateVisitor::SearchForClosestOptimizedChunk(
+        Chunk* currentChunk, 
+        bool searchForward,
+        bool frettedChunksOnly)
+{
+    const uint32_t maximumUnOptimizedSearchLength = 2;
+    
+    Chunk* discoveredChunk = nullptr;
+    uint32_t searchCounter = 0;
+    
+    while(currentChunk != nullptr)
+    {
+        searchCounter++;
+        
+        if(searchForward)
+        {
+            currentChunk = currentChunk->GetNextChunk();
+        }
+
+        else
+        {
+            currentChunk = currentChunk->GetPreviousChunk();
+        }
+        
+        if((currentChunk != nullptr) && currentChunk->GetIsOptimized())
+        {
+            if(((frettedChunksOnly) && (GetChunkFretCenter(currentChunk) != 0)) ||
+                !frettedChunksOnly)
+            {
+                discoveredChunk = currentChunk;
+                break;
+            }
+        }
+        
+        else if(searchCounter == maximumUnOptimizedSearchLength)
+        {
+            break;
+        }
+    }
+    
+    return discoveredChunk;
+}
+
+void RotateVisitor::LockStringsInTheNextFewChunksForThisConfiguration(Chunk *chunk)
+{
+    vector<uint32_t> stringIndexedRemainingDeltaTicks(NumberOfStrings);
+    vector<uint32_t> stringIndexedFrettedNotes(NumberOfStrings);
+    
+    for(Note* note : chunk->GetElements())
+    {
+        uint32_t stringIndex = note->GetStringIndexForCurrentNotePosition();
+        uint32_t fretNumber = note->GetFretForCurrentNotePosition();
+        uint32_t noteDuration = note->GetNoteDurationBeats();
+        
+        if(noteDuration != 0)
+        {
+            stringIndexedRemainingDeltaTicks[stringIndex] = noteDuration;
+            stringIndexedFrettedNotes[stringIndex] = fretNumber;
+        }
+    }
+    
+    bool currentChunkSustained = true;
+    
+    while(currentChunkSustained)
+    {
+        chunk = chunk->GetNextChunk();
+        
+        currentChunkSustained = false;
+        
+        if(chunk != nullptr)
+        {
+            uint32_t delta = chunk->GetDelta();
+            
+            vector<FretboardPosition> sustainedFretboardPositions;
+            
+            for(uint32_t stringIndex=0;stringIndex<NumberOfStrings;stringIndex++)
+            {
+                uint32_t currentDeltaValue = 
+                        stringIndexedRemainingDeltaTicks[stringIndex];
+                
+                stringIndexedRemainingDeltaTicks[stringIndex] -= 
+                        min(currentDeltaValue,delta);
+                
+                if(stringIndexedRemainingDeltaTicks[stringIndex] > 0)
+                {
+                    const uint32_t fretNumberForString = 
+                        stringIndexedFrettedNotes[stringIndex];
+                    
+                    const FretboardPosition 
+                        fretPosition(stringIndex,fretNumberForString);
+                    
+                    sustainedFretboardPositions.push_back(fretPosition);
+                    currentChunkSustained = true;
+                }
+            }
+            
+            chunk->SetLockedStringIndices(sustainedFretboardPositions);
+        }
+    }
+}
+
 //Change the note positions in this chunk to a configuration that has not 
 //been checked yet. Skip configurations with impossible fingerings. 
 uint32_t RotateVisitor::ReconfigureChunk(
@@ -148,6 +270,7 @@ uint32_t RotateVisitor::ReconfigureChunk(
         uint32_t permutationCount,
         bool& morePermutations)
 {
+    uint32_t maxErrorsAllowed = 10;
     uint32_t errorCount = 0;
     uint32_t octaveShiftCost = 0;
     
@@ -173,19 +296,33 @@ uint32_t RotateVisitor::ReconfigureChunk(
         const bool stringsOverlap = ValidateStringOverlapsForNotePositions(currentNotePositionsEntries);
         
         const bool currentNotePositionsAlreadyTried = 
-                WasChunkProcessed(candidateChunk->GetCurrentNotePositionEntries());
+                WasConfigurationProcessed(candidateChunk->GetCurrentNotePositionEntries());
         
         shouldContinue = stringsOverlap ||  (currentNotePositionsAlreadyTried && 
                                              morePermutations);
-        
         if(exhaustedAllPermutations)
         {
             //todo: prevent this from happening by cleaning chunks properly
             errorCount++;
-            LogStream << "\tError " <<errorCount << " " << Chunk::PrintNoteIndices(currentNotePositionsEntries) << " " << stringsOverlap << " " << currentNotePositionsAlreadyTried << " " << morePermutations << endl;
+            ERROR_STREAM << "\tError: exhausted all permutations " <<errorCount << " " << 
+                    Chunk::PrintNoteIndices(currentNotePositionsEntries) 
+                    << ", overlap: " << stringsOverlap 
+                    << ", alreadyTried: " << currentNotePositionsAlreadyTried 
+                    << ", morePermutations: " << morePermutations << endl;
         }
         
-    } while(shouldContinue && (permutationCount < permutationsForThisChunk) && errorCount < 10);
+        if(!(shouldContinue && errorCount < 10))
+        {
+            ERROR_STREAM << "\tExiting because " << 
+                    Chunk::PrintNoteIndices(currentNotePositionsEntries) 
+                    << ", permutations = " << permutationCount << "/" << permutationsForThisChunk
+                    << ", errors = " << "errorCount" << "/" << maxErrorsAllowed
+                    << ", overlap: " << stringsOverlap 
+                    << ", alreadyTried: " << currentNotePositionsAlreadyTried 
+                    << ", morePermutations: " << morePermutations << endl;
+        }
+        
+    } while(shouldContinue && (errorCount < maxErrorsAllowed));
     
     
     return octaveShiftCost;
@@ -202,11 +339,11 @@ void RotateVisitor::SelectOptimalFingering(
     vector<NotePositionEntry> candidateChunkFingering =
         chunkToConfigure->GetCurrentNotePositionEntries();
     
-    const bool alreadyCheckedThisConfiguration = WasChunkProcessed(candidateChunkFingering);
+    const bool alreadyCheckedThisConfiguration = WasConfigurationProcessed(candidateChunkFingering);
     
     if(!alreadyCheckedThisConfiguration)
     {
-        const uint32_t candidateCost = CalculateConfigurationCost(candidateChunkFingering);
+        const uint32_t candidateCost = CalculateConfigurationCost(chunkToConfigure);
         
         if(candidateCost < currentLowestCost)
         {            
@@ -216,7 +353,7 @@ void RotateVisitor::SelectOptimalFingering(
             currentLowestCost = candidateCost;
         }
         
-        MarkChunkAsProcessed(candidateChunkFingering);   
+        MarkConfigurationProcessed(candidateChunkFingering);   
         
     }
 } //end SelectOptimalFingering
@@ -290,132 +427,107 @@ bool RotateVisitor::ValidateStringOverlapsForNotePositions(vector<NotePositionEn
     return stringsOverlap;
 }
 
-void RotateVisitor::GetStringOverlapStuff(
-            vector<NotePositionEntry> notePositions, 
-            uint32_t fretCenterInCandidateChunk, 
-            uint32_t& candidateSpacingFromLastChunk,
-            uint32_t& intersectionsWithPreviousChunk)
+
+void RotateVisitor::GetAdjacentChunkRelativeFeatures(Chunk* chunk,
+            uint32_t& distanceFromNearestFrettedChunks,
+            uint32_t& intersectionsWithNearestChunks)
 {
-    uint32_t candidateSpacingFromPreviousChunk = 0;
-    uint32_t candidateSpacingFromFrettedNotes = 0;
-    uint32_t fretCenterInFrettedNotes = 0;
     
-    uint32_t maximumFretInPreviousChunk = 0;
-    uint32_t fretSpacingInPreviousChunk = 0;
-    uint32_t fretCenterInPreviousChunk = 0;
-    uint32_t sustainDontCare = 0;
+    Chunk * const previousFrettedChunk = SearchForClosestOptimizedChunk(chunk, false, true);
+    Chunk * const previousChunk = SearchForClosestOptimizedChunk(chunk, false, false);
     
-    vector<uint32_t> stringPositionsInPreviousChunk;
+    Chunk * const nextFrettedChunk = SearchForClosestOptimizedChunk(chunk, true, true);
+    Chunk * const nextChunk = SearchForClosestOptimizedChunk(chunk, true, false);
     
-    Chunk * const previousFrettedChunk = PreviousFrettedChunk;
-    Chunk * const previousChunk = PreviousChunk;
-    
-    if(previousChunk != nullptr)
-    {
-        vector<NotePositionEntry > previousChunkIndices = 
-            previousChunk->GetCurrentNotePositionEntries();
         
-        intersectionsWithPreviousChunk = 
-                CountStringIntersectionsBetweenTwoChunkConfigurations(
-                previousChunkIndices, 
-                notePositions);
-    }
+    uint32_t fretCenterInCandidateChunk = GetChunkFretCenter(chunk);
+    uint32_t previousFrettedChunkFretCenter = GetChunkFretCenter(previousFrettedChunk);
+    uint32_t nextFrettedChunkFretCenter = GetChunkFretCenter(nextFrettedChunk);
     
-    {
-        uint32_t numberOfFrettedNotes = 0;
-        uint32_t fretSumForAverage = 0;
-
-        for(uint32_t fretNumber : StringIndexedFrettedNotes)
-        {
-            //Don't count 0 in the fret span or fret center calculations
-            if(fretNumber != 0) 
-            {
-                fretSumForAverage += fretNumber;
-                numberOfFrettedNotes++;
-            }
-
-        } //end loop
-
-        if(numberOfFrettedNotes != 0)
-        {
-            fretCenterInFrettedNotes = fretSumForAverage / numberOfFrettedNotes;
-        }
-    }
+    uint32_t stringIntersectionsWithPrevious = 
+            CountStringIntersectionsBetweenTwoChunkConfigurations(chunk,previousChunk);
     
-    if(previousFrettedChunk != nullptr)
-    {
-        bool previousChunkValid = true;
+    uint32_t stringIntersectionsWithNext = 
+            CountStringIntersectionsBetweenTwoChunkConfigurations(chunk,nextChunk);
+    
+    uint32_t distanceFromPreviousFrettedChunk = 
+            abs((int)fretCenterInCandidateChunk - (int)previousFrettedChunkFretCenter);
+    
+    uint32_t distanceFromNextFrettedChunk = 
+            abs((int)fretCenterInCandidateChunk - (int)nextFrettedChunkFretCenter);
+    
+    intersectionsWithNearestChunks = 0;
+    distanceFromNearestFrettedChunks = 0;
         
-        vector<NotePositionEntry > previousChunkIndices = 
-            previousFrettedChunk->GetCurrentNotePositionEntries();
-        
-        LogStream << "\tFeaturesTrace: Previous chunk." << endl;
-        previousChunkValid = GetChunkFeatures(previousChunkIndices,
-                maximumFretInPreviousChunk, fretSpacingInPreviousChunk,
-                fretCenterInPreviousChunk, sustainDontCare,
-                stringPositionsInPreviousChunk);
-    
-        if(previousChunkValid)
-        {
-            //If either fret center is 0, the fret center is not a good measure of 
-            //how far the hand has to move between the two chunks
-            if(fretCenterInCandidateChunk != 0)
-            {
-                candidateSpacingFromPreviousChunk = 
-                    std::abs((int32_t)fretCenterInCandidateChunk - 
-                             (int32_t)fretCenterInPreviousChunk);
-            }
-        }
-    }
-    
-    if((fretCenterInCandidateChunk != 0) && (fretCenterInFrettedNotes != 0))
+    if((previousFrettedChunk != nullptr) && (nextFrettedChunk != nullptr))
     {
-        candidateSpacingFromFrettedNotes = 
-            std::abs((int32_t)fretCenterInCandidateChunk - 
-                     (int32_t)fretCenterInFrettedNotes);
+        distanceFromNearestFrettedChunks = 
+            (distanceFromPreviousFrettedChunk + distanceFromNextFrettedChunk)/2;
     }
     
-    //Todo: incorporate other chunk data?
-    candidateSpacingFromLastChunk = candidateSpacingFromFrettedNotes;
+    else if(previousFrettedChunk != nullptr)
+    {
+        distanceFromNearestFrettedChunks = distanceFromPreviousFrettedChunk;
+    }
     
-}
+    else if(nextFrettedChunk != nullptr)
+    {
+        distanceFromNearestFrettedChunks = distanceFromNextFrettedChunk;
+    }
+    
+    if((previousChunk != nullptr) && (nextChunk != nullptr))
+    {
+        intersectionsWithNearestChunks = 
+            (stringIntersectionsWithPrevious + stringIntersectionsWithNext)/2;
+    }
+    
+    else if(previousChunk != nullptr)
+    {
+        intersectionsWithNearestChunks = stringIntersectionsWithPrevious;
+    }
+    
+    else if(nextChunk != nullptr)
+    {
+        intersectionsWithNearestChunks = stringIntersectionsWithNext;
+    }
+    
+    FEATURE_STREAM <<
+            "\r\n\t\tPrevious fretted chunk:" 
+                << Chunk::PrintChunk(previousFrettedChunk) 
+                << ", center = " << previousFrettedChunkFretCenter
+                << ", distance = " << distanceFromPreviousFrettedChunk <<
+            
+            
+            "\r\n\t\tPrevious chunk:" 
+                << Chunk::PrintChunk(previousChunk)
+                << ", intersections = " << stringIntersectionsWithPrevious <<
+            
+            "\r\n\t\tNext fretted chunk:" 
+                << Chunk::PrintChunk(nextFrettedChunk) << ", center = " 
+                << nextFrettedChunkFretCenter
+                << ", distance = " << distanceFromNextFrettedChunk <<
+            
+            "\r\n\t\tNext chunk:" 
+                << Chunk::PrintChunk(nextChunk) 
+                << ", intersections = " << stringIntersectionsWithNext <<                        
+            endl;
+} 
 
 uint32_t RotateVisitor::CalculateConfigurationCost(
-        vector<NotePositionEntry > indices)
+    Chunk* chunk)
 {
     uint32_t chunkCost = UINT32_MAX;
     
-    uint32_t maximumFretInCandidateChunk;
-    uint32_t fretSpacingInCandidateChunk;
-    uint32_t fretCenterInCandidateChunk;
-    uint32_t sustainInterruptionsInCandidateChunk;
-    vector<uint32_t> stringPositions;
+   ChunkFeatures candidateChunkFeatures;
     
+    vector<NotePositionEntry > indices = chunk->GetCurrentNotePositionEntries();
     
-    LogStream << "\tFeaturesTrace: Candidate chunk." << endl;
-    bool chunkValid = GetChunkFeatures(
-        indices, maximumFretInCandidateChunk,
-        fretSpacingInCandidateChunk,fretCenterInCandidateChunk,
-        sustainInterruptionsInCandidateChunk, stringPositions);
+    FEATURE_STREAM << "Candidate chunk." << endl;
+    GetChunkFeatures(chunk, candidateChunkFeatures);
 
+    COST_STREAM << Chunk::PrintNoteIndices(indices) << endl;
+    chunkCost =  EvaluateConfigurationFeatures(candidateChunkFeatures);
     
-    //If the chunk is not valid, return the largest possible cost
-    if(chunkValid)
-    {
-        uint32_t candidateSpacingFromLastChunk = 0;
-        uint32_t numberOfDuplicateStrings = 0;
-        
-        GetStringOverlapStuff(indices, fretCenterInCandidateChunk, 
-            candidateSpacingFromLastChunk,numberOfDuplicateStrings);
-    
-        LogStream << "\tCostTrace:" << Chunk::PrintNoteIndices(indices) << endl;
-        chunkCost =  EvaluateConfigurationFeatures(
-            maximumFretInCandidateChunk,
-            fretSpacingInCandidateChunk, 
-            candidateSpacingFromLastChunk,
-            sustainInterruptionsInCandidateChunk, 
-            numberOfDuplicateStrings);
-    }
     
     return chunkCost;
     
@@ -426,27 +538,31 @@ uint32_t RotateVisitor::GetChunkFretCenter(
         Chunk* candidateChunk)
 {
     uint32_t fretCenterInCandidateChunk = 0;
-    uint32_t numberOfFrettedNotes = 0;
-    uint32_t fretSumForAverage = 0;
-    vector<NotePositionEntry > chunkIndices = 
-        candidateChunk->GetCurrentNotePositionEntries();
     
-    for(NotePositionEntry notePositionEntry : chunkIndices)
+    if(candidateChunk != nullptr)
     {
-        const uint32_t currentFret = Note::GetFretForNotePositionEntry(notePositionEntry);        
+        uint32_t numberOfFrettedNotes = 0;
+        uint32_t fretSumForAverage = 0;
+        vector<NotePositionEntry > chunkIndices = 
+            candidateChunk->GetCurrentNotePositionEntries();
 
-        //Don't count 0 in the fret span or fret center calculations
-        if(currentFret != 0) 
+        for(NotePositionEntry notePositionEntry : chunkIndices)
         {
-            fretSumForAverage += currentFret;
-            numberOfFrettedNotes++;
+            const uint32_t currentFret = Note::GetFretForNotePositionEntry(notePositionEntry);        
+
+            //Don't count 0 in the fret center calculations
+            if(currentFret != 0) 
+            {
+                fretSumForAverage += currentFret;
+                numberOfFrettedNotes++;
+            }
+
+        } //end loop
+
+        if(numberOfFrettedNotes != 0)
+        {
+            fretCenterInCandidateChunk = fretSumForAverage / numberOfFrettedNotes;
         }
-
-    } //end loop
-
-    if(numberOfFrettedNotes != 0)
-    {
-        fretCenterInCandidateChunk = fretSumForAverage / numberOfFrettedNotes;
     }
     
     return fretCenterInCandidateChunk;
@@ -456,110 +572,122 @@ uint32_t RotateVisitor::GetChunkFretCenter(
  * Find the maximum fret and total fret spacing in a vector of note grid positions.
  * Return the fret spacing and maximum fret as output parameters
 */
-bool RotateVisitor::GetChunkFeatures(
-        vector<NotePositionEntry > chunkIndices,
-        uint32_t& maximumFretInCandidateChunk,
-        uint32_t& fretSpacingInCandidateChunk,
-        uint32_t& fretCenterInCandidateChunk,
-        uint32_t& sustainedNoteInterruptions,
-        vector<uint32_t>& stringPositions)
+void RotateVisitor::GetChunkFeatures(
+        Chunk* chunk,
+        ChunkFeatures& chunkFeatures)
 {
-    maximumFretInCandidateChunk = 0;
-	fretSpacingInCandidateChunk = 0;
-    fretCenterInCandidateChunk = 0;
+    vector<NotePositionEntry > chunkIndices = chunk->GetCurrentNotePositionEntries();
+    uint32_t fretCenterOfSustainedNotes = 0;
+    chunkFeatures.fretDistanceFromSustainedNotes = 0;
+    chunkFeatures.maximumFretInCandidateChunk = 0;
+	chunkFeatures.fretSpacingInCandidateChunk = 0;
+    chunkFeatures.fretCenterInCandidateChunk = 0;
     
     //Variables for finding the note center
-    uint32_t numberOfNotes = chunkIndices.size();
-    
-    const bool validChunk = (numberOfNotes != 0);
-    
-    if(validChunk)
+    uint32_t numberOfZeroFrets = 0;
+    uint32_t numberOfFrettedNotes = 0;
+    uint32_t fretSumForAverage = 0;
+    uint32_t minimumFretInChunkConfiguration = UINT32_MAX;
+
+    for(NotePositionEntry notePositionEntry : chunkIndices)
     {
-        uint32_t numberOfFrettedNotes = 0;
-        uint32_t fretSumForAverage = 0;
-        uint32_t minimumFretInChunkConfiguration = UINT32_MAX;
-        
-        for(NotePositionEntry notePositionEntry : chunkIndices)
+        const uint32_t currentFret = Note::GetFretForNotePositionEntry(notePositionEntry);            
+        const uint32_t currentString = Note::GetStringForNotePositionEntry(notePositionEntry);
+
+        chunkFeatures.stringPositions.push_back(currentString);
+
+        //Don't count 0 in the fret span or fret center calculations
+        if(currentFret != 0) 
         {
-            const uint32_t currentFret = Note::GetFretForNotePositionEntry(notePositionEntry);            
-            const uint32_t currentString = Note::GetStringForNotePositionEntry(notePositionEntry);
-            
-            stringPositions.push_back(currentString);
+            fretSumForAverage += currentFret;
+            numberOfFrettedNotes++;
 
-            //Don't count 0 in the fret span or fret center calculations
-            if(currentFret != 0) 
-            {
-                fretSumForAverage += currentFret;
-                numberOfFrettedNotes++;
+            //Find the new minimum and maximum for this iteration
+            chunkFeatures.maximumFretInCandidateChunk = 
+                    std::max(chunkFeatures.maximumFretInCandidateChunk, currentFret);
 
-                //Find the new minimum and maximum for this iteration
-                maximumFretInCandidateChunk = 
-                        std::max(maximumFretInCandidateChunk, currentFret);
-
-                minimumFretInChunkConfiguration = 
-                        std::min(minimumFretInChunkConfiguration,currentFret);
-            }
-        } //end loop
-
-        if(numberOfFrettedNotes != 0)
-        {
-            fretCenterInCandidateChunk = fretSumForAverage / numberOfFrettedNotes;
+            minimumFretInChunkConfiguration = 
+                    std::min(minimumFretInChunkConfiguration,currentFret);
         }
-        
-        //Spacing cannot go below 0
-        if(minimumFretInChunkConfiguration <= maximumFretInCandidateChunk)
+
+        //Lower the fret maximum
+        else
         {
-            fretSpacingInCandidateChunk = maximumFretInCandidateChunk - 
-                                            minimumFretInChunkConfiguration;
+            numberOfZeroFrets++;
         }
-        
-        sustainedNoteInterruptions = CountStringIntersectionsWithFrettedNotes(chunkIndices);
-        
-        //Trace
-        {
-            stringstream stringIndices;
 
-            stringIndices<< "|";
+    } //end loop
 
-            for(uint32_t stringIndex : stringPositions)
-            {
-                stringIndices<< stringIndex << " ";
-            }
+    if(numberOfFrettedNotes != 0)
+    {
+        chunkFeatures.fretCenterInCandidateChunk = fretSumForAverage / numberOfFrettedNotes;
+    }
 
-            stringIndices<< "|";
+    //Spacing cannot go below 0
+    if(minimumFretInChunkConfiguration <= chunkFeatures.maximumFretInCandidateChunk)
+    {
+        chunkFeatures.fretSpacingInCandidateChunk = chunkFeatures.maximumFretInCandidateChunk - 
+                                        minimumFretInChunkConfiguration;
+    }
 
-            LogStream << "\t" << Chunk::PrintNoteIndices(chunkIndices) << "FeaturesTrace:" << 
-                "\r\n\t\tMax Fret:" << maximumFretInCandidateChunk << " " 
-                "\r\n\t\tSpan:" <<fretSpacingInCandidateChunk << " " <<
-                "\r\n\t\tFret Center:" << fretCenterInCandidateChunk << " = " << fretSumForAverage << "/" << numberOfFrettedNotes <<
-                "\r\n\t\tString positions:" << stringIndices.str() << endl;
-        } 
-        
-    } //end if valid chunk
+    CountStringIntersectionsWithFrettedNotes(chunk,
+            chunkFeatures.sustainInterruptions,
+            fretCenterOfSustainedNotes);
+
+    if(fretCenterOfSustainedNotes != 0)
+    {
+        chunkFeatures.fretDistanceFromSustainedNotes = 
+            abs(chunkFeatures.fretCenterInCandidateChunk - fretCenterOfSustainedNotes);
+    }
+
+    GetAdjacentChunkRelativeFeatures(chunk,
+        chunkFeatures.candidateSpacingFromLastChunk,
+        chunkFeatures.numberOfDuplicateStrings);
     
-    return validChunk;
+    
+    //Trace
+    {
+        stringstream stringIndices;
+
+        stringIndices<< "|";
+
+        for(uint32_t stringIndex : chunkFeatures.stringPositions)
+        {
+            stringIndices<< stringIndex << " ";
+        }
+
+        stringIndices<< "|";
+
+        
+        FEATURE_STREAM << Chunk::PrintNoteIndices(chunkIndices) << 
+            "\r\n\t\tMax Fret:" << chunkFeatures.maximumFretInCandidateChunk << " " 
+            "\r\n\t\tSpan:" << chunkFeatures.fretSpacingInCandidateChunk << " " <<
+            "\r\n\t\tFret Center:" << chunkFeatures.fretCenterInCandidateChunk << 
+            "\r\n\t\tDistance from sustained notes:" << chunkFeatures.fretDistanceFromSustainedNotes << 
+            "\r\n\t\tSustain interruptions:" << chunkFeatures.sustainInterruptions <<
+            "\r\n\t\tRelative spacing:" << chunkFeatures.candidateSpacingFromLastChunk << 
+            endl;
+    }
     
 } //end GetChunkFeatures
 
 
 uint32_t RotateVisitor::EvaluateConfigurationFeatures(
-        uint32_t maximumFretInCandidateChunk,
-        uint32_t fretSpacingInCandidateChunk,
-        uint32_t distanceFromPreviousChunk,
-        uint32_t sustainInterruptionsInCandidateChunk,
-        uint32_t stringIntersections)
+        ChunkFeatures chunkFeatures)
 {
-    //TODO: should stringIntersections matter?
-    const uint32_t interChunkSpacingCost = distanceFromPreviousChunk*InterChunkSpacingScalar;
-    const uint32_t stringOverlapCost = sustainInterruptionsInCandidateChunk * StringOverlapScalar;
+    //const float stringIntersectionsCost = stringIntersections*0;
+    const float stringOverlapCost = chunkFeatures.sustainInterruptions * StringOverlapScalar;
     
-    const uint32_t maximumFretCost = maximumFretInCandidateChunk*MaximumFretScalar;
-    const uint32_t fretSpanCost = fretSpacingInCandidateChunk*FretSpanScalar;
+    const float interChunkSpacingCost = pow(chunkFeatures.candidateSpacingFromLastChunk,2)*InterChunkSpacingScalar;
     
-    const uint32_t candidateCost = maximumFretCost + fretSpanCost + 
-                     interChunkSpacingCost + stringOverlapCost;
+    const float maximumFretCost = (chunkFeatures.maximumFretInCandidateChunk)*MaximumFretScalar;
+    const float fretSpanCost = pow(chunkFeatures.fretSpacingInCandidateChunk,2)*FretSpanScalar;
     
-    LogStream << "\tCostTrace: $" << candidateCost << 
+    const uint32_t candidateCost = stringOverlapCost + 
+                        maximumFretCost + fretSpanCost + interChunkSpacingCost; 
+        
+    
+    COST_STREAM << "$" << candidateCost << 
             "\r\n\t\tMaxFret:" << maximumFretCost << 
             "\r\n\t\tFretSpan:" << fretSpanCost << 
             "\r\n\t\tAdjacency:" << interChunkSpacingCost << 
@@ -585,48 +713,125 @@ vector<uint32_t> RotateVisitor::GetStringPositionsOfIndices(
     return stringPositions;
 }
 
-uint32_t RotateVisitor::CountStringIntersectionsBetweenTwoChunkConfigurations(
-    vector<NotePositionEntry> notePositions1, 
-    vector<NotePositionEntry> notePositions2)
-{
-    vector<uint32_t> duplicateStrings;
-    
-    vector<uint32_t> stringPositions1 = GetStringPositionsOfIndices(notePositions1);
-    vector<uint32_t> stringPositions2 = GetStringPositionsOfIndices(notePositions2);
 
-    std::set_intersection(stringPositions1.begin(),
-                          stringPositions1.end(),
-                          stringPositions2.begin(),
-                          stringPositions2.end(),
-                          std::back_inserter(duplicateStrings));
+vector<uint32_t> RotateVisitor::GetStringPositions(
+        Chunk* chunk)
+{
+    vector<uint32_t> stringPositions;
+   
+    if(chunk != nullptr)
+    {
+        vector<NotePositionEntry > chunkIndices = chunk->GetCurrentNotePositionEntries();
+
+        for(NotePositionEntry notePositionEntry : chunkIndices)
+        {
+            const uint32_t currentString = Note::GetStringForNotePositionEntry(notePositionEntry);
+
+            stringPositions.push_back(currentString);
+        }
+    }
     
-    const uint32_t numberOfDuplicates = duplicateStrings.size();
+    return stringPositions;
+}
+
+
+uint32_t RotateVisitor::CountStringIntersectionsBetweenTwoChunkConfigurations(
+    Chunk* otherChunk,
+    Chunk* currentChunk)
+{    
+    uint32_t numberOfDuplicates = 0;
+    
+    if((currentChunk !=nullptr) && (otherChunk != nullptr))
+    {
+    vector<Note*> otherChunkNotes = otherChunk->GetElements();
+    vector<Note*> chunkNotes = currentChunk->GetElements();
+    
+    //Same track --> same string: increase cost if the tracks match but the strings dont,
+    //so that voices in the same track tend to stay on the same string
+    for(uint32_t noteIndex=0; noteIndex<chunkNotes.size();noteIndex++)
+    {
+        Note* currentNote = chunkNotes[noteIndex];
+        
+        uint32_t trackNumber = currentNote->GetTrackNumber();
+        uint32_t stringIndex = 
+                currentNote->GetStringIndexForCurrentNotePosition();
+        
+        for(uint32_t previousNoteIndex=0; 
+                previousNoteIndex<otherChunkNotes.size();previousNoteIndex++)
+        {
+            Note* previousNote = otherChunkNotes[previousNoteIndex];
+            uint32_t previousTrackNumber = previousNote->GetTrackNumber();
+            
+            uint32_t previousStringIndex = 
+                    previousNote->GetStringIndexForCurrentNotePosition();
+            
+            if((trackNumber==previousTrackNumber) && 
+               (stringIndex != previousStringIndex))
+            {
+                numberOfDuplicates++;
+            }
+        }
+    }
+    
+//    vector<NotePositionEntry> notePositions1 = previousChunk->GetCurrentNotePositionEntries();
+//    vector<NotePositionEntry> notePositions2 = currentChunk->GetCurrentNotePositionEntries();
+//    vector<uint32_t> stringPositions1 = GetStringPositionsOfIndices(notePositions1);
+//    vector<uint32_t> stringPositions2 = GetStringPositionsOfIndices(notePositions2);
+//    vector<uint32_t> duplicateStrings;
+//
+//    std::set_intersection(stringPositions1.begin(),
+//                          stringPositions1.end(),
+//                          stringPositions2.begin(),
+//                          stringPositions2.end(),
+//                          std::back_inserter(duplicateStrings));
+    
+    //numberOfDuplicates = duplicateStrings.size();
+    }
     
     return numberOfDuplicates;
 }
 
-uint32_t RotateVisitor::CountStringIntersectionsWithFrettedNotes(
-    vector<NotePositionEntry> notePositions)
+void RotateVisitor::CountStringIntersectionsWithFrettedNotes(
+    Chunk* chunk,
+    uint32_t& stringIntersections,
+    uint32_t& fretCenterOfSustainedNotes)
 {
-    uint32_t stringIntersectionsWithFrettedNotes = 0;
-    uint32_t comparisonDelta = 0;
-    
-    if(PreviousChunk != nullptr)
-    {
-        comparisonDelta = PreviousChunk->GetDelta(); //compare with 0 if this doesnt work TODO
-    }
-    
+    vector<NotePositionEntry> notePositions = chunk->GetCurrentNotePositionEntries();
     vector<uint32_t> stringPositions = GetStringPositionsOfIndices(notePositions);
-    for(uint32_t stringIndex : stringPositions)
+    
+    vector<FretboardPosition> sustainedFretPositions = chunk->GetSustainedFretboardPositions();
+    vector<uint32_t> duplicateStrings;
+    vector<uint32_t> sustainedStringPositions;
+    
+    uint32_t frettedNotes;
+    fretCenterOfSustainedNotes = 0;
+    
+    for(FretboardPosition fretPosition : sustainedFretPositions)
     {
-        bool stringAlreadyInUse = StringIndexedRemainingDeltaTicks[stringIndex] > comparisonDelta;
-        if(stringAlreadyInUse)
+        const uint32_t fretNumber = fretPosition.FretNumber;
+        const uint32_t stringIndex = fretPosition.StringIndex;
+        
+        sustainedStringPositions.push_back(stringIndex);
+        
+        if(fretNumber != 0)
         {
-            stringIntersectionsWithFrettedNotes++;
+            fretCenterOfSustainedNotes += fretNumber;
+            frettedNotes++;
         }
     }
     
-    return stringIntersectionsWithFrettedNotes;
+    if(frettedNotes > 0)
+    {
+        fretCenterOfSustainedNotes = fretCenterOfSustainedNotes / frettedNotes;
+    }
+    
+    std::set_intersection(sustainedStringPositions.begin(),
+                          sustainedStringPositions.end(),
+                          stringPositions.begin(),
+                          stringPositions.end(),
+                          std::back_inserter(duplicateStrings));
+    
+    stringIntersections = duplicateStrings.size();
 }
 
 /*
@@ -637,10 +842,10 @@ void RotateVisitor::VisitNote(Note* noteToReposition)
     noteToReposition->ReconfigureToNextPitchmapPosition();
 }
 
-bool RotateVisitor::MarkChunkAsProcessed(
+bool RotateVisitor::MarkConfigurationProcessed(
         vector<NotePositionEntry > processedChunkConfiguration)
 {
-    bool chunkAlreadyProcessed = WasChunkProcessed(processedChunkConfiguration);
+    bool chunkAlreadyProcessed = WasConfigurationProcessed(processedChunkConfiguration);
     
     if(!chunkAlreadyProcessed)
     {
@@ -650,7 +855,7 @@ bool RotateVisitor::MarkChunkAsProcessed(
  /*
   *	Determine if the chunk configuration has already been evaluated as an optimum
   */	
-bool RotateVisitor::WasChunkProcessed(
+bool RotateVisitor::WasConfigurationProcessed(
         vector<NotePositionEntry > input)
 {
     const bool foundEntryInProcessedConfiguration =

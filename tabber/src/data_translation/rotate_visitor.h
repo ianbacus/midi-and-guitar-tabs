@@ -6,6 +6,20 @@
 #include <math.h>
 #include <mutex>
 
+struct ChunkFeatures
+{
+    uint32_t maximumFretInCandidateChunk;
+    uint32_t fretSpacingInCandidateChunk;
+    uint32_t fretCenterInCandidateChunk;
+    uint32_t fretDistanceFromSustainedNotes;
+    
+    uint32_t sustainInterruptions;
+    uint32_t candidateSpacingFromLastChunk;
+    uint32_t numberOfDuplicateStrings;
+    
+    vector<uint32_t> stringPositions;
+};
+
 class RotateVisitor : public Visitor
 {
     private:
@@ -14,56 +28,62 @@ class RotateVisitor : public Visitor
         const uint32_t FretSpanScalar;//span of a chunk: more than 5 gets difficult
         const uint32_t InterChunkSpacingScalar; //fret spacing between chunks: 
         const uint32_t StringOverlapScalar; //number of string overlaps
+        const uint32_t NumberOfStrings;
         
         static vector<uint32_t> GetStringPositionsOfIndices(
             vector<NotePositionEntry > chunkIndices);
         
+        static vector<uint32_t> GetStringPositions(
+            Chunk* chunk);
+        
         static uint32_t CountStringIntersectionsBetweenTwoChunkConfigurations(
-            vector<NotePositionEntry> stringPositions1, 
-            vector<NotePositionEntry> stringPositions2);
+                Chunk* previousChunk,
+                Chunk* currentChunk);
         
-        uint32_t CountStringIntersectionsWithFrettedNotes(
-            vector<NotePositionEntry> notePositions);
         
-        Chunk* PreviousFrettedChunk;
-        Chunk* PreviousChunk;
+        static void GetChunkFeatures(
+            Chunk* chunk,
+            ChunkFeatures& chunkFeatures);
+        
+        static void GetAdjacentChunkRelativeFeatures(
+            Chunk* chunk, 
+            uint32_t& candidateSpacingFromLastChunk,
+            uint32_t& intersectionsWithPreviousChunk);
+
+        static uint32_t GetChunkFretCenter(
+            Chunk* candidateChunk);
+        
+        static void CountStringIntersectionsWithFrettedNotes(
+            Chunk* chunk,
+            uint32_t& stringIntersections,
+            uint32_t& fretCenterOfSustainedNotes);
+        
+        
+        static Chunk* SearchForClosestOptimizedChunk(Chunk* currentChunk,
+                bool searchForward, bool searchFrettedChunksOnly);
+        
+        void LockStringsInTheNextFewChunksForThisConfiguration(Chunk *chunk);
+        void UpdateStringIndexedRemainingDeltaTicks(Chunk* candidateChunk);
+        
+        uint32_t EvaluateConfigurationFeatures(ChunkFeatures chunkFeatures);
+        
+        uint32_t CalculateConfigurationCost(Chunk* chunk);
+        
+        
+        Chunk* PreviousFrettedChunky;
+        Chunk* PreviousChunky;
         vector< vector<NotePositionEntry > > ProcessedChunkConfigurations;
         
         vector<uint32_t> StringIndexedRemainingDeltaTicks;
         vector<uint32_t> StringIndexedFrettedNotes;
         
-        uint32_t CalculateConfigurationCost(
-            vector<NotePositionEntry > chunkIndices);
-        
-        bool GetChunkFeatures(
-            vector<NotePositionEntry > chunkIndices,
-            uint32_t& maximumFretInCandidateChunk,
-            uint32_t& fretSpacingInCandidateChunk,
-            uint32_t& fretCenterInCandidateChunk,
-            uint32_t& sustainedNoteInterruptions,
-            vector<uint32_t>& stringPositions);
-        
-        void GetStringOverlapStuff(
-            vector<NotePositionEntry> stringPositions, 
-            uint32_t maximumFretInCandidateChunk, 
-            uint32_t& candidateSpacingFromLastChunk,
-            uint32_t& intersectionsWithPreviousChunk);
-
-        uint32_t GetChunkFretCenter(
-            Chunk* candidateChunk);
         
         
         bool ValidateStringOverlapsForNotePositions(vector<NotePositionEntry> notePositionsEntries);
         
-        uint32_t EvaluateConfigurationFeatures(
-            uint32_t maximumFretInCandidateChunk,
-            uint32_t fretSpacingInCandidateChunk,
-            uint32_t fretCenterDifferenceFromLastChunk,
-            uint32_t sustainInterruptionsInCandidateChunk,
-            uint32_t stringIntersections);
         
-        bool MarkChunkAsProcessed(vector<NotePositionEntry > processedChunkConfiguration);
-        bool WasChunkProcessed(vector<NotePositionEntry > input);
+        bool MarkConfigurationProcessed(vector<NotePositionEntry > processedChunkConfiguration);
+        bool WasConfigurationProcessed(vector<NotePositionEntry > input);
         void ResetMarkedChunks(void);
         
         bool RotateNoteOrItsParent(Chunk* candidateChunk, 
@@ -76,7 +96,6 @@ class RotateVisitor : public Visitor
         void SelectOptimalFingering(Chunk *chunkToConfigure, 
                 uint32_t& currentLowestCost);
         
-        void UpdateStringIndexedRemainingDeltaTicks(Chunk* candidateChunk);
 
     public:
         RotateVisitor(

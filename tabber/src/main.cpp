@@ -59,7 +59,7 @@ int ParseFileIntoTab(const string inputFile, const string outputFile,
 		noteOffset = 127;
 	}
     
-	vector<Bar*> score= ParseIntermediateFile(inputFile,noteOffset,align);
+	vector<Chunk*> score= ParseIntermediateFile(inputFile,noteOffset,align);
     
 	//Swap bounds if they are incorrect
 	if (upperBound < lowerBound)
@@ -76,17 +76,69 @@ int ParseFileIntoTab(const string inputFile, const string outputFile,
     }
     
     std::cout << outputFile << ": Optimizing and printing "  << (upperBound - lowerBound)+1
-    << " measures: m"  << lowerBound << " to m" << upperBound << endl;
+    << "measures, transposed " << noteOffset << " semi-tones: m"  << lowerBound << " to m" << upperBound << endl;
 
+    //Sort score by number of chunk permutations
+    vector<Chunk*> sortedScore = score;
+    sort(begin(sortedScore),end(sortedScore), [](const Chunk* left, const Chunk* right)
+    {
+        vector<Note*> leftNotes = left->GetElements();
+        vector<Note*> rightNotes = right->GetElements();
+        
+        Note* leastMobileNoteLeft = *min_element(begin(leftNotes),end(leftNotes),
+            [](const Note* lhs, const Note* rhs)
+            {
+                //return lhs->GetNumberOfElements() < rhs->GetNumberOfElements();
+                return lhs->GetProximityToNearestTuningBoundary() <
+                       rhs->GetProximityToNearestTuningBoundary();
+                        
+            });
+            
+        Note* leastMobileNoteRight = *min_element(begin(rightNotes),end(rightNotes),
+            [](const Note* lhs, const Note* rhs)
+            {
+                //return lhs->GetNumberOfElements() < rhs->GetNumberOfElements();
+                return lhs->GetProximityToNearestTuningBoundary() <
+                       rhs->GetProximityToNearestTuningBoundary();
+            });
+            
+        uint32_t leastMobileNotePlacementsLeft = leastMobileNoteLeft->GetProximityToNearestTuningBoundary();
+        uint32_t leastMobileNotePlacementsRight = leastMobileNoteRight->GetProximityToNearestTuningBoundary();
+        
+        if(leastMobileNotePlacementsLeft == leastMobileNotePlacementsRight)
+        {
+            return left->GetNumberOfPositionPermutations() < right->GetNumberOfPositionPermutations();
+        }
+        
+        else
+        {
+            return leastMobileNotePlacementsLeft < leastMobileNotePlacementsRight;
+        }
+    });
+    
+    
+    for (Chunk* currentChunk : sortedScore)
+    {
+        cout << Chunk::PrintChunk(currentChunk) << endl;
+        uint32_t measureIndex = currentChunk->GetMeasureIndex();
+        if((lowerBound <= measureIndex) && (measureIndex <= upperBound))
+        {
+            TablatureRearranger.VisitChunk(currentChunk);
+        }
+    }
+    
     //Iterate through each bar, recursively apply the visitor pattern to fix note positions
-    for (Bar* currentBar : score)
+    for (Chunk* currentChunk : score)
     {
         //Todo: fix bug with one of the visitors that causes arithmetic exception 
         //when there is a discontinuity between d0 and a1 low strings for drop d
         if((lowerBound <= measureIndex) && (measureIndex <= upperBound))
         {
-            currentBar->DispatchVisitor(&TablatureRearranger);
-            currentBar->DispatchVisitor(&TablaturePrinter);
+            if(measureIndex == upperBound)
+            {
+                currentChunk->SetIsMeasureEnd(true);
+            }
+            TablaturePrinter.VisitChunk(currentChunk);
         }
         
         measureIndex++;
