@@ -116,16 +116,18 @@ int ParseFileIntoTab(const string inputFile, const string outputFile,
         }
     });
     
+    uint32_t totalCost = 0;
     
     for (Chunk* currentChunk : sortedScore)
     {
-        cout << Chunk::PrintChunk(currentChunk) << endl;
+        //cout << Chunk::PrintChunk(currentChunk) << endl;
         uint32_t measureIndex = currentChunk->GetMeasureIndex();
         if((lowerBound <= measureIndex) && (measureIndex <= upperBound))
         {
-            TablatureRearranger.VisitChunk(currentChunk);
+            TablatureRearranger.OptimizeChunk(currentChunk);
         }
     }
+    
     
     //Iterate through each bar, recursively apply the visitor pattern to fix note positions
     for (Chunk* currentChunk : score)
@@ -138,12 +140,16 @@ int ParseFileIntoTab(const string inputFile, const string outputFile,
             {
                 currentChunk->SetIsMeasureEnd(true);
             }
+            currentChunk->ResetAllNotesRepositions();
+            currentChunk->SetIsOptimized(false);
+            totalCost += TablatureRearranger.OptimizeChunk(currentChunk);
             TablaturePrinter.VisitChunk(currentChunk);
         }
         
         measureIndex++;
     }
 
+    cout << "Total cost: $" << totalCost << endl;
     TablaturePrinter.WriteTablatureToOutputFile(outputFile);
     TablaturePrinter.WriteTablatureToOutputFile("data/outTab.txt");
 
@@ -167,7 +173,7 @@ int main(int argc, char* argv[])
         if(Debug)
         {
             return ParseFileIntoTab("data/parsed_midi_data.txt", 
-                                    "data/tabs/outTab.txt", 0, 0, -1, -1);
+                                    "data/tabs/outTab.txt", -12, 0, -1, -1);
         }
 
         return 0;

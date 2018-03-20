@@ -177,7 +177,7 @@ def HandleSpecialDeltaValues(delta):
 
     if(delta < 1):
         if (float_eq(round(newDelta,3),0.666)):
-            delta = -1
+            delta = 'help me'
         else:
             delta = 0
 
@@ -203,13 +203,19 @@ def ProcessChunk(chunk,chunkDuration,iof):
 
     #Remove middle voices if the chunk is too large
     sortedChunk = sorted(chunk, key=lambda k: k['pitch'])
+    sortedChunkWithRemovedDuplicates = []
 
-    while len(sortedChunk) > MaximumChunkSize: 
-        popIndex = len(sortedChunk)/2
-        sortedChunk.pop(popIndex)
+    for note in sortedChunk:
+        if not any(n['pitch'] == note['pitch'] for n in sortedChunkWithRemovedDuplicates):
+            sortedChunkWithRemovedDuplicates.append(note)
+
+    
+    while len(sortedChunkWithRemovedDuplicates) > MaximumChunkSize: 
+        popIndex = len(sortedChunkWithRemovedDuplicates)/2
+        sortedChunkWithRemovedDuplicates.pop(popIndex)
 
     #Extract the data for each note
-    for event in sortedChunk:
+    for event in sortedChunkWithRemovedDuplicates:
 
         noteMidiPitch = event['pitch']
         noteDuration = event['duration']

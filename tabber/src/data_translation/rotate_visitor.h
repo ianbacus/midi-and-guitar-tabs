@@ -110,7 +110,8 @@ class RotateVisitor : public Visitor
         
         virtual void VisitNote(Note* note);
         virtual void VisitBar(Bar* bar);
-        virtual void VisitChunk(Chunk*);
+        virtual void VisitChunk(Chunk* chunk) {}
+        virtual uint32_t OptimizeChunk(Chunk*);
 };
 
 #endif

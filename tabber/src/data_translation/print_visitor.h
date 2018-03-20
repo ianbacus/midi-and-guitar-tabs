@@ -23,7 +23,7 @@ class PrintVisitor : public Visitor
     private:
         //1 row for each string/course, and 1 row for duration info
         static const uint32_t NoteTokenWidth = 2;
-        static const uint32_t NumberOfPaddingRows = 2;
+        static const uint32_t NumberOfPaddingRows = 1;
         static const char TablatureUnfrettedPadding = '-';
         static const char TablatureSustainPadding = '=';
         

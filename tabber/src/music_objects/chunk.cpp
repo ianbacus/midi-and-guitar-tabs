@@ -122,7 +122,6 @@ bool ChunkHasUnConfigurableNotesOnOneString(Chunk* chunk)
     bool chunkValid = true;
     vector<Note*> chunkNotes = chunk->GetElements();
     
-    vector<uint32_t> stringIndices;
     unordered_map<uint32_t, uint32_t> stringToOverlapCountMap;
     
     
@@ -200,7 +199,7 @@ uint32_t Chunk::GetAveragePitch(void)
         for(Note* note : chunkNotes)
         {
             uint32_t octave = 0;
-            uint32_t pitch = 0;
+            int32_t pitch = 0;
             note->GetPlayablePitch(octave,pitch);
             averagePitch += pitch;
         }
@@ -214,6 +213,7 @@ uint32_t Chunk::GetAveragePitch(void)
 //of size 1 
 void Chunk::CleanChunk(void)
 {
+    return;
     while(!ChunkHasUnConfigurableNotesOnOneString(this))
     {
         cout << "Cleaning chunk." << endl;
@@ -223,7 +223,7 @@ void Chunk::CleanChunk(void)
         if(chunkSize > 0)
         {            
             uint32_t averagePitch = GetAveragePitch();
-            cout << "Unsorted |";
+            cout << "Unsorted | ";
             for (Note* x : chunkNotes)
             {
                 cout << Note::PrintNote(x->GetCurrentNotePosition()) << " ";
@@ -248,15 +248,18 @@ void Chunk::CleanChunk(void)
                 }
             });
             
-            cout << "| Sorted |";
+            cout << "| Sorted | ";
             for (auto x : chunkNotes)
             {
-                cout << x << " ";
+                cout << Note::PrintNote(x->GetCurrentNotePosition()) << " ";
             }
-            cout << "|" << endl;
+            cout << "|";
             
+            Note* chosenNote = chunkNotes[0];
+            
+            cout << "Adding note positions to " << Note::PrintNote(chosenNote->GetCurrentNotePosition()) << " " << endl;
             //Make the least playable note more playable by shifting it up an octave
-            chunkNotes[0]->MakeNoteMorePlayable();
+            chosenNote->MakeNoteMorePlayable();
         }
     }
 }
@@ -265,7 +268,7 @@ void Chunk::CleanChunk(void)
 bool Chunk::CheckIfNoteIsAlreadyPresent(Note* note)
 {
     uint32_t octaves = 0;
-    uint32_t candidateNotePitch = note->GetPitch();
+    int32_t candidateNotePitch = note->GetPitch();
 
     bool duplicateNote = false;
     bool success = Note::GetPlayablePitch(octaves, candidateNotePitch);
@@ -276,7 +279,7 @@ bool Chunk::CheckIfNoteIsAlreadyPresent(Note* note)
         vector<Note*> chunkNotes = GetElements();
         for(Note* note : chunkNotes)
         {
-            uint32_t pitch = note->GetPitch();
+            int32_t pitch = note->GetPitch();
             Note::GetPlayablePitch(octaves, pitch);
 
             //todo: some notes bypass this

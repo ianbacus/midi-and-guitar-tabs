@@ -9,13 +9,15 @@ using namespace std;
 
 stringstream fileStringStream;
     
-ostream& LogStream = fileStringStream;
+ostream& FileStream = fileStringStream;
 ostream NullStream(nullptr);
+ostream& TerminalStream = cout;
 
-#define FEATURE_STREAM NullStream << "\tFeatures: "
-#define COST_STREAM NullStream << "\tCosts: "
+
+#define FEATURE_STREAM FileStream << "\tFeatures: "
+#define COST_STREAM FileStream << "\tCosts: "
 #define ERROR_STREAM NullStream<< "\tError: "
-#define RESULT_STREAM LogStream<< "Results: "
+#define RESULT_STREAM FileStream<< "Results: "
 
 
 
@@ -45,7 +47,7 @@ RotateVisitor::~RotateVisitor(void)
     ofstream outputFileStream;
     
 	outputFileStream.open("debugOutput.txt");
-	outputFileStream << LogStream.rdbuf();
+	outputFileStream << FileStream.rdbuf();
 	outputFileStream.close();
 }
 
@@ -62,7 +64,7 @@ void RotateVisitor::VisitBar(Bar* bar)
 }
 
 //Visit a chunk, and re-arrange all of its notes until they are valid/playable
-void RotateVisitor::VisitChunk(Chunk* candidateChunk) 
+uint32_t RotateVisitor::OptimizeChunk(Chunk* candidateChunk) 
 {
     const uint32_t permutationsForThisChunk = 
         candidateChunk->GetNumberOfPositionPermutations();
@@ -108,6 +110,8 @@ void RotateVisitor::VisitChunk(Chunk* candidateChunk)
     }
     
     RESULT_STREAM << "Optimized chunk: " << Chunk::PrintNoteIndices(candidateChunk->GetCurrentNotePositionEntries()) << endl;
+    
+    return currentLowestCost;
     
 
 } //end VisitChunk
@@ -172,7 +176,7 @@ Chunk* RotateVisitor::SearchForClosestOptimizedChunk(
     Chunk* discoveredChunk = nullptr;
     uint32_t searchCounter = 0;
     
-    while(currentChunk != nullptr)
+    while((currentChunk != nullptr) && (searchCounter < maximumUnOptimizedSearchLength))
     {
         searchCounter++;
         
@@ -196,10 +200,7 @@ Chunk* RotateVisitor::SearchForClosestOptimizedChunk(
             }
         }
         
-        else if(searchCounter == maximumUnOptimizedSearchLength)
-        {
-            break;
-        }
+        
     }
     
     return discoveredChunk;
@@ -300,7 +301,7 @@ uint32_t RotateVisitor::ReconfigureChunk(
         
         shouldContinue = stringsOverlap ||  (currentNotePositionsAlreadyTried && 
                                              morePermutations);
-        if(exhaustedAllPermutations)
+        if(true)//exhaustedAllPermutations)
         {
             //todo: prevent this from happening by cleaning chunks properly
             errorCount++;
@@ -311,7 +312,7 @@ uint32_t RotateVisitor::ReconfigureChunk(
                     << ", morePermutations: " << morePermutations << endl;
         }
         
-        if(!(shouldContinue && errorCount < 10))
+        if(!((shouldContinue && errorCount < 10)) || (permutationCount > permutationsForThisChunk))
         {
             ERROR_STREAM << "\tExiting because " << 
                     Chunk::PrintNoteIndices(currentNotePositionsEntries) 
@@ -322,7 +323,7 @@ uint32_t RotateVisitor::ReconfigureChunk(
                     << ", morePermutations: " << morePermutations << endl;
         }
         
-    } while(shouldContinue && (errorCount < maxErrorsAllowed));
+    } while(shouldContinue && (errorCount < maxErrorsAllowed) );
     
     
     return octaveShiftCost;
@@ -459,20 +460,23 @@ void RotateVisitor::GetAdjacentChunkRelativeFeatures(Chunk* chunk,
     intersectionsWithNearestChunks = 0;
     distanceFromNearestFrettedChunks = 0;
         
-    if((previousFrettedChunk != nullptr) && (nextFrettedChunk != nullptr))
+    if(fretCenterInCandidateChunk != 0)
     {
-        distanceFromNearestFrettedChunks = 
-            (distanceFromPreviousFrettedChunk + distanceFromNextFrettedChunk)/2;
-    }
-    
-    else if(previousFrettedChunk != nullptr)
-    {
-        distanceFromNearestFrettedChunks = distanceFromPreviousFrettedChunk;
-    }
-    
-    else if(nextFrettedChunk != nullptr)
-    {
-        distanceFromNearestFrettedChunks = distanceFromNextFrettedChunk;
+        if((previousFrettedChunk != nullptr) && (nextFrettedChunk != nullptr))
+        {
+            distanceFromNearestFrettedChunks = 
+                (distanceFromPreviousFrettedChunk + distanceFromNextFrettedChunk)/2;
+        }
+
+        else if(previousFrettedChunk != nullptr)
+        {
+            distanceFromNearestFrettedChunks = distanceFromPreviousFrettedChunk;
+        }
+
+        else if(nextFrettedChunk != nullptr)
+        {
+            distanceFromNearestFrettedChunks = distanceFromNextFrettedChunk;
+        }
     }
     
     if((previousChunk != nullptr) && (nextChunk != nullptr))
@@ -491,12 +495,11 @@ void RotateVisitor::GetAdjacentChunkRelativeFeatures(Chunk* chunk,
         intersectionsWithNearestChunks = stringIntersectionsWithNext;
     }
     
-    FEATURE_STREAM <<
+    FEATURE_STREAM << "Relative" <<
             "\r\n\t\tPrevious fretted chunk:" 
                 << Chunk::PrintChunk(previousFrettedChunk) 
                 << ", center = " << previousFrettedChunkFretCenter
                 << ", distance = " << distanceFromPreviousFrettedChunk <<
-            
             
             "\r\n\t\tPrevious chunk:" 
                 << Chunk::PrintChunk(previousChunk)
@@ -509,7 +512,13 @@ void RotateVisitor::GetAdjacentChunkRelativeFeatures(Chunk* chunk,
             
             "\r\n\t\tNext chunk:" 
                 << Chunk::PrintChunk(nextChunk) 
-                << ", intersections = " << stringIntersectionsWithNext <<                        
+                << ", intersections = " << stringIntersectionsWithNext <<  
+            
+            "\r\n\t\tResulting features:" 
+                << ", avg distance = " << distanceFromNearestFrettedChunks  
+                << ", avg intersections = " << intersectionsWithNearestChunks <<  
+            
+            
             endl;
 } 
 
@@ -522,10 +531,10 @@ uint32_t RotateVisitor::CalculateConfigurationCost(
     
     vector<NotePositionEntry > indices = chunk->GetCurrentNotePositionEntries();
     
-    FEATURE_STREAM << "Candidate chunk." << endl;
+    FEATURE_STREAM << Chunk::PrintChunk(chunk) << endl;
     GetChunkFeatures(chunk, candidateChunkFeatures);
 
-    COST_STREAM << Chunk::PrintNoteIndices(indices) << endl;
+    COST_STREAM << Chunk::PrintChunk(chunk) << endl;
     chunkCost =  EvaluateConfigurationFeatures(candidateChunkFeatures);
     
     
@@ -644,6 +653,7 @@ void RotateVisitor::GetChunkFeatures(
         chunkFeatures.candidateSpacingFromLastChunk,
         chunkFeatures.numberOfDuplicateStrings);
     
+    chunkFeatures.maximumFretInCandidateChunk -= min(chunkFeatures.maximumFretInCandidateChunk, numberOfZeroFrets);
     
     //Trace
     {
@@ -659,7 +669,7 @@ void RotateVisitor::GetChunkFeatures(
         stringIndices<< "|";
 
         
-        FEATURE_STREAM << Chunk::PrintNoteIndices(chunkIndices) << 
+        FEATURE_STREAM << "Inherent" << 
             "\r\n\t\tMax Fret:" << chunkFeatures.maximumFretInCandidateChunk << " " 
             "\r\n\t\tSpan:" << chunkFeatures.fretSpacingInCandidateChunk << " " <<
             "\r\n\t\tFret Center:" << chunkFeatures.fretCenterInCandidateChunk << 
@@ -675,15 +685,22 @@ void RotateVisitor::GetChunkFeatures(
 uint32_t RotateVisitor::EvaluateConfigurationFeatures(
         ChunkFeatures chunkFeatures)
 {
-    //const float stringIntersectionsCost = stringIntersections*0;
-    const float stringOverlapCost = chunkFeatures.sustainInterruptions * StringOverlapScalar;
+    const uint32_t maximumPlayableSpan = 6;
     
-    const float interChunkSpacingCost = pow(chunkFeatures.candidateSpacingFromLastChunk,2)*InterChunkSpacingScalar;
+    if(chunkFeatures.fretSpacingInCandidateChunk >= maximumPlayableSpan)
+    {
+        chunkFeatures.fretSpacingInCandidateChunk *= 2;
+    }
+    
+    const float trackStringDivergence = (chunkFeatures.numberOfDuplicateStrings)*StringOverlapScalar/4;
+    const float stringOverlapCost = (chunkFeatures.sustainInterruptions)* StringOverlapScalar;
+    
+    const float interChunkSpacingCost = pow(chunkFeatures.candidateSpacingFromLastChunk,1.5)*InterChunkSpacingScalar;
     
     const float maximumFretCost = (chunkFeatures.maximumFretInCandidateChunk)*MaximumFretScalar;
     const float fretSpanCost = pow(chunkFeatures.fretSpacingInCandidateChunk,2)*FretSpanScalar;
     
-    const uint32_t candidateCost = stringOverlapCost + 
+    const uint32_t candidateCost = stringOverlapCost + trackStringDivergence +
                         maximumFretCost + fretSpanCost + interChunkSpacingCost; 
         
     

@@ -113,6 +113,7 @@ vector<string> PrintVisitor::GenerateTablatureColumn(Chunk *chunk)
     const int32_t chunkDelta = chunk->GetDelta();
     const string quaverString = TranslateDeltaAndAppendQuaverCodes(chunkDelta);
     
+    
     //Insert padding rows
     if(NumberOfPaddingRows > 1)
     {
@@ -299,7 +300,7 @@ void PrintVisitor::VisitChunk(Chunk* chunk)
 {
     static vector<vector<string> > tablatureColumns;
     bool measureEnd = chunk->GetIsMeasureEnd();    
-
+    
     vector<string> chunkColumn = GenerateTablatureColumn(chunk);
 
     tablatureColumns.push_back(chunkColumn);  

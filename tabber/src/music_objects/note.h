@@ -30,7 +30,7 @@ inline bool operator==(const FretboardPosition& lhs, const FretboardPosition& rh
 typedef struct NotePositionEntry_t
 {
     uint32_t RepositioningIndex; 
-    uint32_t PitchMidiValue; 
+    int32_t PitchMidiValue; 
     
     NotePositionEntry_t() = default;
     
@@ -58,15 +58,15 @@ class Note : public Base
         static const uint32_t OctaveValueMidiPitches = 12;
         static vector<std::string> StringIndexedNoteNames;
 
-        int TrackNumber;
-        int PitchMidiValue;
-        int NoteDurationBeats;
-        int CurrentPitchMapRepositionIndex;
+        uint32_t TrackNumber;
+        int32_t PitchMidiValue;
+        uint32_t NoteDurationBeats;
+        uint32_t CurrentPitchMapRepositionIndex;
 
-        uint32_t PitchOffset;
+        int32_t PitchOffset;
         
-        static uint32_t TuningMinimum;
-        static uint32_t TuningMaximum;
+        static int32_t TuningMinimum;
+        static int32_t TuningMaximum;
         uint32_t Repositions;
 
 
@@ -87,7 +87,7 @@ class Note : public Base
         static uint32_t GetFretForNotePositionEntry(NotePositionEntry notePositionEntry);
         static uint32_t GetStringForNotePositionEntry(NotePositionEntry notePositionEntry);
         static std::string PrintNote(NotePositionEntry notePositionEntry);
-        static bool GetPlayablePitch(uint32_t& numberOfOctaves, uint32_t& pitch);
+        static bool GetPlayablePitch(uint32_t& numberOfOctaves, int32_t& pitch);
 
         Note(int pitch, int duration, int trackNumber); 
         virtual ~Note() {}

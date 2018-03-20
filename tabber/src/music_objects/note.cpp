@@ -8,8 +8,8 @@
 using namespace std;
 
 int Note::DeletedNotesCount = 0;
-uint32_t Note::TuningMinimum = 0;
-uint32_t Note::TuningMaximum = 0;
+int32_t Note::TuningMinimum = 0;
+int32_t Note::TuningMaximum = 0;
 PitchMap Note::PitchToFretMap;
 vector<string> Note::StringIndexedNoteNames;
 /*
@@ -46,13 +46,11 @@ PitchMap Note::GeneratePitchToFretMap(
 
     for(uint32_t stringIndex =0;stringIndex<numberOfStrings;stringIndex++)
     {
-//        cout << StringIndexedNoteNames[stringIndex] <<  endl;
         //Assume that the frets are separated by a semitone
         for(uint32_t fretNumber = capoFret; fretNumber < numberOfFrets; fretNumber++)
         {
             const uint32_t pitchMidiValue = 
                 instrumentCoursePitchValues[stringIndex] + fretNumber;
-//                cout << "\t" << pitchMidiValue <<  endl;
             
             FretboardPosition map_point(stringIndex,fretNumber);
 
@@ -151,7 +149,7 @@ vector<FretboardPosition> Note::GetNotePositions() const
 {
     uint32_t octaveCount = 0;
     
-    uint32_t pitchMidiValue = GetPitch();
+    int32_t pitchMidiValue = GetPitch();
     vector<FretboardPosition> notePositions;
     
 	const bool success = GetPlayablePitch(octaveCount,pitchMidiValue);
@@ -200,7 +198,7 @@ uint32_t Note::GetFretForNotePositionEntry(
     uint32_t octaveCount = 0;
     
     uint32_t currentPitchMapRepositionIndex = notePositionEntry.RepositioningIndex;
-    uint32_t pitchMidiValue = notePositionEntry.PitchMidiValue;
+    int32_t pitchMidiValue = notePositionEntry.PitchMidiValue;
     
 	const bool success = GetPlayablePitch(octaveCount,pitchMidiValue);
     
@@ -240,7 +238,8 @@ uint32_t Note::GetStringForNotePositionEntry(
     uint32_t octaveCount = 0;
     
     uint32_t currentPitchMapRepositionIndex = notePositionEntry.RepositioningIndex;
-    uint32_t pitchMidiValue = notePositionEntry.PitchMidiValue;
+    int pitchMidiValue = notePositionEntry.PitchMidiValue;
+    
     
 	const bool success = GetPlayablePitch(octaveCount,pitchMidiValue);
     
@@ -258,7 +257,7 @@ string Note::PrintNote(NotePositionEntry notePositionEntry)
     string resultString = "|XX|";
     uint32_t octaveCount = 0;
     
-    uint32_t pitchMidiValue = notePositionEntry.PitchMidiValue;
+    int32_t pitchMidiValue = notePositionEntry.PitchMidiValue;
     uint32_t currentPitchMapRepositionIndex = notePositionEntry.RepositioningIndex;
     
     const bool success = GetPlayablePitch(octaveCount,pitchMidiValue);
@@ -311,6 +310,7 @@ uint32_t Note::GetAttemptedRepositions(void) const
 
 void Note::ResetAttemptedRepositions(void)
 {
+    CurrentPitchMapRepositionIndex = 0;
     Repositions = 0;
 }
 /*
@@ -320,7 +320,7 @@ uint32_t Note::GetNumberOfElements() const
 {
     uint32_t numberOfElements = 0;
     uint32_t octaveCount = 0;
-    uint32_t adjustedPitch = GetPitch();
+    int32_t adjustedPitch = GetPitch();
     
 	const bool success = GetPlayablePitch(octaveCount,adjustedPitch);
     
@@ -361,7 +361,7 @@ uint32_t Note::GetCurrentPitchmapIndex() const
  */	
 uint32_t Note::GetPitch() const 
 {
-	return PitchMidiValue;//+PitchOffset;
+	return PitchMidiValue+PitchOffset;
 }
 
 
@@ -369,7 +369,7 @@ uint32_t Note::GetProximityToNearestTuningBoundary() const
 {
     uint32_t proximityToNearestTuningBoundary = UINT32_MAX;
     uint32_t octave;
-    uint32_t pitchMidiValue = GetPitch();
+    int32_t pitchMidiValue = GetPitch();
     bool success = GetPlayablePitch(octave, pitchMidiValue);
     
     if(success)
@@ -387,7 +387,7 @@ uint32_t Note::GetProximityToNearestTuningBoundary() const
     return proximityToNearestTuningBoundary;
 }
 
-bool Note::GetPlayablePitch(uint32_t& numberOfOctaves, uint32_t& pitchMidiValue) 
+bool Note::GetPlayablePitch(uint32_t& numberOfOctaves, int32_t& pitchMidiValue) 
 {
     uint32_t numberOfElements = 0;
     numberOfOctaves = 0;
