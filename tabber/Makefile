@@ -16,7 +16,7 @@ tabber:$(EXE)
 install:
 	sh ./src/scripts/install.sh
 $(EXE): $(SOURCES)
-	C:\Program Files (x86)\IAR Systems\Embedded Workbench 8.0\common\bin\IarBuild.exe $(CFLAGS) -std=c++11 $(INC_PATH) $(SOURCES) $(LIB_PATH) -o $(EXE)
+	g++ $(CFLAGS) -std=c++11 $(INC_PATH) $(SOURCES) $(LIB_PATH) -o $(EXE)
 	
 clean:
 	rm $(EXE)

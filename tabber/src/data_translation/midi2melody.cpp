@@ -53,7 +53,8 @@ void ParseTabberSettingsFile(std::string infile, TabberSettings& tabSettings)
             vector<uint16_t> midiPitches;
             vector<string> midiPitchStrings;
             
-            while(regex_search(line, tuningMatchResults, tuningRegex2, regex_constants::match_any))
+            while(regex_search(line, tuningMatchResults, 
+                tuningRegex2, regex_constants::match_any))
             {
                 const uint32_t octavePitchMidiValue = 12;
                 
@@ -61,7 +62,8 @@ void ParseTabberSettingsFile(std::string infile, TabberSettings& tabSettings)
                 const uint32_t stringOctave = stoi(tuningMatchResults[2]);
                 const uint32_t octaveOffset = octavePitchMidiValue*stringOctave;
                 
-                uint32_t pitchMidiValue = noteAlphabetToPitchMidiValue[stringName]+octaveOffset;
+                uint32_t pitchMidiValue = 
+                    noteAlphabetToPitchMidiValue[stringName]+octaveOffset;
                 
                 midiPitches.push_back(pitchMidiValue);
                 midiPitchStrings.push_back(stringName);

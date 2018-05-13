@@ -117,7 +117,7 @@ void Chunk::DispatchVisitor(Visitor* v)
 }
 
 
-bool ChunkHasUnConfigurableNotesOnOneString(Chunk* chunk) 
+bool IsChunkConfigurable(Chunk* chunk) 
 {
     bool chunkValid = true;
     vector<Note*> chunkNotes = chunk->GetElements();
@@ -213,21 +213,14 @@ uint32_t Chunk::GetAveragePitch(void)
 //of size 1 
 void Chunk::CleanChunk(void)
 {
-    return;
-    while(!ChunkHasUnConfigurableNotesOnOneString(this))
+    while(!IsChunkConfigurable(this))
     {
-        cout << "Cleaning chunk." << endl;
         vector<Note*> chunkNotes = GetElements();
         uint32_t chunkSize = chunkNotes.size();
         
         if(chunkSize > 0)
         {            
             uint32_t averagePitch = GetAveragePitch();
-            cout << "Unsorted | ";
-            for (Note* x : chunkNotes)
-            {
-                cout << Note::PrintNote(x->GetCurrentNotePosition()) << " ";
-            }
             
             sort(begin(chunkNotes),end(chunkNotes), [averagePitch](const Note* left, const Note* right)
             {
@@ -248,16 +241,8 @@ void Chunk::CleanChunk(void)
                 }
             });
             
-            cout << "| Sorted | ";
-            for (auto x : chunkNotes)
-            {
-                cout << Note::PrintNote(x->GetCurrentNotePosition()) << " ";
-            }
-            cout << "|";
-            
             Note* chosenNote = chunkNotes[0];
             
-            cout << "Adding note positions to " << Note::PrintNote(chosenNote->GetCurrentNotePosition()) << " " << endl;
             //Make the least playable note more playable by shifting it up an octave
             chosenNote->MakeNoteMorePlayable();
         }

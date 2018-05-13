@@ -77,11 +77,15 @@ class Note : public Base
     public:
         static PitchMap PitchToFretMap;
         static int DeletedNotesCount;
+        static uint32_t GetNotesLostCounterValue();
+        
         static PitchMap GeneratePitchToFretMap(
             vector<std::string> stringNames,
             vector<uint16_t> instrumentCoursePitchValues, 
             const uint32_t numberOfFrets,
             const uint32_t capoFret);
+        
+        static std::string PrintPitchMap(PitchMap pitchMap);
 
         //Read pitchmap
         static uint32_t GetFretForNotePositionEntry(NotePositionEntry notePositionEntry);
@@ -99,7 +103,6 @@ class Note : public Base
         uint32_t GetStringIndexForCurrentNotePosition() const;
         NotePositionEntry GetCurrentNotePosition() const;
         uint32_t GetCurrentPitchmapIndex() const;
-        uint32_t GetNotesLostCounterValue() const ;
         uint32_t GetNoteDurationBeats()  const;
         uint32_t GetTrackNumber() const;
         uint32_t GetPitch() const ;

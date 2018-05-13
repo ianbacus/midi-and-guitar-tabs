@@ -7,6 +7,8 @@
 
 using namespace std;
 
+using std::string;
+
 int Note::DeletedNotesCount = 0;
 int32_t Note::TuningMinimum = 0;
 int32_t Note::TuningMaximum = 0;
@@ -46,6 +48,7 @@ PitchMap Note::GeneratePitchToFretMap(
 
     for(uint32_t stringIndex =0;stringIndex<numberOfStrings;stringIndex++)
     {
+        cout << stringIndex << ":";
         //Assume that the frets are separated by a semitone
         for(uint32_t fretNumber = capoFret; fretNumber < numberOfFrets; fretNumber++)
         {
@@ -53,6 +56,8 @@ PitchMap Note::GeneratePitchToFretMap(
                 instrumentCoursePitchValues[stringIndex] + fretNumber;
             
             FretboardPosition map_point(stringIndex,fretNumber);
+            
+            cout << pitchMidiValue << " ";
 
             //Insert sorted by fret number
             initMap[pitchMidiValue].insert(
@@ -63,15 +68,20 @@ PitchMap Note::GeneratePitchToFretMap(
                     return left.FretNumber < right.FretNumber; 
                 }), map_point); 
         }
+        
+        cout << endl;
     }
     PitchToFretMap = initMap;
+    
+    //PrintPitchMap(initMap);
+    
     return initMap;
 }
 
 /*
  *	Print out initialization map
  */
-string PrintPitchMap(PitchMap pitchMap)
+string Note::PrintPitchMap(PitchMap pitchMap)
 {
     stringstream outputStream;
     
@@ -86,7 +96,15 @@ string PrintPitchMap(PitchMap pitchMap)
 		{
 			outputStream << "(" << p.StringIndex << "s," << p.FretNumber << "f), ";
 		}
+        
+        outputStream << "\r\n";
 	}
+    
+    string outputString = outputStream.str();
+
+    cout << outputString << endl;
+    
+    return outputString;
 }
 
 
@@ -335,7 +353,7 @@ uint32_t Note::GetNumberOfElements() const
 /*
  *	Get the number of deleted notes (notes whose pitch was not mapped)
  */	
-uint32_t Note::GetNotesLostCounterValue() const 
+uint32_t Note::GetNotesLostCounterValue() 
 {
 	return DeletedNotesCount;
 }

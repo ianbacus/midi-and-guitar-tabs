@@ -9,15 +9,18 @@
 struct ChunkFeatures
 {
     uint32_t maximumFretInCandidateChunk;
-    uint32_t fretSpacingInCandidateChunk;
+    uint32_t internalFretDistance;
     uint32_t fretCenterInCandidateChunk;
     uint32_t fretDistanceFromSustainedNotes;
     
     uint32_t sustainInterruptions;
-    uint32_t candidateSpacingFromLastChunk;
+    uint32_t fretDistanceFromAdjacentChunks;
     uint32_t numberOfDuplicateStrings;
     
-    vector<uint32_t> stringPositions;
+    bool goodInternalFingerSpread;
+    bool goodRelativeFingerSpread;
+    
+    vector<FretboardPosition> fretboardPositions;
 };
 
 class RotateVisitor : public Visitor
@@ -50,13 +53,22 @@ class RotateVisitor : public Visitor
             uint32_t& candidateSpacingFromLastChunk,
             uint32_t& intersectionsWithPreviousChunk);
 
-        static uint32_t GetChunkFretCenter(
-            Chunk* candidateChunk);
         
-        static void CountStringIntersectionsWithFrettedNotes(
+        static void GetSustainedChunkRelativeFeatures(
             Chunk* chunk,
             uint32_t& stringIntersections,
-            uint32_t& fretCenterOfSustainedNotes);
+            uint32_t& fretCenterOfSustainedNotes,
+            bool& goodRelativeFingerSpread);
+        
+        static void GetChunkInternalFeatures(
+            Chunk* chunk,
+            uint32_t& maximumFretInCandidateChunk,
+            uint32_t& fretCenterInCandidateChunk,
+            uint32_t& internalFretDistance,
+            bool& goodInternalFingerSpread);
+        
+        static uint32_t GetChunkFretCenter(
+            Chunk* candidateChunk);
         
         
         static Chunk* SearchForClosestOptimizedChunk(Chunk* currentChunk,

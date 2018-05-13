@@ -273,7 +273,11 @@ def WriteExtractedMidiDataToIntermediateFile(newfile):
 
     #end of file writing
 
-def make(newfile,infile,maximumNumberOfTracks, note_offsets):
+def generate_pitch_delta(newfile,infile,maximumNumberOfTracks, notesPerBeat='8.0'):
+
+    global MaximumNotesPerBeat
+
+    MaximumNotesPerBeat = float(notesPerBeat) 
 
     #Read midi file, translate it into track objects
     midiTracks = midi.read_midifile(infile)

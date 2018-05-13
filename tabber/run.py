@@ -2,14 +2,16 @@ import time, sys, os
 sys.path.insert(0, './src/scripts/')
 
 from collections import OrderedDict
-from midi_writer import make as generate_pitch_delta
+from midi_writer import generate_pitch_delta
 import subprocess
+
+targetPitchAverage = 64
 
 #set the order of input parameters here. They are ordered from left to right based on how frequently they are estimated to be used
 inputParameters = OrderedDict(
 [	('fileName', False),		\
 	('noteOffset', '0'),		\
-	('align', '0'),			\
+	('align', '8.0'),			\
 	('maximumNumTracks', '-1'), 	\
 	('startMeasure', '0'),		\
 	('endMeasure', '-1'),		\
@@ -59,13 +61,13 @@ if __name__ == "__main__":
 		parsedFileName = "data/parsed_midi_data.txt"
 
 		#Translate midi file into intermediate format with raw pitch/time information
-		averagePitch = generate_pitch_delta(newfile=parsedFileName,                        		\
-						infile="data/input_files/"+fileName+".mid",                 \
-						maximumNumberOfTracks=inputParameters['maximumNumTracks'],  \
-						note_offsets='(0,0,0,0,0,0)')
+		averagePitch = generate_pitch_delta(parsedFileName,   		  \
+						"data/input_files/"+fileName+".mid",     	  \
+						inputParameters['maximumNumTracks'],  		  \
+						inputParameters['align'])
 		
 		if (not argumentWasSpecifiedDictionary['noteOffset']) or (inputParameters['noteOffset'] == 'auto'):
-			inputParameters['noteOffset'] = str(64 - averagePitch)
+			inputParameters['noteOffset'] = str(targetPitchAverage - averagePitch)
 		else:
 			print inputParameters['noteOffset']
 		
@@ -76,7 +78,7 @@ if __name__ == "__main__":
 				  	inputParameters['noteOffset'],		\
 					inputParameters['startMeasure'],	\
 					inputParameters['endMeasure'],		\
-					inputParameters['align']			\
+					'0'\
 				  ]
 		subprocess.call(spstring)
 

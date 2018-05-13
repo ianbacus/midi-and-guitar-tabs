@@ -41,21 +41,37 @@ PrintVisitor::~PrintVisitor(void)
 
 string PrintVisitor::TempVisitNote(Note *note)
 {
+    const bool UseHex = true;
     string result;
     std::stringstream sstream;
     
     char paddingFill = TablatureUnfrettedPadding;
     uint32_t fretNumber = note->GetFretForCurrentNotePosition();
 
-    if(fretNumber < 16)
+    if(UseHex)
     {
-        sstream << paddingFill <<  std::hex << std::uppercase << fretNumber;
+        if(fretNumber < 16)
+        {
+            sstream << paddingFill << std::hex  << fretNumber;
+        }
+
+        else
+        {
+            sstream <<  std::hex << fretNumber;
+        }   
     }
-    
     else
     {
-        sstream <<  std::hex << std::uppercase << fretNumber;
-    }   
+        if(fretNumber < 10)
+        {
+            sstream << paddingFill << std::uppercase << fretNumber;
+        }
+
+        else
+        {
+            sstream << std::uppercase << fretNumber;
+        }   
+    }
     
     result = sstream.str();
     
