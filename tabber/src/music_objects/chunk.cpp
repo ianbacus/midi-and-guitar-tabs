@@ -32,6 +32,8 @@ string Chunk::PrintChunk(Chunk* chunk)
         {
             sstream << Note::PrintNote(notePositionEntry)<<" ";
         }
+        
+        sstream << ", index: " << chunk->GetMeasureIndex();
     }
     
     else
@@ -100,6 +102,29 @@ vector<NotePositionEntry > Chunk::GetCurrentNotePositionEntries(void) const
 	}
     
 	return indices;
+}
+
+vector<FretboardPosition> Chunk::GetCurrentFretboardPositions()
+{
+    vector<NotePositionEntry> currentNotePositions =
+        GetCurrentNotePositionEntries();
+    
+    vector<FretboardPosition> fretboardPositions;
+    
+    for(NotePositionEntry notePositionEntry : currentNotePositions)
+    {
+        const uint32_t currentString = 
+            Note::GetStringForNotePositionEntry(notePositionEntry);
+        
+        const uint32_t currentFret = 
+            Note::GetFretForNotePositionEntry(notePositionEntry);
+        
+        const FretboardPosition fretPosition(currentString,currentFret);
+
+        fretboardPositions.push_back(fretPosition);
+    }
+    
+    return fretboardPositions;
 }
 
 
@@ -409,17 +434,22 @@ void Chunk::SetIsMeasureEnd(bool isMeasureStart)
 }
 
 //Set locked strings without clearing others
-void Chunk::SetLockedStringIndices(vector<FretboardPosition> lockedStrings)
+void Chunk::SetLockedStringIndices(vector<FretboardPosition> sustainedStrings)
 {    
-    for(FretboardPosition fretPosition : lockedStrings)
+    const vector<FretboardPosition> currentFretboardPositions = 
+        GetCurrentFretboardPositions();
+    
+    
+    for(FretboardPosition fretboardPosition : sustainedStrings)
     {
-        for(FretboardPosition currentFretPosition : SustainedFretboardPositions)
+        for(FretboardPosition currentFretboardPosition : currentFretboardPositions)
         {
-            if(currentFretPosition.StringIndex == fretPosition.StringIndex)
+            const uint32_t currentStringIndex = currentFretboardPosition.StringIndex;
+            const uint32_t previousStringIndex = fretboardPosition.StringIndex;
+            
+            if(currentStringIndex == previousStringIndex)
             {
-                replace(begin(SustainedFretboardPositions),
-                        end(SustainedFretboardPositions),
-                        currentFretPosition,fretPosition);
+                SustainedFretboardPositions.push_back(currentFretboardPosition);
             }
         }
     }

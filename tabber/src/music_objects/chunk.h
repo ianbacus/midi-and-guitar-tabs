@@ -44,6 +44,9 @@ class Chunk : public Base
         uint32_t GetOptimalChunkSize(void) const;
         vector<NotePositionEntry > GetCurrentOptimalNotePositionEntries() const;
         vector<NotePositionEntry > GetCurrentNotePositionEntries() const;
+        
+        vector<FretboardPosition> GetCurrentFretboardPositions();
+        
         uint32_t GetNumberOfPositionPermutations(void) const;
         
         //Note access

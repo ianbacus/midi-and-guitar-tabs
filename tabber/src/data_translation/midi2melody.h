@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <vector>
+#include <map>
 #include <sstream>
 #include <fstream>
 
@@ -39,8 +40,16 @@ struct TabberSettings
     } Formatting;
 };
 
-vector<Chunk*> ParseIntermediateFile(std::string infile,int,int);
-void ParseTabberSettingsFile(std::string infile, TabberSettings& tabSettings);
+vector<Chunk*> ParseIntermediateFile(
+    std::string infile, 
+    int pitchOffset,
+    int deltaExpansion,
+    int durationExpansion);
+
+void ParseTabberSettingsFile(
+    std::string infile, 
+    std::map<std::string,uint32_t>& parsedConstants,
+    TabberSettings& tabSettings);
 
 
 

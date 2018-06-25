@@ -18,7 +18,7 @@
 
 using namespace std;
 
-class PrintVisitor : public Visitor
+class TablatureOutputFormatter : public Visitor
 {
     private:
         //1 row for each string/course, and 1 row for duration info
@@ -53,10 +53,10 @@ class PrintVisitor : public Visitor
     
     public:
   	
-        PrintVisitor(uint32_t maximumLineWidth,
+        TablatureOutputFormatter(uint32_t maximumLineWidth,
                      vector<string> instrumentStringNames);
         
-        virtual ~PrintVisitor(void);
+        virtual ~TablatureOutputFormatter(void);
 
         virtual void VisitNote(Note*) override;
         virtual void VisitBar(Bar*) override;

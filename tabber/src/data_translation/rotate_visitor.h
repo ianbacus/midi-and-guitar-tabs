@@ -23,7 +23,7 @@ struct ChunkFeatures
     vector<FretboardPosition> fretboardPositions;
 };
 
-class RotateVisitor : public Visitor
+class TablatureOptimizer : public Visitor
 {
     private:
         
@@ -31,36 +31,39 @@ class RotateVisitor : public Visitor
         const uint32_t FretSpanScalar;//span of a chunk: more than 5 gets difficult
         const uint32_t InterChunkSpacingScalar; //fret spacing between chunks: 
         const uint32_t StringOverlapScalar; //number of string overlaps
+        const uint32_t ArpeggiationDeductionScalar; //difference between adjacent strings
+        
         const uint32_t NumberOfStrings;
         
-        static vector<uint32_t> GetStringPositionsOfIndices(
+        
+         vector<uint32_t> GetStringPositionsOfIndices(
             vector<NotePositionEntry > chunkIndices);
         
-        static vector<uint32_t> GetStringPositions(
+         vector<uint32_t> GetStringPositions(
             Chunk* chunk);
         
-        static uint32_t CountStringIntersectionsBetweenTwoChunkConfigurations(
+         uint32_t CountStringIntersectionsBetweenTwoChunkConfigurations(
                 Chunk* previousChunk,
                 Chunk* currentChunk);
         
         
-        static void GetChunkFeatures(
+         void GetChunkFeatures(
             Chunk* chunk,
             ChunkFeatures& chunkFeatures);
         
-        static void GetAdjacentChunkRelativeFeatures(
+         void GetAdjacentChunkRelativeFeatures(
             Chunk* chunk, 
             uint32_t& candidateSpacingFromLastChunk,
             uint32_t& intersectionsWithPreviousChunk);
 
         
-        static void GetSustainedChunkRelativeFeatures(
+         void GetSustainedChunkRelativeFeatures(
             Chunk* chunk,
             uint32_t& stringIntersections,
             uint32_t& fretCenterOfSustainedNotes,
             bool& goodRelativeFingerSpread);
         
-        static void GetChunkInternalFeatures(
+         void GetChunkInternalFeatures(
             Chunk* chunk,
             uint32_t& maximumFretInCandidateChunk,
             uint32_t& fretCenterInCandidateChunk,
@@ -69,7 +72,9 @@ class RotateVisitor : public Visitor
         
         static uint32_t GetChunkFretCenter(
             Chunk* candidateChunk);
-        
+
+        static uint32_t GetChunkStringCenter(
+            Chunk* candidateChunk);
         
         static Chunk* SearchForClosestOptimizedChunk(Chunk* currentChunk,
                 bool searchForward, bool searchFrettedChunksOnly);
@@ -110,15 +115,17 @@ class RotateVisitor : public Visitor
         
 
     public:
-        RotateVisitor(
+        TablatureOptimizer(
             uint32_t numberOfStrings,
             uint32_t maximumFretScalar,
             uint32_t fretSpanScalar,
             uint32_t interChunkSpacingScalar,
-            uint32_t stringOverlapScalar);
+            uint32_t stringOverlapScalar,
+            uint32_t arpeggiationDeductionScalar);
         
-        virtual ~RotateVisitor();
+        virtual ~TablatureOptimizer();
 
+        void EmitDebugString(std::string debugString);
         
         virtual void VisitNote(Note* note);
         virtual void VisitBar(Bar* bar);

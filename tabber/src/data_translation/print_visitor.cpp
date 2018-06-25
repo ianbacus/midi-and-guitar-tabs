@@ -20,7 +20,7 @@ std::map<int,string> quaver_map =
 /*
  *	Initialize print Visitor with output file and columns per row
  */	
-PrintVisitor::PrintVisitor(uint32_t maximumLineWidth, 
+TablatureOutputFormatter::TablatureOutputFormatter(uint32_t maximumLineWidth, 
                            vector<string> instrumentStringNames) 
     : 
         PreviousChunk(nullptr),
@@ -32,14 +32,14 @@ PrintVisitor::PrintVisitor(uint32_t maximumLineWidth,
 }
 
 
-PrintVisitor::~PrintVisitor(void) 
+TablatureOutputFormatter::~TablatureOutputFormatter(void) 
 {
     TablatureBuffer.erase(std::begin(TablatureBuffer), 
                           std::end(TablatureBuffer));
 }
 
 
-string PrintVisitor::TempVisitNote(Note *note)
+string TablatureOutputFormatter::TempVisitNote(Note *note)
 {
     const bool UseHex = true;
     string result;
@@ -78,7 +78,7 @@ string PrintVisitor::TempVisitNote(Note *note)
     return result;
 }
 
-uint32_t PrintVisitor::GetNumberOfTablaturePrintRows(void)
+uint32_t TablatureOutputFormatter::GetNumberOfTablaturePrintRows(void)
 {
     
     const uint32_t numberOfTablatureRows = InstrumentStringNames.size();
@@ -88,7 +88,7 @@ uint32_t PrintVisitor::GetNumberOfTablaturePrintRows(void)
     return numberOfTablaturePrintRows;
 }
 
-vector<string> PrintVisitor::GenerateTablatureStartColumn(void)
+vector<string> TablatureOutputFormatter::GenerateTablatureStartColumn(void)
 {
     const uint32_t numberOfTablaturePrintRows = GetNumberOfTablaturePrintRows();
     
@@ -116,7 +116,7 @@ vector<string> PrintVisitor::GenerateTablatureStartColumn(void)
     
 } //end GenerateTablatureStartColumn
 
-vector<string> PrintVisitor::GenerateTablatureColumn(Chunk *chunk)
+vector<string> TablatureOutputFormatter::GenerateTablatureColumn(Chunk *chunk)
 {
     const uint32_t numberOfTablaturePrintRows = GetNumberOfTablaturePrintRows();
     const uint32_t numberOfTablatureRows = InstrumentStringNames.size();
@@ -215,7 +215,7 @@ vector<string> PrintVisitor::GenerateTablatureColumn(Chunk *chunk)
 } //end GenerateTablatureColumn
 
 //Concatenate a range of row groupings
-vector<string> PrintVisitor::ConcatenateColumnsIntoMeasureStrings(vector<vector<string> > columns)
+vector<string> TablatureOutputFormatter::ConcatenateColumnsIntoMeasureStrings(vector<vector<string> > columns)
 {
     const uint32_t rowGroupNumberOfRows = columns.back().size();
     
@@ -235,7 +235,7 @@ vector<string> PrintVisitor::ConcatenateColumnsIntoMeasureStrings(vector<vector<
 } //end ConcatenateColumnsIntoMeasureStrings
 
 //Concatenate two row groupings
-vector<string> PrintVisitor::ConcatenateRowGroups(
+vector<string> TablatureOutputFormatter::ConcatenateRowGroups(
         const vector<string> rows0,
         const vector<string> rows1)
 {
@@ -259,7 +259,7 @@ vector<string> PrintVisitor::ConcatenateRowGroups(
     
 } //end ConcatenateRowGroups
 
-void PrintVisitor::VisitBar(Bar* currentBar)
+void TablatureOutputFormatter::VisitBar(Bar* currentBar)
 {
     const uint32_t numberOfTablatureRows = InstrumentStringNames.size();
     
@@ -312,7 +312,7 @@ void PrintVisitor::VisitBar(Bar* currentBar)
 } //end VisitBar
 
 
-void PrintVisitor::VisitChunk(Chunk* chunk)
+void TablatureOutputFormatter::VisitChunk(Chunk* chunk)
 {
     static vector<vector<string> > tablatureColumns;
     bool measureEnd = chunk->GetIsMeasureEnd();    
@@ -369,13 +369,13 @@ void PrintVisitor::VisitChunk(Chunk* chunk)
     }
 }
 
-void PrintVisitor::VisitNote(Note* currentBar)
+void TablatureOutputFormatter::VisitNote(Note* currentBar)
 {
     
 }
 
 
-void PrintVisitor::UpdateStringIndexedRemainingDeltaTicks(
+void TablatureOutputFormatter::UpdateStringIndexedRemainingDeltaTicks(
     Chunk* candidateChunk)
 {
     Chunk* previousChunk = PreviousChunk;
@@ -423,7 +423,7 @@ void PrintVisitor::UpdateStringIndexedRemainingDeltaTicks(
 /*
  *	Add padding to the string buffers based on the given delta
  */
-string PrintVisitor::TranslateDeltaAndAppendQuaverCodes(int delta)
+string TablatureOutputFormatter::TranslateDeltaAndAppendQuaverCodes(int delta)
 {
     string quaverCodeString;
     
@@ -463,7 +463,7 @@ string PrintVisitor::TranslateDeltaAndAppendQuaverCodes(int delta)
 /*
  *	Print the contents of the string buffer to the chosen file
  */	
-void PrintVisitor::WriteTablatureToOutputFile(string fileName)
+void TablatureOutputFormatter::WriteTablatureToOutputFile(string fileName)
 {
 	ofstream outputFileStream;
 	stringstream tablatureStringStream;

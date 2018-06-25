@@ -10,76 +10,9 @@
 #include <vector>
 #include <iostream>
 
-void GenerateTab(
-        string outputFile, vector<Bar*> score, 
-        uint32_t upperBound, uint32_t lowerBound)
+
+void SortScoreByChunkFlexibility(vector<Chunk*>& sortedScore)
 {
-
-
-}
-
-
-int ParseFileIntoTab(const string inputFile, const string outputFile,
-        int noteOffset, uint32_t lowerBound,
-        uint32_t upperBound, const uint32_t align) 
-{
-        uint32_t measureIndex = 0;
-    TabberSettings tabSettings;
-    
-    memset(&tabSettings, 0, sizeof(tabSettings));
-    
-    ParseTabberSettingsFile("src/tabberSettings.txt", tabSettings);
-    
-    Note::PitchToFretMap = Note::GeneratePitchToFretMap(
-            tabSettings.InstrumentInfo.StringIndexedNoteNames,
-            tabSettings.InstrumentInfo.StringIndexedMidiPitches, 
-            tabSettings.InstrumentInfo.NumberOfFrets,
-            tabSettings.InstrumentInfo.CapoFret);
-
-    RotateVisitor TablatureRearranger(
-            tabSettings.InstrumentInfo.StringIndexedNoteNames.size(),
-            tabSettings.CostScalars.NeckPositionCost,
-            tabSettings.CostScalars.SpanCost,
-            tabSettings.CostScalars.NeckDiffCost,
-            tabSettings.CostScalars.SuppressedSustainCost);
-    
-    PrintVisitor TablaturePrinter(
-            tabSettings.Formatting.NumberOfLinesPerTabRow,
-            tabSettings.InstrumentInfo.StringIndexedNoteNames);
-
-    
-	//Limit transpositions to +/- 127 pitches 
-	if (noteOffset < -127) 
-	{
-		noteOffset = -127;
-	}
-    
-	if (noteOffset > 127)
-	{
-		noteOffset = 127;
-	}
-    
-	vector<Chunk*> score= ParseIntermediateFile(inputFile,noteOffset,align);
-    
-	//Swap bounds if they are incorrect
-	if (upperBound < lowerBound)
-	{
-		const uint32_t tempBound = lowerBound;
-		lowerBound = upperBound;
-		upperBound = tempBound;
-	}
-	
-	//Set the default upper bound to the maximum value
-    if(upperBound > score.size())
-    {
-        upperBound = score.size();
-    }
-    
-    std::cout << outputFile << ": Optimizing and printing "  << (upperBound - lowerBound)+1
-    << "measures, transposed " << noteOffset << " semi-tones: m"  << lowerBound << " to m" << upperBound << endl;
-
-    //Sort score by number of chunk permutations
-    vector<Chunk*> sortedScore = score;
     sort(begin(sortedScore),end(sortedScore), [](const Chunk* left, const Chunk* right)
     {
         vector<Note*> leftNotes = left->GetElements();
@@ -88,7 +21,6 @@ int ParseFileIntoTab(const string inputFile, const string outputFile,
         Note* leastMobileNoteLeft = *min_element(begin(leftNotes),end(leftNotes),
             [](const Note* lhs, const Note* rhs)
             {
-                //return lhs->GetNumberOfElements() < rhs->GetNumberOfElements();
                 return lhs->GetProximityToNearestTuningBoundary() <
                        rhs->GetProximityToNearestTuningBoundary();
                         
@@ -97,7 +29,6 @@ int ParseFileIntoTab(const string inputFile, const string outputFile,
         Note* leastMobileNoteRight = *min_element(begin(rightNotes),end(rightNotes),
             [](const Note* lhs, const Note* rhs)
             {
-                //return lhs->GetNumberOfElements() < rhs->GetNumberOfElements();
                 return lhs->GetProximityToNearestTuningBoundary() <
                        rhs->GetProximityToNearestTuningBoundary();
             });
@@ -115,45 +46,155 @@ int ParseFileIntoTab(const string inputFile, const string outputFile,
             return leastMobileNotePlacementsLeft < leastMobileNotePlacementsRight;
         }
     });
+}
+
+void FixInputs(
+        const uint32_t maximumLength, 
+        int32_t& noteOffset, 
+        uint32_t& lowerBound, 
+        uint32_t& upperBound)
+{
+    const int16_t transpositionLimit = 127;
     
+    //Limit transpositions to +/- 127 pitches 
+	if (noteOffset < -1*transpositionLimit) 
+	{
+		noteOffset = -1*transpositionLimit;
+	}
+    
+	if (noteOffset > transpositionLimit)
+	{
+		noteOffset = transpositionLimit;
+	}
+    
+	//Swap bounds if they inverted
+	if (upperBound < lowerBound)
+	{
+		swap(lowerBound,upperBound);
+	}
+	
+    //Clamp the bounds
+    upperBound = min(upperBound, maximumLength);
+    lowerBound = min(lowerBound, maximumLength);
+}
+
+uint32_t ProcessScore(
+        string outputFile,
+        const uint32_t lowerBound,
+        const uint32_t upperBound, 
+        vector<Chunk*>& score,
+        TablatureOptimizer& tablatureRearranger,
+        TablatureOutputFormatter& tablaturePrinter)
+
+{
     uint32_t totalCost = 0;
     
+    vector<Chunk*> sortedScore  = score;
+    
+    SortScoreByChunkFlexibility(sortedScore);
+    //First pass: process and place chunks with fewer permutations before 
+    //those with more permutations
+    int i = 0;
     for (Chunk* currentChunk : sortedScore)
     {
-        //cout << Chunk::PrintChunk(currentChunk) << endl;
         uint32_t measureIndex = currentChunk->GetMeasureIndex();
+        
         if((lowerBound <= measureIndex) && (measureIndex <= upperBound))
         {
-            TablatureRearranger.OptimizeChunk(currentChunk);
+            tablatureRearranger.OptimizeChunk(currentChunk);
         }
     }
-    
-    
-    //Iterate through each bar, recursively apply the visitor pattern to fix note positions
+  
+    tablatureRearranger.EmitDebugString("First pass complete");
+
+    //Second pass: reposition chunks in chronological order so that user's 
+    //inter-chunk constraints can be satisfied
     for (Chunk* currentChunk : score)
     {
-        //Todo: fix bug with one of the visitors that causes arithmetic exception 
-        //when there is a discontinuity between d0 and a1 low strings for drop d
+        uint32_t measureIndex = currentChunk->GetMeasureIndex();
+        
         if((lowerBound <= measureIndex) && (measureIndex <= upperBound))
         {
             if(measureIndex == upperBound)
             {
                 currentChunk->SetIsMeasureEnd(true);
             }
+            
             currentChunk->ResetAllNotesRepositions();
             currentChunk->SetIsOptimized(false);
-            totalCost += TablatureRearranger.OptimizeChunk(currentChunk);
-            TablaturePrinter.VisitChunk(currentChunk);
+            
+            totalCost += tablatureRearranger.OptimizeChunk(currentChunk);
+            tablaturePrinter.VisitChunk(currentChunk);
         }
-        
-        measureIndex++;
     }
+    
+    tablaturePrinter.WriteTablatureToOutputFile(outputFile);
+    tablaturePrinter.WriteTablatureToOutputFile("data/outTab.txt");
+}
 
-    cout << "Total cost: $" << totalCost << endl;
-    TablaturePrinter.WriteTablatureToOutputFile(outputFile);
-    TablaturePrinter.WriteTablatureToOutputFile("data/outTab.txt");
+int ParseFileIntoTab(
+        const string inputFile, 
+        const string outputFile,
+        int32_t noteOffset, 
+        uint32_t lowerBound,
+        uint32_t upperBound, 
+        const uint32_t deltaExpansion) 
+{
+    
+    uint32_t totalCost = 0;
+    map<string,uint32_t> parsedConstants;
+    
+    vector<Chunk*> score;
+            
+    TabberSettings tabSettings = {0};
+    
+    //Parse user settings file
+    ParseTabberSettingsFile("src/tabberSettings.txt", parsedConstants, tabSettings);
+
+    
+    Note::InitializePitchToFretMap(
+        tabSettings.InstrumentInfo.StringIndexedNoteNames,
+        tabSettings.InstrumentInfo.StringIndexedMidiPitches, 
+        parsedConstants["Frets"],
+        parsedConstants["CapoFret"]);
+
+    TablatureOptimizer tablatureRearranger(
+        tabSettings.InstrumentInfo.StringIndexedNoteNames.size(),
+        parsedConstants["NeckPositionCost"],
+        parsedConstants["SpanCost"],
+        parsedConstants["NeckDiffCost"],
+        parsedConstants["SuppressedSustainCost"],
+        parsedConstants["ArpeggiationDeduction"]);
+    
+    TablatureOutputFormatter tablaturePrinter(
+        parsedConstants["NumberOfLinesPerTabRow"],
+        tabSettings.InstrumentInfo.StringIndexedNoteNames);
+
+    //Sort score by number of chunk permutations
+	score = ParseIntermediateFile(
+        inputFile,
+        noteOffset,
+        deltaExpansion,
+        deltaExpansion);
+    
+    
+    FixInputs(score.size(), noteOffset, lowerBound, upperBound);
+
+    std::cout << outputFile << ": Optimizing and printing "  
+            << (upperBound - lowerBound)+1
+            << "measures, transposed " << noteOffset << " semi-tones: m"  
+            << lowerBound << " to m" << upperBound << endl;
+    
+    
+    totalCost = ProcessScore(
+        outputFile,
+        lowerBound, upperBound, score, 
+        tablatureRearranger, tablaturePrinter);
 
     std::cout << "Done. " << std::endl;
+    cout << "Total cost: $" << totalCost << endl;
+    cout << Note::GetNotesLostCounterValue() << " notes were out of range" << endl;
+
   
     score.clear();
 
@@ -162,35 +203,45 @@ int ParseFileIntoTab(const string inputFile, const string outputFile,
 
 int main(int argc, char* argv[])
 {
-    bool Debug = true;
+    const bool Debug = false;
+    const uint8_t correctNumberOfArguments = 7;
+    
+    int returnValue = 0;
+    
+    if(Debug)
+    {
+        returnValue = ParseFileIntoTab(
+            "data/parsed_midi_data.txt", 
+            "data/tabs/outTab.txt", -12, 0, -1, -1);
+    }
 
-    if(argc != 7)
+    if(argc != correctNumberOfArguments)
     {
         cout << "Invalid entry. use the following format:\n";
         cout << ">> ./gen <inputFile> <outputFile> <pitchShift#>,";
         cout << " <measuresPerRow#> <startMeasure#> <endMeasure#>" << endl;
-        
-        if(Debug)
-        {
-            return ParseFileIntoTab("data/parsed_midi_data.txt", 
-                                    "data/tabs/outTab.txt", -12, 0, -1, -1);
-        }
-
-        return 0;
     }
-
-    const string inputFile = argv[1]; //name of input file
-    const string outputFile = argv[2];
-
-    int noteOffset=atoi(argv[3]); 
-
-    uint32_t lowerBound=atoi(argv[4]);
-    uint32_t upperBound=atoi(argv[5]);
-
-    const unsigned int align = atoi(argv[6]);
-
-    return ParseFileIntoTab(inputFile, outputFile, noteOffset, 
-                            lowerBound, upperBound, align);
-
     
+    else
+    {
+        const string inputFile = argv[1]; //name of input file
+        const string outputFile = argv[2];
+
+        int noteOffset=atoi(argv[3]); 
+
+        uint32_t lowerBound=atoi(argv[4]);
+        uint32_t upperBound=atoi(argv[5]);
+
+        unsigned int align = atoi(argv[6]);
+
+        returnValue = ParseFileIntoTab(
+            inputFile, 
+            outputFile, 
+            noteOffset, 
+            lowerBound, 
+            upperBound,
+            align);   
+    }
+    
+    return returnValue;
 }

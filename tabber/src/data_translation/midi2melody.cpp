@@ -1,6 +1,8 @@
 //Translate an intermediate file into a c++ representation of the pitches and deltas
 
 #include "midi2melody.h"
+
+#include <algorithm>
 #include <iomanip>
 
 #include <stdlib.h>
@@ -12,7 +14,10 @@
 using namespace std;
 
 
-void ParseTabberSettingsFile(std::string infile, TabberSettings& tabSettings)
+void ParseTabberSettingsFile(
+    std::string infile,     
+    map<string,uint32_t>& parsedConstants,
+    TabberSettings& tabSettings)
 {
     const regex keyValueRegex("\\s*([a-zA-Z]+?)\\s*?:\\s*?([0-9]+)");
     const regex tuningRegex("\\s*Tuning\\s*?:\\s*?([a-gA-G][\\-0-9][,\\s]*)+");
@@ -21,8 +26,6 @@ void ParseTabberSettingsFile(std::string infile, TabberSettings& tabSettings)
     ifstream file( infile );
     
     string line;
-    
-    map<string,uint32_t> parsedConstants;
     
     while(getline( file, line ) ) 
     {
@@ -73,21 +76,16 @@ void ParseTabberSettingsFile(std::string infile, TabberSettings& tabSettings)
 
             tabSettings.InstrumentInfo.StringIndexedMidiPitches = midiPitches;
             tabSettings.InstrumentInfo.StringIndexedNoteNames = midiPitchStrings;
-        }
-       
-        tabSettings.InstrumentInfo.NumberOfFrets = parsedConstants["Frets"];
-        tabSettings.InstrumentInfo.CapoFret = parsedConstants["CapoFret"];
-        
-        tabSettings.CostScalars.SpanCost = parsedConstants["SpanCost"];
-        tabSettings.CostScalars.NeckPositionCost = parsedConstants["NeckPositionCost"];
-        tabSettings.CostScalars.NeckDiffCost = parsedConstants["NeckDiffCost"];
-        tabSettings.CostScalars.SuppressedSustainCost = parsedConstants["SuppressedSustainCost"];
-        
-        tabSettings.Formatting.NumberOfLinesPerTabRow = parsedConstants["NumberOfLinesPerTabRow"];
+            for (auto x : midiPitchStrings) cout << x << endl;
+        }       
     }
 }
 
-vector<Chunk*> ParseIntermediateFile(std::string infile, int pitchOffset,int align) 
+vector<Chunk*> ParseIntermediateFile(
+    std::string infile, 
+    int pitchOffset,
+    int deltaExpansion,
+    int durationExpansion) 
 {
     ifstream file( infile );
 
@@ -137,8 +135,12 @@ vector<Chunk*> ParseIntermediateFile(std::string infile, int pitchOffset,int ali
 			std::getline( pitchDeltaInputStringStream, noteDurationString) ) 
 		{
 			const uint32_t currentTrackNumber = stoi(trackNumberString);
-			const uint32_t delta = stoi(deltaString)*pow(2.0,align);
-			const uint32_t noteDuration = stoi(noteDurationString)*pow(2.0,align);
+			const uint32_t delta = stoi(deltaString)*pow(2.0,deltaExpansion);
+			const uint32_t noteDuration = 
+                std::max(
+                    (uint32_t)(stoi(noteDurationString)*pow(2.0,deltaExpansion)),
+                    (uint32_t)durationExpansion);
+            
 			const uint32_t pitch = stoi(pitchString)- shift;
             
             Note * const currentNote = new Note(pitch,noteDuration,currentTrackNumber);

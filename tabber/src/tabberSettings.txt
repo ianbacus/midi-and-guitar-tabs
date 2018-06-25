@@ -10,29 +10,29 @@
 
         ###Instrument strings and tuning
         ##################################################################
-        #The first entry becomes the bottom-most tablature row, and the last entry 
+        #The first entry becomes the bottom-most tablature row, and the last entry
         #becomes the topmost tablature row. Enter midi pitch values.
         ##################################################################
 
         ##################################
         #6 string guitar standard tuning
-        Tuning:e1,a1,d2,g2,b2,e3
+        #Tuning:e1,a1,d2,g2,b2,e3
 
         ##################################
         #6 string guitar with low D string, "drop D"
         #Tuning:d1,a1,d2,g2,b2,e3
 
         ##################################
-        #6 string guitar, "open G" 
+        #6 string guitar, "open G"
         #Tuning:d1,g1,d2,g2,b2,e3
 
         ##################################
         #Ukulele
-        #Tuning:g3,c3,e3,a3
+        #Tuning:d3,g2,b2,e3
 
         ##################################
         #7 string guitar with low B string
-        #Tuning:b0,e1,a1,d2,g2,b2,e3
+        Tuning:b0,e1,a1,d2,g2,b2,e3
 
         ##################################
         #7 string guitar with low A string
@@ -40,14 +40,14 @@
 
         ###Number of frets
         ##################################################################
-        # The maximum number of frets your instrument has (or that you feel 
+        # The maximum number of frets your instrument has (or that you feel
         #comfortable playing).
         ##################################################################
-        Frets:12
+        Frets:11
 
         ###Capo placement
         ##################################################################
-        #Indicate the fret placement of a capo. The capo will set the minimum 
+        #Indicate the fret placement of a capo. The capo will set the minimum
         #fret for all strings
         ##################################################################
         CapoFret:0
@@ -57,33 +57,40 @@
     These settings allow for optimizations suited to the style of music
     and to the player's preferences
     ##################################################################
+        ###Duration Expansion
+        ##################################################################
+        #Increases as the difference between the highest and lowest frets
+        #increases
+        ##################################################################
+        ArpeggiationDeduction:500
+
 
         ###Span cost
         ##################################################################
-        #Increases as the difference between the highest and lowest frets 
+        #Increases as the difference between the highest and lowest frets
         #increases
         ##################################################################
-        SpanCost:20
+        SpanCost:3000
 
         ###Neck Position cost
         ##################################################################
         #Increases as a chord or note moves up the neck
         ##################################################################
-        NeckPositionCost:30
+        NeckPositionCost:2500
 
         ###Inter-Chord Neck Distance cost
         ##################################################################
         #Increases as the distance between adjacent chords or notes increases
         ##################################################################
-        NeckDiffCost:45
+        NeckDiffCost:3500
 
         ###Inter-Chord String Overlap cost
         ##################################################################
-        #Increases as the number of strings in two adjacent chords have more 
-        #of the same strings being held down. Increasing this cost will 
+        #Increases as the number of strings in two adjacent chords have more
+        #of the same strings being held down. Increasing this cost will
         #allow more sustain between notes.
         ##################################################################
-        SuppressedSustainCost:20
+        SuppressedSustainCost:4500
 
 
 
@@ -95,8 +102,8 @@
         ###Number of lines per tab row
         ##################################################################
         #Sets the maximum number of characters that will be printed for each
-        #row of tablature. Measures will not be split across a line break, 
-        #so if a measure does not fit on the current set of lines then a 
+        #row of tablature. Measures will not be split across a line break,
+        #so if a measure does not fit on the current set of lines then a
         #new tablature row will be created for it.
         ##################################################################
-        NumberOfLinesPerTabRow:240
+        NumberOfLinesPerTabRow:280

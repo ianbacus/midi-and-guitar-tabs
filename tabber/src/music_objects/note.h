@@ -16,7 +16,7 @@ typedef struct FretboardPosition_t
         :
             StringIndex(string), FretNumber(fret)
     {
-        
+        //Do nothing
     }
     
 } FretboardPosition;
@@ -48,8 +48,27 @@ inline bool operator==(const NotePositionEntry_t& lhs, const NotePositionEntry_t
         (lhs.RepositioningIndex == rhs.RepositioningIndex);
 }
 
-
 typedef std::map <uint32_t, vector< FretboardPosition >  > PitchMap;
+
+/*
+class PitchMap
+{
+    public:
+    
+        std::map <uint32_t, vector< FretboardPosition >  > PitchToFretMap;
+        PitchMap(
+            vector<std::string> stringNames,
+            vector<uint16_t> instrumentCoursePitchValues, 
+            const uint32_t numberOfFrets,
+            const uint32_t capoFret);
+
+        std::string PrintPitchMap(PitchMap pitchMap);
+
+        //Read pitchmap
+        uint32_t GetFretForNotePositionEntry(NotePositionEntry notePositionEntry);
+        uint32_t GetStringForNotePositionEntry(NotePositionEntry notePositionEntry);
+        bool GetPlayablePitch(uint32_t& numberOfOctaves, int32_t& pitch);
+};*/
 
 class Note : public Base 
 {
@@ -57,6 +76,8 @@ class Note : public Base
         static const uint32_t MaximumNumberOfOctaves = 30;
         static const uint32_t OctaveValueMidiPitches = 12;
         static vector<std::string> StringIndexedNoteNames;
+        static int32_t TuningMinimum;
+        static int32_t TuningMaximum;
 
         uint32_t TrackNumber;
         int32_t PitchMidiValue;
@@ -65,33 +86,29 @@ class Note : public Base
 
         int32_t PitchOffset;
         
-        static int32_t TuningMinimum;
-        static int32_t TuningMaximum;
         uint32_t Repositions;
-
-
-        //Setters
-
-        void AddOffsetToPitchMidiValue(int n);
+        
+        void AddOffsetToPitchMidiValue(int offset);
 
     public:
         static PitchMap PitchToFretMap;
-        static int DeletedNotesCount;
+        
+        //Pitchmap methods (TODO: move to class)
+        static std::string PrintPitchMap(PitchMap pitchMap);
+        static uint32_t GetFretForNotePositionEntry(NotePositionEntry notePositionEntry);
+        static uint32_t GetStringForNotePositionEntry(NotePositionEntry notePositionEntry);
+        static bool GetPlayablePitch(uint32_t& numberOfOctaves, int32_t& pitch);
+        
+        static int OutOfRangeNotesCount;
         static uint32_t GetNotesLostCounterValue();
         
-        static PitchMap GeneratePitchToFretMap(
+        static void InitializePitchToFretMap(
             vector<std::string> stringNames,
             vector<uint16_t> instrumentCoursePitchValues, 
             const uint32_t numberOfFrets,
             const uint32_t capoFret);
         
-        static std::string PrintPitchMap(PitchMap pitchMap);
-
-        //Read pitchmap
-        static uint32_t GetFretForNotePositionEntry(NotePositionEntry notePositionEntry);
-        static uint32_t GetStringForNotePositionEntry(NotePositionEntry notePositionEntry);
         static std::string PrintNote(NotePositionEntry notePositionEntry);
-        static bool GetPlayablePitch(uint32_t& numberOfOctaves, int32_t& pitch);
 
         Note(int pitch, int duration, int trackNumber); 
         virtual ~Note() {}
