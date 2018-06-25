@@ -16,7 +16,7 @@
 
         ##################################
         #6 string guitar standard tuning
-        #Tuning:e1,a1,d2,g2,b2,e3
+        Tuning:e1,a1,d2,g2,b2,e3
 
         ##################################
         #6 string guitar with low D string, "drop D"
@@ -32,7 +32,7 @@
 
         ##################################
         #7 string guitar with low B string
-        Tuning:b0,e1,a1,d2,g2,b2,e3
+        #Tuning:b0,e1,a1,d2,g2,b2,e3
 
         ##################################
         #7 string guitar with low A string

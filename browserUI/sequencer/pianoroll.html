@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="utf‐8">
 <title> Browser Composer </title> 
 
 <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
@@ -28,13 +27,15 @@
 
 <body>
 <div class="container">
-	<h4> Badassery </h4>
-	<div class="row">
+	<h4> Window </h4>
+	<div class="row"> 
+        <!--- This column contains the main editing box --> 
 		<div class="col-md-7">
 			<div id="gridbox"></div>
 		</div>
 	
 		<div class="col-md-5">
+        <!--- This column contains edit palletes-->
 			<ul class="nav nav-tabs">
 				<li><a data-toggle="tab" href="#keys">Keys</a></li>
 				<li class="active"><a data-toggle="tab" href="#mode">Mode</a></li>
@@ -92,14 +93,20 @@
 					
 				</div>
 				<div id="menu2" class="tab-pane fade">
-					<h3>Menu 2</h3>
-					<p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam.</p>
+					<h3>Grids</h3>
+                    
+                    <!-- show all grids, select each one on click to view it, select a few to make them the gridview -->
+                    <div id="GridboxArray"> </div>
+                    
+                    <button type="button" id="PlayMusic" class="btn btn-primary">Play Music</button>
+                    <button type="button" id="Add grid" class="btn btn-primary">Play Music</button>
+                    
 				</div>
 				<div id="menu3" class="tab-pane fade">
 					<h3>Menu 3</h3>
 					<p>Eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.</p>
 				</div>
-				</div>
+            </div>
 		</div>
 	</div>
 </div>

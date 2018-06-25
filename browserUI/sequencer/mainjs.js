@@ -8,6 +8,7 @@ $( function() {
 
 	/* variable init */
 	{
+		//Associate a color with each of the 12 pitches
 		var colorKey = ['red','#CC0099','yellow','#669999','#003399','#990000',  
 				'#000099','#ff6600','#660066','#006600','#669999','#003399'];
 		var pitchKey = [261.626,277.183,293.665,311.127,
@@ -222,12 +223,8 @@ $( function() {
 		DrawBeats(4);
 	}
 	
-	
 	/* general utilities */
 	{
-		
-		
-		
 		function checkEncapsulate(rect1,rect2)
 		{
 			//See if Rect1 bounds rect2
@@ -710,6 +707,7 @@ $( function() {
 		});
 	}
  
+    
 	$(maingrid).mousemove(mainCursorCallback);
 	$(maingrid).hover(mainHoverOnCallback,mainHoverOffCallback);
 	setEditMode(); 

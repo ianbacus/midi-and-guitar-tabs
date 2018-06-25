@@ -1,4 +1,5 @@
 EXE = src/gen
+SOURCEES := $(shell find ./src/ -name \*.cpp)
 SOURCES = src/music_objects/bar.cpp                     \
 	  src/music_objects/chunk.cpp                   \
 	  src/music_objects/note.cpp                    \
