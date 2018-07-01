@@ -62,7 +62,7 @@
         #Increases as the difference between the highest and lowest frets
         #increases
         ##################################################################
-        ArpeggiationDeduction:500
+        ArpeggiationDeduction:100
 
 
         ###Span cost
@@ -70,19 +70,19 @@
         #Increases as the difference between the highest and lowest frets
         #increases
         ##################################################################
-        SpanCost:3000
+        SpanCost:100
 
         ###Neck Position cost
         ##################################################################
         #Increases as a chord or note moves up the neck
         ##################################################################
-        NeckPositionCost:2500
+        NeckPositionCost:7000
 
         ###Inter-Chord Neck Distance cost
         ##################################################################
         #Increases as the distance between adjacent chords or notes increases
         ##################################################################
-        NeckDiffCost:3500
+        NeckDiffCost:3000
 
         ###Inter-Chord String Overlap cost
         ##################################################################
@@ -90,7 +90,7 @@
         #of the same strings being held down. Increasing this cost will
         #allow more sustain between notes.
         ##################################################################
-        SuppressedSustainCost:4500
+        SuppressedSustainCost:0
 
 
 
