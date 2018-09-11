@@ -902,13 +902,15 @@ void TablatureOptimizer::GetChunkInternalFeatures(
     //Spacing cannot go below 0
     if(minimumFretInChunkConfiguration <= maximumFretInCandidateChunk)
     {
-        internalFretDistance = maximumFretInCandidateChunk - 
-                                        minimumFretInChunkConfiguration;
+        internalFretDistance = 
+                maximumFretInCandidateChunk - 
+                minimumFretInChunkConfiguration;
     }
 
+    //Prefer higher frets on higher strings than lower strings
     if((minFretPosition.FretNumber != 0) && (maxFretPosition.FretNumber != 0))
     {
-        goodInternalFingerSpread = minFretPosition.StringIndex <= maxFretPosition.StringIndex;
+        //goodInternalFingerSpread = minFretPosition.StringIndex <= maxFretPosition.StringIndex;
     }
     
     maximumFretInCandidateChunk -= min(maximumFretInCandidateChunk, numberOfZeroFrets);

@@ -27,6 +27,9 @@ class TablatureOutputFormatter : public Visitor
         static const char TablatureUnfrettedPadding = '-';
         static const char TablatureSustainPadding = '=';
         
+        
+        static const bool UseHex = true;
+        
         const uint32_t MaximumLineWidthCharacters;
         
         uint32_t CurrentLineWidth;      

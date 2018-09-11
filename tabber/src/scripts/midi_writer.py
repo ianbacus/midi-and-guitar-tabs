@@ -18,7 +18,7 @@ MaximumNote = 0
 
 def float_eq( a, b, eps=0.65):
     return abs(a - b) <= eps
-
+    
 
 #translate midi to intermediate format (list of musical events, newline separated)
 
@@ -34,7 +34,7 @@ def MakeActiveNoteKey(pitchMidiValueEntry):
         result = (pitchMidiValue)
     except:
         result = ()
-
+    
     return result
 
 def ProcessNote(midiEvent, currentEventTickValue,currentTrackNumber):
@@ -77,7 +77,7 @@ def ProcessNote(midiEvent, currentEventTickValue,currentTrackNumber):
 
 
 def PreprocessTracks(midiTracks):
-
+    
     deleteTracks = False
     trackNumberList = {i:0 for i in range(len(midiTracks))}
 
@@ -88,10 +88,10 @@ def PreprocessTracks(midiTracks):
     #preprocess tracks, sort by their average pitch value
     for currentTrackNumber, track in enumerate(midiTracks):
         numberOfNotes = 0
-        noteSum = 0
+        noteSum = 0    
         highestPitchMidiValue = 0
         lowestPitchMidiValue = 200
-
+        
         #Get the average note information for this track
         for midiEvent in track:
             if type(midiEvent) is midi.events.NoteOnEvent:
@@ -102,19 +102,19 @@ def PreprocessTracks(midiTracks):
                 highestPitchMidiValue = max(highestPitchMidiValue,pitchMidiValue)
                 noteSum += pitchMidiValue
                 numberOfNotes += 1
-
+                
         if(numberOfNotes == 0):
             del trackNumberList[currentTrackNumber]
         else:
             noteAverage = noteSum / numberOfNotes
             trackNumberList[currentTrackNumber] = noteAverage
-
+            
             lowestPitchMidiValue = min(lowestPitchMidiValue,minNoteForAllTracks)
             highestPitchMidiValue = max(highestPitchMidiValue,maxNoteForAllTracks)
 
     sortedTracks = sorted(trackNumberList, key=trackNumberList.get)
     sortedAverages = [trackNumberList[trackIndex] for trackIndex in sortedTracks]
-
+        
     if(deleteTracks):
         while(len(sortedTracks) > maximumNumberOfTracks):
             middleIndex = len(sortedTracks)/2
@@ -126,29 +126,28 @@ def PreprocessTracks(midiTracks):
 
 
 def BuildTickToPitchMidiValueDictionary(midiTracks,maximumNumberOfTracks):
-
+    
     reservedValueForAutomaticFiltering = 1337
 
     pulsesPerQuarterNote = float(midiTracks.resolution)
     print "pulsesPerQuarterNote is %s" % pulsesPerQuarterNote
 
     resolution = pulsesPerQuarterNote
-
+    
     minNoteForAllTracks,maxNoteForAllTracks,averageOfAllTracks = PreprocessTracks(midiTracks)
-
+    
     if (maximumNumberOfTracks > 0):
         global MaximumChunkSize
         MaximumChunkSize = maximumNumberOfTracks
 
     elif maximumNumberOfTracks == reservedValueForAutomaticFiltering:
         RemoveMiddleMidiTracks()
-
+        
     for currentTrackNumber,track in enumerate(midiTracks):
-        if currentTrackNumber not in [0]:
-            pass
+        
         currentEventTickValue = 0
         track.make_ticks_abs()
-        for midiEvent in track:
+        for midiEvent in track:    
             initialValue = midiEvent.tick
 
             nextTickValue =  2*(midiEvent.tick*(MaximumNotesPerBeat/float(midiTracks.resolution)))
@@ -159,10 +158,10 @@ def BuildTickToPitchMidiValueDictionary(midiTracks,maximumNumberOfTracks):
             if type(midiEvent) is midi.events.TimeSignatureEvent:
                 timeSignatureEvents[currentEventTickValue] = midiEvent.get_numerator(),midiEvent.get_denominator()
 
-
+            
             if type(midiEvent) in [midi.events.NoteOnEvent,midi.events.NoteOffEvent]:
                 ProcessNote(midiEvent, currentEventTickValue,currentTrackNumber)
-
+            
         #end of track
     #end of all tracks
     return averageOfAllTracks
@@ -183,14 +182,14 @@ def HandleSpecialDeltaValues(delta):
             delta = 0
 
         '''
-
+        
         newDelta = ""
         if True in [float_eq(delta,tripletCase) for tripletCase in alignedTriplets]:
             newDelta = "-1"
 
         elif True in [float_eq(delta,tripletCase) for tripletCase in unalignedTriplets]:
             newDelta = ((-2.0*delta)-1)*(2.0/3.0)
-
+        
         else:
             newDelta = str(round(delta))
 
@@ -210,8 +209,8 @@ def ProcessChunk(chunk,chunkDuration,iof):
         if not any(n['pitch'] == note['pitch'] for n in sortedChunkWithRemovedDuplicates):
             sortedChunkWithRemovedDuplicates.append(note)
 
-
-    while len(sortedChunkWithRemovedDuplicates) > MaximumChunkSize:
+    
+    while len(sortedChunkWithRemovedDuplicates) > MaximumChunkSize: 
         popIndex = len(sortedChunkWithRemovedDuplicates)/2
         sortedChunkWithRemovedDuplicates.pop(popIndex)
 
@@ -221,7 +220,7 @@ def ProcessChunk(chunk,chunkDuration,iof):
         noteMidiPitch = event['pitch']
         noteDuration = event['duration']
         noteTrackNumber = event['trackNumber']
-
+        
         noteEventData = "%d,%d,%d,%d" % (noteMidiPitch,chunkDelta,noteTrackNumber,noteDuration)
         verboseNoteEventData = "P:%d,CD:%d,D:%d" % (noteMidiPitch,chunkDelta,noteDuration)
 
@@ -239,21 +238,21 @@ def ProcessChunk(chunk,chunkDuration,iof):
 
 def WriteExtractedMidiDataToIntermediateFile(newfile):
     with open(newfile, 'w') as intermediateOutputFile:
-
+    
         #Get a sorted list of all tick instances where midi events occur
         sortedMidiEventTicksList = sorted(TickToPitchMidiValueDictionary.iterkeys())
 
         #process each instant in order
         for tick in sortedMidiEventTicksList:
-
+            
             #Add time signature events to output file
             for timeSignatureTickInstant,timeSignature in timeSignatureEvents.items():
                 if timeSignatureTickInstant == tick:
-
+                    
                     beatsPerMeasure = str(timeSignature[0])
                     beatUnit = str(timeSignature[1])
                     intermediateOutputFile.write("SIGEVENT\n")
-                    intermediateOutputFile.write(beatsPerMeasure+','+beatUnit+'\n')
+                    intermediateOutputFile.write(beatsPerMeasure+','+beatUnit+'\n')  
 
             #Determine the number of ticks between the current event and the next one
             try:
@@ -278,15 +277,18 @@ def generate_pitch_delta(newfile,infile,maximumNumberOfTracks, notesPerBeat='8.0
 
     global MaximumNotesPerBeat
 
-    MaximumNotesPerBeat = float(notesPerBeat)
+    MaximumNotesPerBeat = float(notesPerBeat) 
 
     #Read midi file, translate it into track objects
     midiTracks = midi.read_midifile(infile)
-
+    
     #Extract useful information (time signature changes, note on and off events) into a dictionary
     averagePitch = BuildTickToPitchMidiValueDictionary(midiTracks,int(maximumNumberOfTracks))
 
     #Write the output to an intermediate file
     WriteExtractedMidiDataToIntermediateFile(newfile)
-
+    
     return averagePitch
+
+
+

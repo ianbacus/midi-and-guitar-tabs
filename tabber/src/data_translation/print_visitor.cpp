@@ -41,7 +41,6 @@ TablatureOutputFormatter::~TablatureOutputFormatter(void)
 
 string TablatureOutputFormatter::TempVisitNote(Note *note)
 {
-    const bool UseHex = true;
     string result;
     std::stringstream sstream;
     
