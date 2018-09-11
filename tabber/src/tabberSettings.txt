@@ -16,15 +16,7 @@
 
         ##################################
         #6 string guitar standard tuning
-        #Tuning:e1,a1,d2,g2,b2,e3
-
-        ##################################
-        #6 string guitar with low D string, "drop D"
-        #Tuning:d1,a1,d2,g2,b2,e3
-
-        ##################################
-        #6 string guitar, "open G"
-        #Tuning:d1,g1,d2,g2,b2,e3
+        Tuning:e1,a1,d2,g2,b2,e3
 
         ##################################
         #Ukulele
@@ -34,16 +26,28 @@
         #7 string guitar with low B string
         Tuning:b0,e1,a1,d2,g2,b2,e3
 
+
+        #Non-standard
+        ##################################
+        #6 string guitar with low D string, "drop D"
+        #Tuning:d1,a1,d2,g2,b2,e3
+
+        ##################################
+        #6 string guitar, "open G"
+        #Tuning:d1,g1,d2,g2,b2,e3
+
         ##################################
         #7 string guitar with low A string
         #Tuning:a0,e1,a1,d2,g2,b2,e3
+
+
 
         ###Number of frets
         ##################################################################
         # The maximum number of frets your instrument has (or that you feel
         #comfortable playing).
         ##################################################################
-        Frets:11
+        Frets:13
 
         ###Capo placement
         ##################################################################
@@ -62,7 +66,7 @@
         #Increases as the difference between the highest and lowest frets
         #increases
         ##################################################################
-        ArpeggiationDeduction:100
+        ArpeggiationDeduction:2000
 
 
         ###Span cost
@@ -70,19 +74,19 @@
         #Increases as the difference between the highest and lowest frets
         #increases
         ##################################################################
-        SpanCost:100
+        SpanCost:2200
 
         ###Neck Position cost
         ##################################################################
         #Increases as a chord or note moves up the neck
         ##################################################################
-        NeckPositionCost:7000
+        NeckPositionCost:4000
 
         ###Inter-Chord Neck Distance cost
         ##################################################################
         #Increases as the distance between adjacent chords or notes increases
         ##################################################################
-        NeckDiffCost:3000
+        NeckDiffCost:6500
 
         ###Inter-Chord String Overlap cost
         ##################################################################
@@ -90,7 +94,7 @@
         #of the same strings being held down. Increasing this cost will
         #allow more sustain between notes.
         ##################################################################
-        SuppressedSustainCost:0
+        SuppressedSustainCost:1000
 
 
 
@@ -106,4 +110,4 @@
         #so if a measure does not fit on the current set of lines then a
         #new tablature row will be created for it.
         ##################################################################
-        NumberOfLinesPerTabRow:280
+        NumberOfLinesPerTabRow:300
