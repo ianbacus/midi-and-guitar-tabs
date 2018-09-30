@@ -70,8 +70,6 @@ void Note::InitializePitchToFretMap(
         
         //Assume that the frets are separated by a semitone
         uint32_t startFret = capoFret;
-        
-
 
         for(uint32_t fretNumber = startFret; fretNumber < numberOfFrets; fretNumber++)
         {
@@ -90,8 +88,6 @@ void Note::InitializePitchToFretMap(
                 }), map_point); 
         }
     }
-    
-            cout << "wee" << endl;
         
     PitchToFretMap = initMap;
 }
@@ -348,12 +344,15 @@ string Note::PrintNote(NotePositionEntry notePositionEntry)
  */		
 void Note::ReconfigureToNextPitchmapPosition()
 {
-	const uint32_t numberOfPossiblePositions = GetNumberOfElements();
-    
-	CurrentPitchMapRepositionIndex = (CurrentPitchMapRepositionIndex+1)%
-                                        (numberOfPossiblePositions);
-    
-    Repositions++;
+    const uint32_t numberOfPossiblePositions = GetNumberOfElements();
+
+    if(numberOfPossiblePositions != 0)
+    {
+        CurrentPitchMapRepositionIndex = 
+            (CurrentPitchMapRepositionIndex+1)%
+            (numberOfPossiblePositions);
+	}
+	Repositions++;
 }
 
 

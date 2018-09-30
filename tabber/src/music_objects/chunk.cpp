@@ -1,4 +1,5 @@
 #include "base.h"
+#include <cmath>
 #include <set>
 #include <unordered_map>
 #include <sstream>
@@ -18,6 +19,9 @@ string Chunk::PrintNoteIndices(vector<NotePositionEntry > noteConfiguration)
     
     return sstream.str();
 }
+
+
+
 
 string Chunk::PrintChunk(Chunk* chunk)
 {
@@ -255,8 +259,8 @@ void Chunk::CleanChunk(void)
                 //Make sure the center-most notes come first
                 if(lhsPositions == rhsPositions)
                 {
-                    return abs((left->GetPitch()) - averagePitch) < 
-                           abs(right->GetPitch() - averagePitch);
+                    return abs((double)((left->GetPitch()) - averagePitch)) < 
+                           abs((double)(right->GetPitch() - averagePitch));
                 }
                 
                 //Make sure the more immobile notes come first

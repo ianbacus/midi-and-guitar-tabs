@@ -19,7 +19,7 @@ void ParseTabberSettingsFile(
     map<string,uint32_t>& parsedConstants,
     TabberSettings& tabSettings)
 {
-    const regex keyValueRegex("\\s*([a-zA-Z]+?)\\s*?:\\s*?([0-9]+)");
+    const regex keyValueRegex("\\s*([a-zA-Z]+)\\s*?:\\s*?([0-9]+)\\s*");
     const regex tuningRegex("\\s*Tuning\\s*?:\\s*?([a-gA-G][\\-0-9][,\\s]*)+");
     const regex tuningRegex2("([a-gA-G])([0-9])[,\\s]*");
     
@@ -29,13 +29,12 @@ void ParseTabberSettingsFile(
     
     while(getline( file, line ) ) 
     {
-        smatch keyValMatchResults;
-        smatch tuningMatchResults;
-        
-        regex_match(line, keyValMatchResults, keyValueRegex);
-        regex_match(line, tuningMatchResults, tuningRegex);
-        
-        
+        std::smatch keyValMatchResults;
+        std::smatch tuningMatchResults;
+		
+        std::regex_search(line, keyValMatchResults, keyValueRegex);
+        std::regex_match(line, tuningMatchResults, tuningRegex);
+
         if(keyValMatchResults.size() > 0)
         {
             string key = keyValMatchResults[1];
@@ -76,7 +75,8 @@ void ParseTabberSettingsFile(
 
             tabSettings.InstrumentInfo.StringIndexedMidiPitches = midiPitches;
             tabSettings.InstrumentInfo.StringIndexedNoteNames = midiPitchStrings;
-            for (auto x : midiPitchStrings) cout << x << endl;
+            //for (auto x : midiPitchStrings) cout << x << endl;
+			
         }       
     }
 }
@@ -146,7 +146,7 @@ vector<Chunk*> ParseIntermediateFile(
             Note * const currentNote = new Note(pitch,noteDuration,currentTrackNumber);
             
             Chunk* const currentChunk = (scoreTree.size() > 0 ) ? scoreTree.back() : nullptr;
-            
+			
 			
 			//This note must be added to the current chunk in the current bar
 			if((delta == 0) && (currentChunk != nullptr))
@@ -194,7 +194,7 @@ vector<Chunk*> ParseIntermediateFile(
                 
 			}	
 
-			ticksAccumulatedForCurrentMeasure += abs(delta);
+			ticksAccumulatedForCurrentMeasure += abs((double)delta);
 		}
 	}
     

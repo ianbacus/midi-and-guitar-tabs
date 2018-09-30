@@ -126,6 +126,7 @@ uint32_t ProcessScore(
             totalCost += tablatureRearranger.OptimizeChunk(currentChunk);
             tablaturePrinter.VisitChunk(currentChunk);
         }
+        
     }
     
     tablaturePrinter.WriteTablatureToOutputFile(outputFile);
@@ -143,6 +144,15 @@ int ParseFileIntoTab(
     
     uint32_t totalCost = 0;
     map<string,uint32_t> parsedConstants;
+	
+	parsedConstants["Frets"] = 10;
+	parsedConstants["CapoFret"] = 0;
+	parsedConstants["NeckPositionCost"] = 1500;
+	parsedConstants["SpanCost"] = 3000;
+	parsedConstants["NeckDiffCost"] = 7500;
+	parsedConstants["SuppressedSustainCost"] = 1000;
+	parsedConstants["ArpeggiationDeduction"] = 1000;
+	parsedConstants["NumberOfLinesPerTabRow"] = 300;
     
     vector<Chunk*> score;
             
@@ -198,7 +208,7 @@ int ParseFileIntoTab(
   
     score.clear();
 
-	return 1;
+    return 0;
 }
 
 int main(int argc, char* argv[])

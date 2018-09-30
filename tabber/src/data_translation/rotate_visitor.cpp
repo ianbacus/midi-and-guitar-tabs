@@ -832,7 +832,7 @@ void TablatureOptimizer::GetSustainedChunkRelativeFeatures(
     if(fretCenterOfSustainedNotes != 0)
     {
         fretDistanceFromSustainedNotes = 
-            abs(fretCenterInCandidateChunk - fretCenterOfSustainedNotes);
+            abs((double)(fretCenterInCandidateChunk - fretCenterOfSustainedNotes));
     }
     
     stringIntersections = duplicateStrings.size();
