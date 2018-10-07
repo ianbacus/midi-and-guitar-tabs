@@ -23,9 +23,9 @@ def ParseCommandLineArguments():
 	#Use command line arguments for the first (argc-1) parameters 
 	argumentWasSpecifiedDictionary = {}	
 	argCount = 1
-	
+        print sys.argv	
 	for key,parameter in inputParameters.items():
-		try:
+                try:
 			inputParameters[key] = sys.argv[argCount]
 			argCount += 1
 			argumentWasSpecifiedDictionary[key] = True

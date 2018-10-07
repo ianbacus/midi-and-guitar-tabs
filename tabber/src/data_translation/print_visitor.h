@@ -26,23 +26,23 @@ class TablatureOutputFormatter : public Visitor
         static const uint32_t NumberOfPaddingRows = 1;
         static const char TablatureUnfrettedPadding = '-';
         static const char TablatureSustainPadding = '=';
-        
-        
-        static const bool UseHex = true;
-        
+
+
+        static const bool UseHex = false;
+
         const uint32_t MaximumLineWidthCharacters;
-        
-        uint32_t CurrentLineWidth;      
+
+        uint32_t CurrentLineWidth;
         vector<string> InstrumentStringNames;
         vector<uint32_t> StringIndexedRemainingDeltaTicks;
-        
+
         vector< vector<string> > TablatureBuffer;
         Chunk* PreviousChunk;
-        
-        
+
+
         uint32_t GetNumberOfTablaturePrintRows(void);
         vector<string> ConcatenateColumnsIntoMeasureStrings(vector<vector<string> >);
-        
+
         string TranslateDeltaAndAppendQuaverCodes(int delta);
         string TempVisitNote(Note *note);
         vector<string> GenerateTablatureColumn(Chunk *chunk);
@@ -50,15 +50,15 @@ class TablatureOutputFormatter : public Visitor
         vector<string> ConcatenateRowGroups(
                 const vector<string> rows0,
                 const vector<string> rows1);
-        
-        
+
+
         void UpdateStringIndexedRemainingDeltaTicks(Chunk* candidateChunk);
-    
+
     public:
-  	
+
         TablatureOutputFormatter(uint32_t maximumLineWidth,
                      vector<string> instrumentStringNames);
-        
+
         virtual ~TablatureOutputFormatter(void);
 
         virtual void VisitNote(Note*) override;
@@ -68,5 +68,3 @@ class TablatureOutputFormatter : public Visitor
 };
 
 #endif
-
-
