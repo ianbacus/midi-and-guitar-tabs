@@ -111,7 +111,7 @@ vector<Chunk*> ParseIntermediateFile(
         string noteDurationString;
         
         //Case 0: Time signature event
-		if(line == "SIGEVENT")
+		if(line.find("SIGEVENT") != string::npos)
 		{
 			std::getline(file, line);
 			std::istringstream pitchDeltaInputStringStream( line );
@@ -125,6 +125,7 @@ vector<Chunk*> ParseIntermediateFile(
 				const float meterRatio = (beatsPerBar/beatUnit);
 
 				ticksPerMeasure = meterRatio * beatUnit * 8;
+				cout << ticksPerMeasure << "key sig" << endl;
 			}
 		}
 
@@ -158,7 +159,7 @@ vector<Chunk*> ParseIntermediateFile(
 			else
 			{                
 				//Chunk* const nextChunk = new Chunk(delta,measureIndex);
-				Chunk* const nextChunk = new Chunk(delta,chunkIndex);
+				Chunk* const nextChunk = new Chunk(delta,measureIndex);
                 
                 chunkIndex++;
                 

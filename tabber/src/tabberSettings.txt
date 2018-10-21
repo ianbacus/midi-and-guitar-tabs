@@ -46,7 +46,7 @@
         # The maximum number of frets your instrument has (or that you feel
         #comfortable playing).
         ##################################################################
-        Frets:22
+        Frets:13
 
         ###Capo placement
         ##################################################################
@@ -65,27 +65,26 @@
         #Increases as the difference between the highest and lowest frets
         #increases
         ##################################################################
-        ArpeggiationDeduction:2000
-
+        ArpeggiationDeduction:10
 
         ###Span cost
         ##################################################################
         #Increases as the difference between the highest and lowest frets
         #increases
         ##################################################################
-        SpanCost:3200
+        SpanCost:408
 
         ###Neck Position cost
         ##################################################################
         #Increases as a chord or note moves up the neck
         ##################################################################
-        NeckPositionCost:5500
+        NeckPositionCost:300
 
         ###Inter-Chord Neck Distance cost
         ##################################################################
         #Increases as the distance between adjacent chords or notes increases
         ##################################################################
-        NeckDiffCost:5500
+        NeckDiffCost:550
 
         ###Inter-Chord String Overlap cost
         ##################################################################
@@ -93,7 +92,7 @@
         #of the same strings being held down. Increasing this cost will
         #allow more sustain between notes.
         ##################################################################
-        SuppressedSustainCost:2000
+        SuppressedSustainCost:10
 
 
 
