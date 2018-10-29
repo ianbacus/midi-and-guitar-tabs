@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title> Browser Composer </title> 
+<title> Browser Composer </title>
 
 <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 <link rel="stylesheet" href="/resources/demos/style.css">
@@ -21,6 +21,10 @@
 <!-- audio attempt 2 -->
 <script src="http://mohayonao.github.io/timbre.js/timbre.js"></script>
 <script src="http://mohayonao.github.io/timbre.js/src/extras/keyboard.js"></script>
+
+<script src="model.js"></script>
+<script src="view.js"></script>
+<script src="controller.js"></script>
 <script src="mainjs.js"></script>
 
 </head>
@@ -28,18 +32,18 @@
 <body>
 <div class="container">
 	<h4> Window </h4>
-	<div class="row"> 
-        <!--- This column contains the main editing box --> 
+	<div class="row">
+        <!--- This column contains the main editing box -->
 		<div class="col-md-7">
 			<div id="gridbox"></div>
 		</div>
-	
+
 		<div class="col-md-5">
         <!--- This column contains edit palletes-->
 			<ul class="nav nav-tabs">
 				<li><a data-toggle="tab" href="#keys">Keys</a></li>
 				<li class="active"><a data-toggle="tab" href="#mode">Mode</a></li>
-				<li><a data-toggle="tab" href="#menu2">Menu 2</a></li>
+				<li><a data-toggle="tab" href="#menu2">Playback</a></li>
 			</ul>
 			<div class="tab-content">
 				<div id="keys" class="tab-pane fade">
@@ -49,7 +53,7 @@
 						<li>X: select mode</li>
 						<li>C: copy mode</li>
 						<li>W/E: shrink/grow note</li>
-						
+
 					</ul>
 				</div>
 				<div id="mode" class="tab-pane fade in active">
@@ -67,7 +71,7 @@
 						<label><input type="radio" name="optradio">Option 3</label>
 						</div>
 					</div>
-					<br> 
+					<br>
 					Meter
 					<div id="meter">
 						<div class="radio">
@@ -89,18 +93,17 @@
 						<label><input type="radio" name="optradio" value=2>2</label>
 						</div>
 					</div>
-					
-					
+
 				</div>
 				<div id="menu2" class="tab-pane fade">
 					<h3>Grids</h3>
-                    
+
                     <!-- show all grids, select each one on click to view it, select a few to make them the gridview -->
                     <div id="GridboxArray"> </div>
-                    
+
                     <button type="button" id="PlayMusic" class="btn btn-primary">Play Music</button>
-                    <button type="button" id="Add grid" class="btn btn-primary">Play Music</button>
-                    
+                    <button type="button" id="AddGrid" class="btn btn-primary">Add grid</button>
+
 				</div>
 				<div id="menu3" class="tab-pane fade">
 					<h3>Menu 3</h3>
@@ -111,8 +114,8 @@
 	</div>
 </div>
 </body>
-	
-	
-	
+
+
+
 
 </html>
