@@ -54,6 +54,9 @@ class Controller
         c_this.CursorPosition = { x: -1, y: -1 };
         c_this.Hovering = false;
         c_this.SelectingGroup = false;
+
+        c_this.NoteIndex = 0;
+        c_this.PendingTimeout = null;
     }
 
     DeleteSelectedNotes()
@@ -70,6 +73,17 @@ class Controller
     }
 
     ModifySelectedNotes(transform)
+    {
+        c_this.Model.Score.forEach( function(note)
+        {
+            if(note.IsSelected)
+            {
+                transform(note);
+            }
+        });
+    }
+
+    DoActionOnAllNotes(transform)
     {
         c_this.Model.Score.forEach( function(note)
         {
@@ -94,6 +108,11 @@ class Controller
             c_this.EditorMode = editModeEnumeration.DELETE;
             break;
 
+        case 32: //spacebar
+            c_this.DoActionOnAllNotes(function(note){console.log(note);});
+            c_this.PlayNotes();
+            event.preventDefault();
+            break;
         case 67: //"c" key"
             break;
         case 81: //"q" key
@@ -111,6 +130,63 @@ class Controller
         }
     }
 
+    GetNextUnselectedNote()
+    {
+        var note = null;
+
+        console.log("note index "+c_this.NoteIndex);
+        //Get the next note that isn't selected
+        while(c_this.NoteIndex < c_this.Model.Score.length)
+        {
+            var note = c_this.Model.Score[c_this.NoteIndex ];
+
+            c_this.NoteIndex++;
+            if(!note.IsSelected)
+            {
+                break;
+            }
+            else
+            {
+                note = null;
+            }
+
+        }
+
+        return note;
+    }
+
+    PlayChord()
+    {
+        var lastDelta = 0;
+        var note = c_this.GetNextUnselectedNote();
+
+        if(note != null)
+        {
+            lastDelta = note.StartTimeTicks;
+            console.log("a",note.Pitch);
+            note.Play();
+
+            note = c_this.GetNextUnselectedNote();
+        }
+
+        if(note != null)
+        {
+            var millisecondsPerTick = 100;
+            var relativeDelta = note.StartTimeTicks - lastDelta;
+            var delta = relativeDelta*millisecondsPerTick;
+            c_this.NoteIndex -= 1;
+
+            c_this.PendingTimeout = setTimeout(c_this.PlayChord, delta)
+        }
+    }
+
+    PlayNotes()
+    {
+        c_this.NoteIndex = 0;
+        clearTimeout(c_this.PendingTimeout);
+        c_this.PlayChord();
+    }
+
     CreatePreviewNote()
     {
         var startTicks = c_this.View.ConvertXIndexToTicks(c_this.CursorPosition.x);
@@ -124,7 +200,6 @@ class Controller
 
     OnHoverBegin(event)
     {
-        return;
         if(!c_this.Hovering)
         {
             var previewNote = c_this.CreatePreviewNote();
@@ -137,7 +212,6 @@ class Controller
 
     OnHoverEnd(event)
     {
-        return;
         if(c_this.Hovering)
         {
             c_this.Hovering = false;
@@ -156,7 +230,6 @@ class Controller
     ///Update the cursor position, move all selected notes
     OnMouseMove(cursorPosition)
     {
-        return;
         c_this.CursorPosition = cursorPosition;
 
         //If there are selected notes, move them
@@ -191,6 +264,7 @@ class Controller
         c_this.ModifySelectedNotes(function(note)
         {
             note.IsSelected = false;
+            note.Play();
         });
 
         if(c_this.EditorMode == editModeEnumeration.SELECT)
@@ -203,7 +277,6 @@ class Controller
         {
             var previewNote = c_this.CreatePreviewNote();
 
-            c_this.ModifySelectedNotes(function(note) {note.IsSelected = false;});
             c_this.Model.AddNote(previewNote);
         }
     }
@@ -226,8 +299,7 @@ class Controller
 
             c_this.Model.Score.forEach( function(note)
             {
-                var noteRectangle =
-                {
+                var noteRectangle = {
                     x1: c_this.View.ConvertTicksToXIndex(note.StartTimeTicks),
                     y1: c_this.View.ConvertPitchToYIndex(note.Pitch),
                     x2: x1+note.Duration,
@@ -264,7 +336,7 @@ class Controller
         return false;
     }
 
-	{
+
 
         	/* analysis suite
         function DrawBeats(meter)
@@ -432,5 +504,5 @@ class Controller
 
         }
         DrawBeats(4);*/
-	}
+
 }

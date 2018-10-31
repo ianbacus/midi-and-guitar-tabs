@@ -103,7 +103,7 @@ class View
 
         selectP.x = cursorP.x;
         selectP.y = cursorP.y;
-                console.log(cursorP.y,cursorP.x,selectP.x,selectP.y);
+        console.log(cursorP.y,cursorP.x,selectP.x,selectP.y);
         $(node).css({'top':cursorP.y, 'left':cursorP.x,
                  'border':'solid black 1px', 'position':'absolute',
                  'width':'0px','height':'0px'});
@@ -114,10 +114,10 @@ class View
     {
         var gridNoteClass = "gridNote";
         $(".gridNote").remove();
-        console.log(noteArray.length);
+
         if(noteArray.length > 0)
         {
-            var initialNoteStartTimeTicks = 0;//noteArray[0].StartTimeTicks;
+            var initialNoteStartTimeTicks = 0;
             noteArray.forEach(function(note)
             {
                 var noteWidth = note.Duration*v_this.gridSnap;
