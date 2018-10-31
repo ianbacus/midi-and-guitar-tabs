@@ -5,11 +5,11 @@ let ScoreController = new Controller(ScoreView,ScoreModel);
 
 $( function()
 {
+    console.log("begin");
     ScoreView.Initialize(
         ScoreController.OnKeyUp,
-        ScoreController.OnMouseMove,
-        ScoreController.OnHover,
-        ScoreController.OnKeyPress,
+        ScoreController.OnMouseMove, ScoreController.OnMouseClickUp, ScoreController.OnMouseClickDown,
+        ScoreController.OnHoverBegin, ScoreController.OnHoverEnd,
         ScoreController.OnButtonPress,
     );
 

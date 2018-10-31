@@ -1,78 +1,121 @@
+var sm = {
+    BEGIN: 1,
+    SELECTED: 2,
+    DRAG: 3
+};
+
+var editEnum = {
+    PREVIEW: 1,
+    DRAG: 2,
+    OFF: 3
+}
+
+let c_this = undefined;
+
+
+class SelectModeController
+{
+    constructor()
+    {
+        //SelectMode = sm.BEGIN;
+    }
+
+    OnMouseMove(event)
+    {
+        //case 1: render preview
+        //case 2: move selected items
+        //case 3:
+    }
+};
+
+class EditModeController
+{
+    constructor()
+    {
+        //EditMode = em.BEGIN;
+    }
+
+    OnMouseMove(event)
+    {
+        //case 1: render preview
+        //case 2: move selected items
+        //case 3:
+    }
+};
+
 class Controller
 {
     constructor(view, model)
     {
-        this.View = view;
-        this.Model = model;
+        c_this = this;
+        c_this.View = view;
+        c_this.Model = model;
+
+    }
+
+    DeleteSelectedNotes()
+    {
+        var i = 0;
+        for(var index = 0; index < Model.Score.length; index++)
+        {
+            note = Model.Score[index]
+            if(note.IsSelected)
+            {
+                c_this.Model.DeleteNoteWithIndex(index)
+            }
+        }
+    }
+
+    ModifySelectedNotes(transform)
+    {
+        c_this.Model.Score.forEach( function(note)
+        {
+            transform(Note)
+        });
     }
 
     OnKeyUp(event)
     {
-        var nextMode = mainMode;
-        switch(e.keyCode)
+        switch(event.keyCode)
         {
-        case 67: //"c" key"
-            console.log(getNoteArray());
-
-            break;
-        case 68: //"d" key
-            if((selectState == selectEnum.SELECTED) || (selectState == selectEnum.DRAG))
-            {
-                selectState = selectEnum.BEGIN;
-                $(".selected").remove();
-            }
-            else
-            {
-                nextMode = em.DELETE;
-            }
-            break;
-
-        case 81: //"q" key
-            console.log("cancel");
-            unSelect($(".node"));
-            if(mainMode == em.EDIT)
-            {
-                editState = editEnum.DRAG;
-            }
-
-            deleteCurrentObj();
-            break;
-        case 87: //"w" key
-            if(widthMode > snapX)
-            {
-                widthMode = widthMode/2;
-            }
-            $('.selected').each(function(){
-                $(this).css({'width':widthMode});
-            });
-            break;
-        case 69: //"e" key
-            if(widthMode < 32*snapX)
-            {
-                widthMode = widthMode*2;
-            }
-
-            $('.selected').each(function(){
-                $(this).css({'width':widthMode});
-            });
-            break;
+        //Mode control: select, edit, delete
         case 88: //"x" key"
-            nextMode = em.SELECT;
+            c_this.EditorMode = em.SELECT;
             break;
         case 90: //"z" key"
-            nextMode = em.EDIT;
+            c_this.EditorMode = em.EDIT;
             break;
+        case 68: //"d" key
+            //Delete any selected notes, and enter delete mode
+            c_this.DeleteSelectedNotes();
+            c_this.EditorMode = em.DELETE;
+            break;
+
+        case 67: //"c" key"
+            break;
+        case 81: //"q" key
+            if(editorMode == em.EDIT) { editState = editEnum.DRAG; }
+            c_this.ModifySelectedNotes(function(note) {note.IsSelected = false;});
+            deleteCurrentObj();
+            break;
+        case 87: //"w" key: Halve durations
+            c_this.ModifySelectedNotes(function(note){note.Duration = ceil(note.Duration /= 2);});
+            break;
+        case 69: //"e" key: Double durations
+            c_this.ModifySelectedNotes(function(note){ note.Duration = min(32, note.Duration *= 2); });
+            break;
+
         }
     }
 
     OnHoverBegin(event)
     {
-
+        console.log("enter");
     }
 
     OnHoverEnd(event)
     {
-
+        console.log("exit");
     }
 
     OnKeyPress(event)
@@ -82,17 +125,26 @@ class Controller
 
     OnButtonPress(event)
     {
-
+        //Play
     }
 
-    OnMouseMove(event)
+    OnMouseMove(cursorPosition)
+    {
+        var startTicks = c_this.View.ConvertXIndexToTicks(cursorPosition.x);
+        var pitch = c_this.View.ConvertYIndexToPitch(cursorPosition.y);
+        c_this.ModifySelectedNotes(function(note){ note.Move(startTicks, pitch); });
+        c_this.View.RenderNotes(c_this.Model.Score);
+    }
+
+    OnMouseClickUp(event)
     {
 
     }
 
+    OnMouseClickDown(event)
+    {
 
-
-
+    }
 
 
 	/* analysis suite

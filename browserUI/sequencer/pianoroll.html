@@ -53,8 +53,14 @@
 						<li>X: select mode</li>
 						<li>C: copy mode</li>
 						<li>W/E: shrink/grow note</li>
-
 					</ul>
+
+                    <!-- show all grids, select each one on click to view it, select a few to make them the gridview -->
+                    <div id="GridboxArray"> </div>
+
+                    <button type="button" id="PlayMusic" class="btn btn-primary">Play Music</button>
+                    <button type="button" id="AddGrid" class="btn btn-primary">Add grid</button>
+
 				</div>
 				<div id="mode" class="tab-pane fade in active">
 					<h3>Mode</h3>
@@ -62,23 +68,23 @@
 					Analysis
 					<div id="meter">
 						<div class="radio">
-						<label><input type="radio" name="optradio">Invertible</label>
+						    <label><input type="radio" name="optradio">Invertible</label>
 						</div>
 						<div class="radio">
-						<label><input type="radio" name="optradio">Canon</label>
+						    <label><input type="radio" name="optradio">Canon</label>
 						</div>
 						<div class="radio">
-						<label><input type="radio" name="optradio">Option 3</label>
+						    <label><input type="radio" name="optradio">Option 3</label>
 						</div>
 					</div>
 					<br>
 					Meter
 					<div id="meter">
 						<div class="radio">
-						<label><input type="radio" name="optradio" value=0>Duple</label>
+    						<label><input type="radio" name="optradio" value=0>Duple</label>
 						</div>
 						<div class="radio">
-						<label><input type="radio" name="optradio" value=1>Triple</label>
+						    <label><input type="radio" name="optradio" value=1>Triple</label>
 						</div>
 					</div>
 					Track
@@ -98,16 +104,6 @@
 				<div id="menu2" class="tab-pane fade">
 					<h3>Grids</h3>
 
-                    <!-- show all grids, select each one on click to view it, select a few to make them the gridview -->
-                    <div id="GridboxArray"> </div>
-
-                    <button type="button" id="PlayMusic" class="btn btn-primary">Play Music</button>
-                    <button type="button" id="AddGrid" class="btn btn-primary">Add grid</button>
-
-				</div>
-				<div id="menu3" class="tab-pane fade">
-					<h3>Menu 3</h3>
-					<p>Eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.</p>
 				</div>
             </div>
 		</div>

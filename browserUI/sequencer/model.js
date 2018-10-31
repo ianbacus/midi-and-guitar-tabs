@@ -1,17 +1,26 @@
+let self = undefined;
+
+var noteInstance;
 
 class Note
 {
     constructor(pitch, startTimeTicks, endTimeTicks)
     {
-        this.Pitch = pitch
-        this.StartTimeTicks = startTimeTicks
-        this.EndTimeTicks = endTimeTicks
-        this.IsSelected = false
+        noteInstance = this;
+        noteInstance.Pitch = pitch
+        noteInstance.StartTimeTicks = startTimeTicks
+        noteInstance.Duration = startTimeTicks+endTimeTicks
+        noteInstance.IsSelected = false
     }
 
+    Move(startTimeTicks, pitch)
+    {
+        noteInstance.Pitch = pitch;
+        noteInstance.StartTimeTicks = startTimeTicks;
+    }
     get Duration()
     {
-        return this.EndTimeTicks - this.StartTimeTicks;
+        return noteInstance.EndTimeTicks - noteInstance.StartTimeTicks;
     }
 
 };
@@ -68,18 +77,14 @@ class Model
     //Public
     constructor()
     {
-        this.Score = [];
+        self = this;
+        self.Score = [];
         console.log("model");
     }
 
-    Initialize()
-    {
-
-    }
-    
     AddNote(note)
     {
-        this.InsertSorted(this.Score, note);
+        self.InsertSorted(self.Score, note);
 
         return id;
     }
@@ -87,13 +92,13 @@ class Model
     DeleteNote(note)
     {
         var numberOfDeletions = 1;
-        var deletionIndex = BinarySearch(this.Score, note)
-        this.Score.splice(deletionIndex, numberOfDeletions)
+        var deletionIndex = BinarySearch(self.Score, note, CompareNotes)
+        DeleteNoteWithIndex(deletionIndex)
     }
 
-    get FullScore()
+    DeleteNoteWithIndex(deletionIndex)
     {
-        return this.Score
+        self.Score.splice(deletionIndex, numberOfDeletions)
     }
 
-}
+};

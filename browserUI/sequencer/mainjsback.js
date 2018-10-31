@@ -86,6 +86,17 @@ $( function() {
             noteArray.push(entry);
     	});
 
+        noteArray.sort(function(note1,note2)
+        {
+            var n1d = note1['delta'];
+            var n2d = note2['delta'];
+
+            if(n1d < n2d) return -1;
+            else if(n1d > n2d) return 1;
+            else return 0;
+
+        });
+
     	return noteArray;
     }
 
@@ -362,7 +373,6 @@ $( function() {
 
         function selectClickDownCallback()
         {
-
         	switch(selectState)
         	{
             case selectEnum.SELECTED:
@@ -656,6 +666,7 @@ $( function() {
         	$(this).css({'border':'solid black 1px'});
         	deleteCurrentObj();
         }
+
         function changemainMode(nextMode)
         	{
         	if(mainMode == nextMode) return;
@@ -696,6 +707,11 @@ $( function() {
         	var nextMode = mainMode;
         	switch(e.keyCode)
         	{
+                case 32: //spacebar
+                playCallback(null);
+                e.preventDefault();
+                break;
+
             case 67: //"c" key"
             	console.log(getNoteArray());
 

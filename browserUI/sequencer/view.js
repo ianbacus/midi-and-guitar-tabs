@@ -1,26 +1,28 @@
+let v_this = undefined;
+
 class View
 {
     constructor()
     {
-        this.Maingrid = "#gridbox";
-        this.PlayButton = "#PlayButton";
-        this.emColors = ['orange','blue','green'];
-        this.previewObjs = ['cell', 'wire'];
+        v_this = this;
+        v_this.Maingrid = "#gridbox";
+        v_this.PlayButton = "#PlayButton";
+        v_this.emColors = ['orange','blue','green'];
+        v_this.previewObjs = ['cell', 'wire'];
 
-        this.MaximumPitch = 72;
-        this.MinimumPitch = 54;
+        v_this.MaximumPitch = 72;
+        v_this.MinimumPitch = 54;
 
-        this.cursorP = { x: -1, y: -1 };
-        this.selectP = { x: 0, y: 0};
+        v_this.selectP = { x: 0, y: 0};
 
-        this.gridSnap = 20;
+        v_this.gridSnap = 20;
 
-        this.colorKey = [
+        v_this.colorKey = [
             'red',    '#CC0099','yellow', '#669999',
             '#003399','#990000','#000099','#ff6600',
             '#660066','#006600','#669999','#003399'];
 
-        this.pitchKey = [
+        v_this.pitchKey = [
             261.626,277.183,293.665,311.127,
             329.628,349.228,369.994,391.995,
             415.305,440.000,466.164,493.883,
@@ -32,40 +34,80 @@ class View
             1046.50,1108.73,1174.66,1244.51,
             1318.51,1396.61,1479.98,1567.98];
 
+
     }
 
     Initialize(
         onKeyUp,
-        onMouseMove,
-        onHoverBegin,
-        onHoverEnd,
-        onKeyPress,
+        onMouseMove, onMouseClickUp, onMouseClickDown,
+        onHoverBegin, onHoverEnd,
         onButtonPress)
     {
-    	$(this.Maingrid).mousemove(onMouseMove);
-    	$(this.Maingrid).hover(onHoverBegin,onHoverEnd);
-        $(this.PlayButton).click(onButtonPress);
+    	$(v_this.Maingrid)
+            .mousemove(v_this.OnMouseMove)
+            .mousedown(onMouseClickDown)
+            .mouseup(onMouseClickUp)
+            .hover(onHoverBegin,onHoverEnd);
+
+        $(v_this.PlayButton).click(onButtonPress);
+
         $(document).keyup(onKeyUp);
+        v_this.GridMouseHandler = onMouseMove;
+    }
+
+    OnMouseMove(event)
+    {
+        var cursorPosition = { x: -1, y: -1 };
+        var offset = $(v_this.Maingrid).offset();
+        var gridSnap = v_this.gridSnap;
+
+        cursorPosition.x = (Math.ceil((event.pageX - offset.left) / gridSnap)*gridSnap)-gridSnap;
+        cursorPosition.y = (Math.ceil(((event.pageY - offset.top)) / gridSnap)*gridSnap)-gridSnap;
+
+        v_this.GridMouseHandler(cursorPosition);
     }
 
     ConvertPitchToYIndex(pitch)
     {
-        var pitchRange = this.MaximumPitch - this.MinimumPitch;
-        pitchOffset = this.MaximumPitch - pitch;
+        var pitchRange = v_this.MaximumPitch - v_this.MinimumPitch;
+        pitchOffset = v_this.MaximumPitch - pitch;
 
-        return gridSnap*pitchOffset;
+        return v_this.gridSnap*pitchOffset;
     }
 
     ConvertTicksToXIndex(ticks)
     {
-        return gridSnap*ticks;
+        return v_this.gridSnap*ticks;
+    }
+
+    ConvertYIndexToPitch(yIndex)
+    {
+        return v_this.MaximumPitch - (yIndex/v_this.gridSnap);
+    }
+
+    ConvertXIndexToTicks(xIndex)
+    {
+        return xIndex/v_this.gridSnap;
     }
 
     GetColorKey(pitch)
     {
         var colorIndex = pitch % 12;
-
         return colorKey[colorIndex];
+    }
+
+    RenderSelectRectangle()
+    {
+        var node = document.createElement('div');
+        $(maingrid).append(node);
+
+        selectP.x = cursorP.x;
+        selectP.y = cursorP.y;
+                console.log(cursorP.y,cursorP.x,selectP.x,selectP.y);
+        $(node).css({'top':cursorP.y, 'left':cursorP.x,
+                 'border':'solid black 1px', 'position':'absolute',
+                 'width':'0px','height':'0px'});
+        currentObj = $(node);
     }
 
     RenderNotes(noteArray)
@@ -90,7 +132,7 @@ class View
                     noteOpacity = 0.5;
                 }
 
-                $(this.maingrid).append(node);
+                $(v_this.maingrid).append(node);
                 $(node).css({'top':offsetY, 'left':offsetX});
                 $(node).css({"opacity":noteOpacity, "height":snapY,"width":noteWidth,"position":"absolute"});
                 $(node).css({'background':colorIndex});
