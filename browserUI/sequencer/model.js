@@ -17,7 +17,7 @@ var pitchKey = [
 
 var Synthesizer = T("OscGen",
 {
-    wave: "konami",
+    wave: "fami",
     //fami, saw, tri, pulse, konami, cos, sin
     mul: 0.5
 

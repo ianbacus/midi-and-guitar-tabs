@@ -52,6 +52,7 @@ class Controller
         c_this.View = view;
         c_this.Model = model;
         c_this.CursorPosition = { x: -1, y: -1 };
+        c_this.SelectorPosition = { x: -1, y: -1 };
         c_this.Hovering = false;
         c_this.SelectingGroup = false;
 
@@ -97,10 +98,20 @@ class Controller
         {
         //Mode control: select, edit, delete
         case 88: //"x" key"
+            console.log("Select mode");
             c_this.EditorMode = editModeEnumeration.SELECT;
+            c_this.DeleteSelectedNotes(); //todo don't delete selected groups
+            c_this.View.RenderNotes(c_this.Model.Score);
+
             break;
         case 90: //"z" key"
+            console.log("Edit mode");
             c_this.EditorMode = editModeEnumeration.EDIT;
+            c_this.DeleteSelectedNotes(); //todo don't delete selected groups
+            var previewNote = c_this.CreatePreviewNote();
+            c_this.Model.AddNote(previewNote);
+            c_this.View.RenderNotes(c_this.Model.Score);
+            zx
             break;
         case 68: //"d" key
             //Delete any selected notes, and enter delete mode
@@ -239,7 +250,8 @@ class Controller
         //If a selection rectangle is being drawn, begin selecting notes caught in the rectangle
         if(c_this.SelectingGroup)
         {
-
+            console.log("Resize");
+            c_this.View.RenderSelectRectangle(c_this.SelectorPosition, c_this.CursorPosition);
         }
 
         //If no selection rectangle is being drawn,
@@ -270,6 +282,7 @@ class Controller
         if(c_this.EditorMode == editModeEnumeration.SELECT)
         {
             //Delete the selection rectangle (TODO)
+            c_this.View.DeleteSelectRectangle();
             c_this.SelectingGroup = false;
         }
 
@@ -287,7 +300,7 @@ class Controller
         {
             var selectCount = 0;
             c_this.ModifySelectedNotes(function(note){selectCount++;});
-
+            var cursorPosition = c_this.CursorPosition;
             var clickedNote = null;
             var cursorRectangle =
             {
@@ -299,14 +312,17 @@ class Controller
 
             c_this.Model.Score.forEach( function(note)
             {
+                var x1Value = c_this.View.ConvertTicksToXIndex(note.StartTimeTicks);
+                var y1Value = c_this.View.ConvertPitchToYIndex(note.Pitch);
+
                 var noteRectangle = {
-                    x1: c_this.View.ConvertTicksToXIndex(note.StartTimeTicks),
-                    y1: c_this.View.ConvertPitchToYIndex(note.Pitch),
-                    x2: x1+note.Duration,
-                    y2: y1+1
+                    x1: x1Value,
+                    y1: y1Value,
+                    x2: x1Value+note.Duration,
+                    y2: y1Value+1
                 };
 
-                var noteWasClicked = DoesRectangle1CoverRectangle2(noteRectangle, cursorRectangle);
+                var noteWasClicked = c_this.DoesRectangle1CoverRectangle2(noteRectangle, cursorRectangle);
                 if(noteWasClicked)
                 {
                     clickedNote = note;
@@ -317,6 +333,8 @@ class Controller
             //If a note is clicked, play it
             if(clickedNote != null)
             {
+
+                console.log("Clicked note");
                 note.Play();
             }
 
@@ -324,12 +342,17 @@ class Controller
             else if(selectCount == 0)
             {
                 c_this.SelectingGroup = true;
-                this.View.RenderSelectRectangle();
+
+                c_this.SelectorPosition = c_this.CursorPosition;
+
+                console.log("Begin selecting");
+                c_this.View.RenderSelectRectangle(c_this.selectorStartPosition, c_this.CursorPosition);
             }
 
         }
 
     }
+
 
     DoesRectangle1CoverRectangle2(rectangle1, rectangle2)
     {

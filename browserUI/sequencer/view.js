@@ -96,18 +96,34 @@ class View
         return v_this.colorKey[colorIndex];
     }
 
-    RenderSelectRectangle()
+    DeleteSelectRectangle()
+    {
+        $(".selectionRectangle").remove();
+    }
+
+    RenderSelectRectangle(selectPosition, cursorPosition)
     {
         var node = document.createElement('div');
+        $(node).addClass("selectionRectangle");
+
+        v_this.DeleteSelectRectangle();
+
         $(v_this.Maingrid).append(node);
 
-        selectP.x = cursorP.x;
-        selectP.y = cursorP.y;
-        console.log(cursorP.y,cursorP.x,selectP.x,selectP.y);
-        $(node).css({'top':cursorP.y, 'left':cursorP.x,
+        var rect_width = cursorPosition.x - selectPosition.x;
+        var rect_height = cursorPosition.y - selectPosition.y;
+
+                    //var rect_width = selectPosition.x - selectPosition.x;
+                    //var rect_height = selectPosition.y - selectPosition.y;
+
+        var top = selectPosition.y;
+        var left = selectPosition.x;
+
+        $(node).css({'top':top, 'left':left,
                  'border':'solid black 1px', 'position':'absolute',
-                 'width':'0px','height':'0px'});
-        currentObj = $(node);
+                 'width':rect_width,'height':rect_height});
+
+         console.log(rect_width, rect_height, node);
     }
 
     RenderNotes(noteArray)
