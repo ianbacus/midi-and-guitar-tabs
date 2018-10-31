@@ -1,16 +1,34 @@
-let self = undefined;
+let m_this = undefined;
 
 var noteInstance;
 
+var pitchKey = [
+    261.626,277.183,293.665,311.127,
+    329.628,349.228,369.994,391.995,
+    415.305,440.000,466.164,493.883,
+
+    523.251,554.365,587.330,622.254,
+    659.255,698.456,739.989,783.991,
+    830.609,880.000,932.328,987.767,
+
+    1046.50,1108.73,1174.66,1244.51,
+    1318.51,1396.61,1479.98,1567.98];
+
+var Synthesizer = T("OscGen", {
+    wave: "cos",
+    //fami, saw, tri, pulse, konami, cos, sin
+    mul: 0.5
+    }).play();
+
 class Note
 {
-    constructor(pitch, startTimeTicks, endTimeTicks)
+    constructor(pitch, startTimeTicks, duration)
     {
         noteInstance = this;
-        noteInstance.Pitch = pitch
-        noteInstance.StartTimeTicks = startTimeTicks
-        noteInstance.Duration = startTimeTicks+endTimeTicks
-        noteInstance.IsSelected = false
+        noteInstance.Pitch = pitch;
+        noteInstance.StartTimeTicks = startTimeTicks;
+        noteInstance.Duration = duration;
+        noteInstance.IsSelected = false;
     }
 
     Move(startTimeTicks, pitch)
@@ -18,9 +36,11 @@ class Note
         noteInstance.Pitch = pitch;
         noteInstance.StartTimeTicks = startTimeTicks;
     }
-    get Duration()
+
+    Play()
     {
-        return noteInstance.EndTimeTicks - noteInstance.StartTimeTicks;
+        var pitchIndex = pitch % 32;
+        Synthesizer.noteOnWithFreq(pitchKey[pitchIndex], 200);
     }
 
 };
@@ -31,7 +51,7 @@ class Model
     InsertSorted(array, note)
     {
         array.push(note);
-        array.Sort();
+        //array.Sort();
 
         //TODO: efficient sort
         //var arrayLength = array.length;
@@ -77,28 +97,28 @@ class Model
     //Public
     constructor()
     {
-        self = this;
-        self.Score = [];
+        m_this = this;
+        m_this.Score = [];
         console.log("model");
     }
 
     AddNote(note)
     {
-        self.InsertSorted(self.Score, note);
+        m_this.InsertSorted(m_this.Score, note);
+        console.log("added note");
 
-        return id;
     }
 
     DeleteNote(note)
     {
-        var numberOfDeletions = 1;
-        var deletionIndex = BinarySearch(self.Score, note, CompareNotes)
+        var deletionIndex = BinarySearch(m_this.Score, note, CompareNotes)
         DeleteNoteWithIndex(deletionIndex)
     }
 
     DeleteNoteWithIndex(deletionIndex)
     {
-        self.Score.splice(deletionIndex, numberOfDeletions)
+        var numberOfDeletions = 1;
+        m_this.Score.splice(deletionIndex, numberOfDeletions)
     }
 
 };

@@ -4,10 +4,11 @@ var sm = {
     DRAG: 3
 };
 
-var editEnum = {
-    PREVIEW: 1,
-    DRAG: 2,
-    OFF: 3
+
+var editModeEnumeration = {
+	EDIT: 0,
+	SELECT: 1,
+	DELETE: 2
 }
 
 let c_this = undefined;
@@ -50,15 +51,17 @@ class Controller
         c_this = this;
         c_this.View = view;
         c_this.Model = model;
-
+        c_this.CursorPosition = { x: -1, y: -1 };
+        c_this.Hovering = false;
+        c_this.SelectingGroup = false;
     }
 
     DeleteSelectedNotes()
     {
         var i = 0;
-        for(var index = 0; index < Model.Score.length; index++)
+        for(var index = 0; index < c_this.Model.Score.length; index++)
         {
-            note = Model.Score[index]
+            var note = c_this.Model.Score[index]
             if(note.IsSelected)
             {
                 c_this.Model.DeleteNoteWithIndex(index)
@@ -70,7 +73,7 @@ class Controller
     {
         c_this.Model.Score.forEach( function(note)
         {
-            transform(Note)
+            transform(note)
         });
     }
 
@@ -80,15 +83,15 @@ class Controller
         {
         //Mode control: select, edit, delete
         case 88: //"x" key"
-            c_this.EditorMode = em.SELECT;
+            c_this.EditorMode = editModeEnumeration.SELECT;
             break;
         case 90: //"z" key"
-            c_this.EditorMode = em.EDIT;
+            c_this.EditorMode = editModeEnumeration.EDIT;
             break;
         case 68: //"d" key
             //Delete any selected notes, and enter delete mode
             c_this.DeleteSelectedNotes();
-            c_this.EditorMode = em.DELETE;
+            c_this.EditorMode = editModeEnumeration.DELETE;
             break;
 
         case 67: //"c" key"
@@ -108,47 +111,162 @@ class Controller
         }
     }
 
+    CreatePreviewNote()
+    {
+        var startTicks = c_this.View.ConvertXIndexToTicks(c_this.CursorPosition.x);
+        var pitch = c_this.View.ConvertYIndexToPitch(c_this.CursorPosition.y);
+
+        var previewNote = new Note(startTicks, pitch, 4);
+        previewNote.IsSelected = true;
+
+        return previewNote;
+    }
+
     OnHoverBegin(event)
     {
-        console.log("enter");
+        return;
+        if(!c_this.Hovering)
+        {
+            var previewNote = c_this.CreatePreviewNote();
+            c_this.Model.AddNote(previewNote);
+            c_this.Hovering = true;
+        }
+
+        c_this.View.RenderNotes(c_this.Model.Score);
     }
 
     OnHoverEnd(event)
     {
-        console.log("exit");
-    }
+        return;
+        if(c_this.Hovering)
+        {
+            c_this.Hovering = false;
+            c_this.DeleteSelectedNotes();
+        }
 
-    OnKeyPress(event)
-    {
-
+        c_this.View.RenderNotes(c_this.Model.Score);
     }
 
     OnButtonPress(event)
     {
         //Play
+
     }
 
+    ///Update the cursor position, move all selected notes
     OnMouseMove(cursorPosition)
     {
-        var startTicks = c_this.View.ConvertXIndexToTicks(cursorPosition.x);
-        var pitch = c_this.View.ConvertYIndexToPitch(cursorPosition.y);
-        c_this.ModifySelectedNotes(function(note){ note.Move(startTicks, pitch); });
-        c_this.View.RenderNotes(c_this.Model.Score);
+        return;
+        c_this.CursorPosition = cursorPosition;
+
+        //If there are selected notes, move them
+        var selectCount = 0;
+        c_this.ModifySelectedNotes(function(note){selectCount++;});
+
+        //If a selection rectangle is being drawn, begin selecting notes caught in the rectangle
+        if(c_this.SelectingGroup)
+        {
+
+        }
+
+        //If no selection rectangle is being drawn,
+        else if(selectCount > 0)
+        {
+            var startTicks = c_this.View.ConvertXIndexToTicks(cursorPosition.x);
+            var pitch = c_this.View.ConvertYIndexToPitch(cursorPosition.y);
+
+            c_this.ModifySelectedNotes(function(note){note.Move(startTicks, pitch);});
+            c_this.View.RenderNotes(c_this.Model.Score);
+        }
+
+        else
+        {
+
+        }
     }
 
+    ///Unselect all selected notes to anchor them
     OnMouseClickUp(event)
     {
+        c_this.ModifySelectedNotes(function(note)
+        {
+            note.IsSelected = false;
+        });
 
+        if(c_this.EditorMode == editModeEnumeration.SELECT)
+        {
+            //Delete the selection rectangle (TODO)
+            c_this.SelectingGroup = false;
+        }
+
+        else
+        {
+            var previewNote = c_this.CreatePreviewNote();
+
+            c_this.ModifySelectedNotes(function(note) {note.IsSelected = false;});
+            c_this.Model.AddNote(previewNote);
+        }
     }
 
     OnMouseClickDown(event)
     {
+        if(c_this.EditorMode == editModeEnumeration.SELECT)
+        {
+            var selectCount = 0;
+            c_this.ModifySelectedNotes(function(note){selectCount++;});
+
+            var clickedNote = null;
+            var cursorRectangle =
+            {
+                x1: cursorPosition.x,
+                y1: cursorPosition.y,
+                x2: cursorPosition.x,
+                y2: cursorPosition.y,
+            }
+
+            c_this.Model.Score.forEach( function(note)
+            {
+                var noteRectangle =
+                {
+                    x1: c_this.View.ConvertTicksToXIndex(note.StartTimeTicks),
+                    y1: c_this.View.ConvertPitchToYIndex(note.Pitch),
+                    x2: x1+note.Duration,
+                    y2: y1+1
+                };
+
+                var noteWasClicked = DoesRectangle1CoverRectangle2(noteRectangle, cursorRectangle);
+                if(noteWasClicked)
+                {
+                    clickedNote = note;
+                }
+
+            });
+
+            //If a note is clicked, play it
+            if(clickedNote != null)
+            {
+                note.Play();
+            }
+
+            //If there are no selected notes, create a select rectangle
+            else if(selectCount == 0)
+            {
+                c_this.SelectingGroup = true;
+                this.View.RenderSelectRectangle();
+            }
+
+        }
 
     }
 
+    DoesRectangle1CoverRectangle2(rectangle1, rectangle2)
+    {
+        return false;
+    }
 
-	/* analysis suite
 	{
+
+        	/* analysis suite
         function DrawBeats(meter)
         {
         	var gridWidth = parseInt($(maingrid).css('width'),10)/snapX;
@@ -313,6 +431,6 @@ class Controller
         	}
 
         }
-        DrawBeats(4);
-	}*/
+        DrawBeats(4);*/
+	}
 }

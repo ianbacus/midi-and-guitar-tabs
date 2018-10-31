@@ -435,42 +435,43 @@ $( function() {
 
         function selectCursorCallback(event)
         {
-        	if (currentObj) {
-            var y = (cursorP.y)-selectP.y;
-            var x = (cursorP.x)-selectP.x;
-            //currentObj.css({'height':cursorP.y-topOffset, 'width':cursorP.x-leftOffset});
-            //console.log(cursorP.y,cursorP.x,selectP.x,selectP.y);
+        	if (currentObj)
+             {
+                var y = (cursorP.y)-selectP.y;
+                var x = (cursorP.x)-selectP.x;
+                //currentObj.css({'height':cursorP.y-topOffset, 'width':cursorP.x-leftOffset});
+                //console.log(cursorP.y,cursorP.x,selectP.x,selectP.y);
 
-            if(x < 0) currentObj.css({'width':-1-x,'left':cursorP.x});
-            else if(x==0) currentObj.css({'width':0,'left':selectP.x});
-            else currentObj.css({'width':x-1});
+                if(x < 0) currentObj.css({'width':-1-x,'left':cursorP.x});
+                else if(x==0) currentObj.css({'width':0,'left':selectP.x});
+                else currentObj.css({'width':x-1});
 
-            if(y < 0) currentObj.css({'height':-1-y,'top':cursorP.y});
-            else if(y==0) currentObj.css({'height':0,'top':selectP.y});
-            else currentObj.css({'height':y-1});
+                if(y < 0) currentObj.css({'height':-1-y,'top':cursorP.y});
+                else if(y==0) currentObj.css({'height':0,'top':selectP.y});
+                else currentObj.css({'height':y-1});
 
         	}
         	else if(selectState == selectEnum.DRAG)
         	{
-            var y = (cursorP.y)-selectP.y;
-            var x = (cursorP.x)-selectP.x;
-            $(".selected").each(function()
-            {
-            	var oldY = parseInt($(this).css('top'),10)
-            	var thisY = (parseInt($(this).data( "init-position").top,10)+y);
-            	var thisX = (parseInt($(this).data( "init-position").left,10)+x);
-            	console.log(oldY,' and '+thisY);
+                var y = (cursorP.y)-selectP.y;
+                var x = (cursorP.x)-selectP.x;
+                $(".selected").each(function()
+                {
+                	var oldY = parseInt($(this).css('top'),10)
+                	var thisY = (parseInt($(this).data( "init-position").top,10)+y);
+                	var thisX = (parseInt($(this).data( "init-position").left,10)+x);
+                	console.log(oldY,' and '+thisY);
 
-            	if(oldY != thisY)
-            	{
+                	if(oldY != thisY)
+                	{
 
-                var pitchIndex = getNoteIndex(thisY,24);
-                synth.noteOnWithFreq(pitchKey[pitchIndex], 200);
-            	}
-            	var colorIndex = getNoteIndex(thisY,12);
-            	$(this).css({'top':thisY, 'left':thisX ,'background':colorKey[colorIndex]});
+                    var pitchIndex = getNoteIndex(thisY,24);
+                    synth.noteOnWithFreq(pitchKey[pitchIndex], 200);
+                	}
+                	var colorIndex = getNoteIndex(thisY,12);
+                	$(this).css({'top':thisY, 'left':thisX ,'background':colorKey[colorIndex]});
 
-            });
+                });
         	}
         }
 
@@ -580,6 +581,7 @@ $( function() {
         var colorIndex = getNoteIndex(cursorP.y,12);
         currentObj.css({'top':cursorP.y, 'left':cursorP.x,'background':colorKey[colorIndex]});
 
+        console.log(currentObj);
     	}
     }
 

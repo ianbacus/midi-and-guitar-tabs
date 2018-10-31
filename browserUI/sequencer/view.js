@@ -70,7 +70,7 @@ class View
     ConvertPitchToYIndex(pitch)
     {
         var pitchRange = v_this.MaximumPitch - v_this.MinimumPitch;
-        pitchOffset = v_this.MaximumPitch - pitch;
+        var pitchOffset = v_this.MaximumPitch - pitch;
 
         return v_this.gridSnap*pitchOffset;
     }
@@ -93,13 +93,13 @@ class View
     GetColorKey(pitch)
     {
         var colorIndex = pitch % 12;
-        return colorKey[colorIndex];
+        return v_this.colorKey[colorIndex];
     }
 
     RenderSelectRectangle()
     {
         var node = document.createElement('div');
-        $(maingrid).append(node);
+        $(v_this.Maingrid).append(node);
 
         selectP.x = cursorP.x;
         selectP.y = cursorP.y;
@@ -112,19 +112,23 @@ class View
 
     RenderNotes(noteArray)
     {
+        var gridNoteClass = "gridNote";
+        $(".gridNote").remove();
+        console.log(noteArray.length);
         if(noteArray.length > 0)
         {
-            initialNoteStartTimeTicks = noteArray[0].StartTimeTicks;
+            var initialNoteStartTimeTicks = 0;//noteArray[0].StartTimeTicks;
             noteArray.forEach(function(note)
             {
-                var noteWidth = note.Duration;
+                var noteWidth = note.Duration*v_this.gridSnap;
+                var pitch = note.Pitch;
                 var node = document.createElement('div');
                 var noteOpacity = 1.0;
                 var noteGridStartTimeTicks = note.StartTimeTicks - initialNoteStartTimeTicks;
 
-                var offsetY = ConvertPitchToYIndex(pitch);
-                var offsetX = ConvertTicksToXIndex(noteGridStartTimeTicks);
-                var colorIndex = GetColorKey(pitch);
+                var offsetY = v_this.ConvertPitchToYIndex(pitch);
+                var offsetX = v_this.ConvertTicksToXIndex(noteGridStartTimeTicks);
+                var colorIndex = v_this.GetColorKey(pitch);
 
                 if(note.IsSelected)
                 {
@@ -132,9 +136,10 @@ class View
                     noteOpacity = 0.5;
                 }
 
-                $(v_this.maingrid).append(node);
+                $(node).addClass(gridNoteClass);
+                $(v_this.Maingrid).append(node);
                 $(node).css({'top':offsetY, 'left':offsetX});
-                $(node).css({"opacity":noteOpacity, "height":snapY,"width":noteWidth,"position":"absolute"});
+                $(node).css({"opacity":noteOpacity, "height":v_this.gridSnap,"width":noteWidth,"position":"absolute"});
                 $(node).css({'background':colorIndex});
             });
         }
