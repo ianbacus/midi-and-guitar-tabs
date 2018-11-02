@@ -6,6 +6,7 @@ let ScoreController = new Controller(ScoreView,ScoreModel);
 $( function()
 {
     console.log("begin");
+    ScoreController.Initialize();
     ScoreView.Initialize(
         ScoreController.OnKeyUp,
         ScoreController.OnMouseMove, ScoreController.OnMouseClickUp, ScoreController.OnMouseClickDown,

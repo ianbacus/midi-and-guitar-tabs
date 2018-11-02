@@ -6,8 +6,8 @@ class View
     {
         v_this = this;
         v_this.Maingrid = "#gridbox";
+        v_this.GridArray = "#GridboxArray";
         v_this.PlayButton = "#PlayButton";
-        v_this.emColors = ['orange','blue','green'];
         v_this.previewObjs = ['cell', 'wire'];
 
         v_this.MaximumPitch = 72;
@@ -51,7 +51,7 @@ class View
 
         $(v_this.PlayButton).click(onButtonPress);
 
-        $(document).keyup(onKeyUp);
+        $(document).keydown(onKeyUp);
         v_this.GridMouseHandler = onMouseMove;
     }
 
@@ -101,6 +101,27 @@ class View
         $(".selectionRectangle").remove();
     }
 
+    RenderGridArray(numberOfEntries, index)
+    {
+
+        console.log("Rendering preview", numberOfEntries, index);
+        var domGridArray = $(v_this.GridArray);
+        domGridArray.empty();
+        var nodeIndex = 0;
+
+        while(nodeIndex < numberOfEntries)
+        {
+            var entryNode = "<li> slice " + nodeIndex + "</li>";
+            //TODO: use image of entry
+            if(nodeIndex === index)
+            {
+                entryNode = "<li style=\"border: 1px solid black\"> slice " + nodeIndex + "</li>";
+            }
+            domGridArray.append(entryNode);
+            nodeIndex++;
+        }
+    }
+
     RenderSelectRectangle(selectPosition, cursorPosition)
     {
         var node = document.createElement('div');
@@ -110,26 +131,41 @@ class View
 
         $(v_this.Maingrid).append(node);
 
-        var rect_width = cursorPosition.x - selectPosition.x;
-        var rect_height = cursorPosition.y - selectPosition.y;
+        var x_offset = 0;
+        var y_offset = 0;
 
-                    //var rect_width = selectPosition.x - selectPosition.x;
-                    //var rect_height = selectPosition.y - selectPosition.y;
+        var rect_width = (cursorPosition.x - selectPosition.x);
+        var rect_height = (cursorPosition.y - selectPosition.y);
 
-        var top = selectPosition.y;
-        var left = selectPosition.x;
+        if(rect_width < 0)
+        {
+            rect_width *= -1;
+            x_offset = rect_width;
+        }
+
+        if(rect_height < 0)
+        {
+            rect_height *= -1;
+            y_offset = rect_height;
+        }
+
+        var top = selectPosition.y-y_offset;
+        var left = selectPosition.x-x_offset;
 
         $(node).css({'top':top, 'left':left,
                  'border':'solid black 1px', 'position':'absolute',
                  'width':rect_width,'height':rect_height});
 
-         console.log(rect_width, rect_height, node);
     }
 
-    RenderNotes(noteArray)
+    RenderNotes(noteArray, color)
     {
         var gridNoteClass = "gridNote";
+        var mainGrid = $(v_this.Maingrid);
+
+        mainGrid.css({'border':'solid'+color+' 1px'});
         $(".gridNote").remove();
+
 
         if(noteArray.length > 0)
         {
@@ -153,7 +189,7 @@ class View
                 }
 
                 $(node).addClass(gridNoteClass);
-                $(v_this.Maingrid).append(node);
+                mainGrid.append(node);
                 $(node).css({'top':offsetY, 'left':offsetX});
                 $(node).css({"opacity":noteOpacity, "height":v_this.gridSnap,"width":noteWidth,"position":"absolute"});
                 $(node).css({'background':colorIndex});

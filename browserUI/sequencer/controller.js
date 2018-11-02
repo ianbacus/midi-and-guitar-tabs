@@ -49,15 +49,41 @@ class Controller
     constructor(view, model)
     {
         c_this = this;
+        c_this.EditorMode = editModeEnumeration.EDIT;
         c_this.View = view;
         c_this.Model = model;
         c_this.CursorPosition = { x: -1, y: -1 };
         c_this.SelectorPosition = { x: -1, y: -1 };
+        c_this.Playing = false;
         c_this.Hovering = false;
         c_this.SelectingGroup = false;
+        c_this.GridPreviewList = [c_this.Model.Score];
+        c_this.GridPreviewIndex = 0;
+        c_this.EditModeColors = ['orange','blue','green'];
 
         c_this.NoteIndex = 0;
         c_this.PendingTimeout = null;
+
+
+    }
+
+    Initialize()
+    {
+        c_this.RenderGridArray();
+    }
+
+    RenderGridArray()
+    {
+        c_this.StopPlayingNotes();
+        c_this.RenderMainGridBox()
+        c_this.View.RenderGridArray(c_this.GridPreviewList.length, c_this.GridPreviewIndex);
+
+    }
+
+    RenderMainGridBox()
+    {
+        var editModeColor = c_this.EditModeColors[c_this.EditorMode];
+        c_this.View.RenderNotes(c_this.Model.Score, editModeColor);
     }
 
     DeleteSelectedNotes()
@@ -101,7 +127,7 @@ class Controller
             console.log("Select mode");
             c_this.EditorMode = editModeEnumeration.SELECT;
             c_this.DeleteSelectedNotes(); //todo don't delete selected groups
-            c_this.View.RenderNotes(c_this.Model.Score);
+
 
             break;
         case 90: //"z" key"
@@ -110,8 +136,8 @@ class Controller
             c_this.DeleteSelectedNotes(); //todo don't delete selected groups
             var previewNote = c_this.CreatePreviewNote();
             c_this.Model.AddNote(previewNote);
-            c_this.View.RenderNotes(c_this.Model.Score);
-            zx
+            c_this.RenderMainGridBox()
+
             break;
         case 68: //"d" key
             //Delete any selected notes, and enter delete mode
@@ -120,8 +146,14 @@ class Controller
             break;
 
         case 32: //spacebar
-            c_this.DoActionOnAllNotes(function(note){console.log(note);});
-            c_this.PlayNotes();
+            if(!c_this.Playing)
+            {
+                c_this.PlayNotes();
+            }
+            else
+            {
+                c_this.StopPlayingNotes();
+            }
             event.preventDefault();
             break;
         case 67: //"c" key"
@@ -132,12 +164,50 @@ class Controller
             deleteCurrentObj();
             break;
         case 87: //"w" key: Halve durations
-            c_this.ModifySelectedNotes(function(note){note.Duration = ceil(note.Duration /= 2);});
+            //c_this.ModifySelectedNotes(function(note){note.Duration = ceil(note.Duration /= 2);});
             break;
         case 69: //"e" key: Double durations
-            c_this.ModifySelectedNotes(function(note){ note.Duration = min(32, note.Duration *= 2); });
-            break;
+            c_this.CreateGridPreview();
+            console.log(c_this.GridPreviewList);
 
+            c_this.RenderGridArray();
+
+            //c_this.ModifySelectedNotes(function(note){ note.Duration = min(32, note.Duration *= 2); });
+            break;
+        case 38: //up arrow: select grid
+
+            event.preventDefault();
+            if(c_this.GridPreviewIndex > 0)
+            {
+                c_this.GridPreviewList[c_this.GridPreviewIndex] = c_this.Model.Score;
+                c_this.GridPreviewIndex--;
+
+                c_this.Model.Score = c_this.GridPreviewList[c_this.GridPreviewIndex];
+                c_this.RenderGridArray();
+
+                console.log("Previous grid",c_this.GridPreviewIndex,c_this.GridPreviewList.length, c_this.Model.Score);
+            }
+            else {
+                console.log("BOINK",c_this.GridPreviewIndex,c_this.GridPreviewList.length, c_this.Model.Score);
+            }
+            break;
+        case 40: //down arrow: select grid
+            event.preventDefault();
+            if(c_this.GridPreviewIndex < c_this.GridPreviewList.length-1)
+            {
+                c_this.GridPreviewList[c_this.GridPreviewIndex] = c_this.Model.Score;
+                c_this.GridPreviewIndex++;
+
+                c_this.Model.Score = c_this.GridPreviewList[c_this.GridPreviewIndex];
+                c_this.RenderGridArray();
+
+                console.log("Next grid",c_this.GridPreviewIndex,c_this.GridPreviewList.length, c_this.Model.Score);
+            }
+            else
+            {
+                console.log("BOINK",c_this.GridPreviewIndex,c_this.GridPreviewList.length, c_this.Model.Score);
+            }
+            break;
         }
     }
 
@@ -182,43 +252,66 @@ class Controller
 
         if(note != null)
         {
-            var millisecondsPerTick = 100;
+            var millisecondsPerTick = 400;
             var relativeDelta = note.StartTimeTicks - lastDelta;
             var delta = relativeDelta*millisecondsPerTick;
             c_this.NoteIndex -= 1;
 
             c_this.PendingTimeout = setTimeout(c_this.PlayChord, delta)
         }
+        else
+        {
+            c_this.Playing = false;
+        }
     }
 
     PlayNotes()
     {
         c_this.NoteIndex = 0;
-        clearTimeout(c_this.PendingTimeout);
+        c_this.StopPlayingNotes();
         c_this.PlayChord();
+        c_this.Playing = true;
+    }
+
+    StopPlayingNotes()
+    {
+        c_this.Playing = false;
+        clearTimeout(c_this.PendingTimeout);
+
     }
 
     CreatePreviewNote()
     {
         var startTicks = c_this.View.ConvertXIndexToTicks(c_this.CursorPosition.x);
         var pitch = c_this.View.ConvertYIndexToPitch(c_this.CursorPosition.y);
+        var defaultNoteDuration = 1;
 
-        var previewNote = new Note(startTicks, pitch, 4);
+        var previewNote = new Note(startTicks, pitch, defaultNoteDuration);
         previewNote.IsSelected = true;
 
         return previewNote;
+    }
+
+    CreateGridPreview()
+    {
+        console.log("Create grid");
+        c_this.GridPreviewList.push([]);
+
     }
 
     OnHoverBegin(event)
     {
         if(!c_this.Hovering)
         {
-            var previewNote = c_this.CreatePreviewNote();
-            c_this.Model.AddNote(previewNote);
             c_this.Hovering = true;
+            if(c_this.EditorMode === editModeEnumeration.EDIT)
+            {
+                var previewNote = c_this.CreatePreviewNote();
+                c_this.Model.AddNote(previewNote);
+            }
         }
 
-        c_this.View.RenderNotes(c_this.Model.Score);
+        c_this.RenderMainGridBox()
     }
 
     OnHoverEnd(event)
@@ -229,7 +322,7 @@ class Controller
             c_this.DeleteSelectedNotes();
         }
 
-        c_this.View.RenderNotes(c_this.Model.Score);
+        c_this.RenderMainGridBox()
     }
 
     OnButtonPress(event)
@@ -241,6 +334,11 @@ class Controller
     ///Update the cursor position, move all selected notes
     OnMouseMove(cursorPosition)
     {
+        if(c_this.LastCursorPosition != c_this.CursorPosition)
+        {
+            c_this.LastCursorPosition = c_this.CursorPosition;
+        }
+
         c_this.CursorPosition = cursorPosition;
 
         //If there are selected notes, move them
@@ -250,18 +348,36 @@ class Controller
         //If a selection rectangle is being drawn, begin selecting notes caught in the rectangle
         if(c_this.SelectingGroup)
         {
-            console.log("Resize");
             c_this.View.RenderSelectRectangle(c_this.SelectorPosition, c_this.CursorPosition);
+            var selectRectangle =
+            {
+                x1: Math.min(c_this.SelectorPosition.x, c_this.CursorPosition.x),
+                y1: Math.min(c_this.SelectorPosition.y, c_this.CursorPosition.y),
+                x2: Math.max(c_this.SelectorPosition.x, c_this.CursorPosition.x),
+                y2: Math.max(c_this.SelectorPosition.y, c_this.CursorPosition.y)
+            };
+
+            c_this.DoActionOnAllNotes( function(note)
+            {
+                var noteRectangle = c_this.GetNoteRectangle(note);
+                var noteWasClicked = c_this.DoesRectangle1CoverRectangle2(selectRectangle, noteRectangle);
+
+                if(noteWasClicked)
+                {
+                    note.IsSelected = true;
+                }
+            });
         }
 
         //If no selection rectangle is being drawn,
         else if(selectCount > 0)
         {
-            var startTicks = c_this.View.ConvertXIndexToTicks(cursorPosition.x);
-            var pitch = c_this.View.ConvertYIndexToPitch(cursorPosition.y);
+            var x_offset = c_this.View.ConvertXIndexToTicks(c_this.CursorPosition.x) - c_this.View.ConvertXIndexToTicks(c_this.LastCursorPosition.x);
+            var y_offset = c_this.View.ConvertYIndexToPitch(c_this.CursorPosition.y) - c_this.View.ConvertYIndexToPitch(c_this.LastCursorPosition.y);
 
-            c_this.ModifySelectedNotes(function(note){note.Move(startTicks, pitch);});
-            c_this.View.RenderNotes(c_this.Model.Score);
+            //Todo: move notes relative to start position
+            c_this.ModifySelectedNotes(function(note){note.Move(x_offset, y_offset);});
+            c_this.RenderMainGridBox()
         }
 
         else
@@ -273,25 +389,67 @@ class Controller
     ///Unselect all selected notes to anchor them
     OnMouseClickUp(event)
     {
-        c_this.ModifySelectedNotes(function(note)
+        c_this.StopPlayingNotes();
+        //if(c_this.EditorMode == editModeEnumeration.SELECT)
+        if(c_this.SelectingGroup === true)
         {
-            note.IsSelected = false;
-            note.Play();
-        });
-
-        if(c_this.EditorMode == editModeEnumeration.SELECT)
-        {
-            //Delete the selection rectangle (TODO)
             c_this.View.DeleteSelectRectangle();
             c_this.SelectingGroup = false;
         }
 
         else
         {
+            c_this.ModifySelectedNotes(function(note)
+            {
+                note.IsSelected = false;
+                note.Play();
+            });
+
             var previewNote = c_this.CreatePreviewNote();
 
             c_this.Model.AddNote(previewNote);
         }
+    }
+
+    GetNoteRectangle(note)
+    {
+        var x1Value = c_this.View.ConvertTicksToXIndex(note.StartTimeTicks);
+        var y1Value = c_this.View.ConvertPitchToYIndex(note.Pitch);
+
+        var noteRectangle = {
+            x1: x1Value,
+            y1: y1Value,
+            x2: x1Value+note.Duration,
+            y2: y1Value+1
+        };
+
+        return noteRectangle;
+    }
+
+    GetNoteIfClicked()
+    {
+        var clickedNote = null;
+
+        var cursorPosition = c_this.CursorPosition;
+        var cursorRectangle =
+        {
+            x1: cursorPosition.x,
+            y1: cursorPosition.y,
+            x2: cursorPosition.x,
+            y2: cursorPosition.y,
+        }
+
+        c_this.DoActionOnAllNotes( function(note)
+        {
+            var noteRectangle = c_this.GetNoteRectangle(note);
+            var noteWasClicked = c_this.DoesRectangle1CoverRectangle2(noteRectangle, cursorRectangle);
+
+            if(noteWasClicked)
+            {
+                clickedNote = note;
+            }
+        });
+        return clickedNote;
     }
 
     OnMouseClickDown(event)
@@ -299,41 +457,13 @@ class Controller
         if(c_this.EditorMode == editModeEnumeration.SELECT)
         {
             var selectCount = 0;
+            var clickedNote = c_this.GetNoteIfClicked();
+
             c_this.ModifySelectedNotes(function(note){selectCount++;});
-            var cursorPosition = c_this.CursorPosition;
-            var clickedNote = null;
-            var cursorRectangle =
-            {
-                x1: cursorPosition.x,
-                y1: cursorPosition.y,
-                x2: cursorPosition.x,
-                y2: cursorPosition.y,
-            }
-
-            c_this.Model.Score.forEach( function(note)
-            {
-                var x1Value = c_this.View.ConvertTicksToXIndex(note.StartTimeTicks);
-                var y1Value = c_this.View.ConvertPitchToYIndex(note.Pitch);
-
-                var noteRectangle = {
-                    x1: x1Value,
-                    y1: y1Value,
-                    x2: x1Value+note.Duration,
-                    y2: y1Value+1
-                };
-
-                var noteWasClicked = c_this.DoesRectangle1CoverRectangle2(noteRectangle, cursorRectangle);
-                if(noteWasClicked)
-                {
-                    clickedNote = note;
-                }
-
-            });
 
             //If a note is clicked, play it
             if(clickedNote != null)
             {
-
                 console.log("Clicked note");
                 note.Play();
             }
@@ -346,7 +476,7 @@ class Controller
                 c_this.SelectorPosition = c_this.CursorPosition;
 
                 console.log("Begin selecting");
-                c_this.View.RenderSelectRectangle(c_this.selectorStartPosition, c_this.CursorPosition);
+                c_this.View.RenderSelectRectangle(c_this.SelectorPosition, c_this.CursorPosition);
             }
 
         }
@@ -356,7 +486,9 @@ class Controller
 
     DoesRectangle1CoverRectangle2(rectangle1, rectangle2)
     {
-        return false;
+        var xCovered = (rectangle1.x1 <= rectangle2.x1) && (rectangle1.x2 >= rectangle2.x2) ;
+        var yCovered = (rectangle1.y1 <= rectangle2.y1) && (rectangle1.y2 >= rectangle2.y2) ;
+        return xCovered && yCovered;
     }
 
 

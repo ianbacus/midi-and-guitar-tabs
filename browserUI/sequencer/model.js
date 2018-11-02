@@ -31,13 +31,14 @@ class Note
         this.StartTimeTicks = startTimeTicks;
         this.Duration = duration;
         this.IsSelected = false;
+        this.SelectedPitchAndTicks = [this.Pitch, this.StartTimeTicks]
 
     }
 
-    Move(startTimeTicks, pitch)
+    Move(x_offset, y_offset)
     {
-        this.Pitch = pitch;
-        this.StartTimeTicks = startTimeTicks;
+        this.StartTimeTicks += x_offset;
+        this.Pitch += y_offset;
     }
 
     Play()
@@ -48,6 +49,7 @@ class Note
         console.log("b",this.Pitch);
         Synthesizer.noteOnWithFreq(pitchKey[pitchIndex], 200);
     }
+
 
 };
 

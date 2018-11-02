@@ -2,7 +2,7 @@ canvas {
     margin-top: 3px;
 }
 
-.selectable { width: 80px; height: 80px; padding: 0.5em; border-style: dotted; } 
+.selectable { width: 80px; height: 80px; padding: 0.5em; border-style: dotted; }
 .selectable .ui-selecting { background: #FECA40; }
 .selectable .ui-selected { background: #F39814; color: white; }
 #gridbox {
@@ -19,7 +19,8 @@ canvas {
 #selectable .ui-selecting { background: #FECA40; }
 #selectable .ui-selected { background: #F39814; color: white; }
 
-
+nav ul{height:200px; width:50%;}
+nav ul{overflow:hidden; overflow-y:scroll;}
 
 
 
@@ -41,9 +42,9 @@ html, body {
   height: calc(100% - 4px); }
 
 /**
- *  
+ *
  *  TOP BAR
- *  
+ *
  */
 #TopBar {
   background-color: black;
