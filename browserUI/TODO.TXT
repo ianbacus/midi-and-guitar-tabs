@@ -1,0 +1,16 @@
+todo stuff
+
+
+
+1. modes / radio buttons
+    1.1 when you pick a key, highlight the key notes on the piano roll, select modes
+    1.2 redundancy: keybindings OR clickable things for mode selection (for the dumb dumbs)
+    1.3
+2. draw strong beats with black lines of different thicknesses
+3. mousewheel callbackfunctions
+    3.1 zoom horizontally
+    3.2 transpose vertically
+    3.3
+4. delete notes, change note widths
+5. play the whole score
+6.

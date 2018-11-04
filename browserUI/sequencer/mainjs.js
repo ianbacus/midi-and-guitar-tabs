@@ -9,9 +9,10 @@ $( function()
     ScoreController.Initialize();
     ScoreView.Initialize(
         ScoreController.OnKeyUp,
+        ScoreController.OnMouseScroll,
         ScoreController.OnMouseMove, ScoreController.OnMouseClickUp, ScoreController.OnMouseClickDown,
         ScoreController.OnHoverBegin, ScoreController.OnHoverEnd,
-        ScoreController.OnButtonPress,
+        ScoreController.OnButtonPress, ScoreController.OnRadioButtonPress,
     );
 
 });

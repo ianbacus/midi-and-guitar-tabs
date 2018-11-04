@@ -17,22 +17,38 @@ var pitchKey = [
 
 var Synthesizer = T("OscGen",
 {
+    //wave: "fami",
     wave: "fami",
+
     //fami, saw, tri, pulse, konami, cos, sin
-    mul: 0.5
+    mul: 0.25
 
 }).play();
 
 class Note
 {
-    constructor(startTimeTicks, pitch, duration)
+    constructor(startTimeTicks, pitch, duration, selected)
     {
         this.Pitch = pitch;
         this.StartTimeTicks = startTimeTicks;
         this.Duration = duration;
-        this.IsSelected = false;
-        this.SelectedPitchAndTicks = [this.Pitch, this.StartTimeTicks]
+        this._IsSelected = selected;
+        this.SelectedPitchAndTicks = null;
+    }
 
+    ExactMatch(otherNote)
+    {
+        var exactMatch = otherNote === this;
+            //console.log("Exact match?", exactMatch, otherNote, this)
+
+        return exactMatch;
+        /*
+        this.Pitch = otherNote.Pitch;
+        this.StartTimeTicks = otherNote.StartTimeTicks;
+        this.Duration = otherNote.Duration;
+        this._IsSelected = otherNote._IsSelected;
+        this.SelectedPitchAndTicks = otherNote.SelectedPitchAndTicks
+        */
     }
 
     Move(x_offset, y_offset)
@@ -46,8 +62,30 @@ class Note
         var numberOfPitches = pitchKey.length;
         var pitchIndex = this.Pitch % numberOfPitches;
 
-        console.log("b",this.Pitch);
         Synthesizer.noteOnWithFreq(pitchKey[pitchIndex], 200);
+    }
+
+    set IsSelected(selected)
+    {
+        this._IsSelected = selected;
+        if(selected)
+        {
+            console.log("marked position")
+            this.SelectedPitchAndTicks = [this.Pitch, this.StartTimeTicks]
+        }
+    }
+
+    get IsSelected()
+    {
+        return this._IsSelected;
+    }
+
+    ResetPosition()
+    {
+        if(this.SelectedPitchAndTicks != null)
+        {
+            [this.Pitch,this.StartTimeTicks] = this.SelectedPitchAndTicks;
+        }
     }
 
 
@@ -68,41 +106,45 @@ class Model
         //array.splice( index, 0, note );
     }
 
-    LinearSearch(array,element)
+
+
+    LinearSearchOfScore(note)
     {
-        console.log(element)
+        return m_this.LinearSearch(m_this.Score, note)
+    }
 
-        var returnIndex = array.length;
-        var k = 0;
+    //Return the index of an exact match, or the index where the element would be if it were present
+    LinearSearch(array,searchNote)
+    {
+        var returnIndex2 = undefined;
+        var lastCompareResult = undefined;
+        console.log("Begin searching for ", searchNote);
 
-        console.log("Inserting:");
-        console.log(element);
-
-        console.log("Into:");
-        array.forEach(function(note)
+        for(var returnIndex in array)
         {
-            console.log(note);
-        });
-        console.log(".");
+            var otherNote = array[returnIndex];
+            var compareResult = m_this.CompareNotes(searchNote, otherNote);
 
-        array.forEach(function(note)
-        {
-            var cmp = m_this.CompareNotes(element, array[k]);
-            if (cmp <= 0)
+            //1: searchNote > otherNote: keep going
+            //-1: searchNote < otherNoteotherNote: stop
+            //0: searchNote == otherNote: return the index of an exact match (the pitch and duration are the same), or the index after all 'inexact' matches
+
+            console.log("Searching, index " + returnIndex + ", cmp=" + compareResult, otherNote)
+            if((compareResult === 0) || ((lastCompareResult != undefined) && (lastCompareResult != compareResult)))
             {
-                console.log("found insertion point"+k)
-                returnIndex = k;
+                if(returnIndex2 == undefined)
+                {
+                    console.log("Search complete", compareResult, otherNote);
+                    returnIndex2 = returnIndex;
+                }
             }
-            k += 1;
-        })
 
-        console.log("Sorted:");
-        array.forEach(function(note)
-        {
-            console.log(note);
-        });
-        console.log(".");
-        return k;
+            lastCompareResult = compareResult;
+
+        }
+
+        console.log("Search complete. Index ="+returnIndex);
+        return returnIndex2;
     }
 
     BinarySearch(array, element, compare_fn)
@@ -123,28 +165,28 @@ class Model
         var returnIndex = -m - 1;
     }
 
+
     CompareNotes(note1, note2)
     {
         var nst1 = note1.StartTimeTicks;
         var nst2 = note2.StartTimeTicks;
 
+        if(note1 === note2)
+        {
+            return 0;
+        }
         if(nst1 > nst2)
         {
-            //console.log(nst1+">"+nst2)
             return 1;
         }
         else if(nst1 < nst2)
         {
-            //console.log(nst1+"<"+nst2)
             return -1;
         }
-        else
-        {
-            //console.log(nst1+"==="+nst2)
+        else {
             return 0;
         }
     }
-
 
     //Public
     constructor()
@@ -160,7 +202,16 @@ class Model
 
     DeleteNote(note)
     {
-        var deletionIndex = m_this.LinearSearch(m_this.Score, note, m_this.CompareNotes)
+        var array = m_this.Score;
+
+        for(var deletionIndex in array)
+        {
+            var otherNote = array[deletionIndex];
+            if(otherNote === note)
+            {
+                break;
+            }
+        }
         m_this.DeleteNoteWithIndex(deletionIndex)
     }
 

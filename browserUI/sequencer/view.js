@@ -39,22 +39,37 @@ class View
 
     Initialize(
         onKeyUp,
+        onMouseScroll,
         onMouseMove, onMouseClickUp, onMouseClickDown,
         onHoverBegin, onHoverEnd,
-        onButtonPress)
+        onButtonPress,
+        radioButtonHandler)
     {
     	$(v_this.Maingrid)
             .mousemove(v_this.OnMouseMove)
             .mousedown(onMouseClickDown)
             .mouseup(onMouseClickUp)
-            .hover(onHoverBegin,onHoverEnd);
+            .mouseenter(onHoverBegin)
+            .mouseleave(onHoverEnd);
 
         $(v_this.PlayButton).click(onButtonPress);
+        $('input[type=radio]').change(v_this.OnRadioButton);
 
         $(document).keydown(onKeyUp);
         v_this.GridMouseHandler = onMouseMove;
+        v_this.RadioButtonHandler = radioButtonHandler;
+
+        $(v_this.Maingrid).bind('mousewheel DOMMouseScroll', onMouseScroll);
+
     }
 
+    OnRadioButton(event)
+    {
+        var filter = $('input:checked');
+        var identifier = filter.parent().parent().parent().attr("id");
+        var eventData = {id:identifier, value:this.value};
+        v_this.RadioButtonHandler(eventData);
+    }
     OnMouseMove(event)
     {
         var cursorPosition = { x: -1, y: -1 };

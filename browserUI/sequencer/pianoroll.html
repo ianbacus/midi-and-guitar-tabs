@@ -33,12 +33,14 @@
 <div class="container">
 	<h4> Window </h4>
 	<div class="row">
-        <!--- This column contains the main editing box -->
-		<div class="col-md-7">
-			<div id="gridbox"></div>
-		</div>
 
-		<div class="col-md-5">
+        <div class="col-md-9">
+            <!--- This column contains the main editing box -->
+            <div id="gridboxContainer">
+                <div id="gridbox"></div>
+            </div>
+        </div>
+        <div class="col-md-3">
         <!--- This column contains edit palletes-->
 			<ul class="nav nav-tabs">
 				<li><a data-toggle="tab" href="#keys">Keys</a></li>
@@ -62,17 +64,17 @@
 				</div>
 				<div id="mode" class="tab-pane fade in active">
 					<h3>Mode</h3>
-					<br>
 					Analysis
-					<div id="meter">
+					<br>
+					<div id="Analysis">
 						<div class="radio">
-						    <label><input type="radio" name="optradio">Invertible</label>
+						    <label><input type="radio" name="optradio" value=0>Invertible (10th)</label>
 						</div>
 						<div class="radio">
-						    <label><input type="radio" name="optradio">Canon</label>
+						    <label><input type="radio" name="optradio" value=1>Canon</label>
 						</div>
 						<div class="radio">
-						    <label><input type="radio" name="optradio">Option 3</label>
+						    <label><input type="radio" name="optradio" value=2>Free</label>
 						</div>
 					</div>
 					<br>
@@ -111,7 +113,7 @@
 				</div>
             </div>
 		</div>
-	</div>
+    </div>
 </div>
 </body>
 

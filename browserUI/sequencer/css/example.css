@@ -5,13 +5,25 @@ canvas {
 .selectable { width: 80px; height: 80px; padding: 0.5em; border-style: dotted; }
 .selectable .ui-selecting { background: #FECA40; }
 .selectable .ui-selected { background: #F39814; color: white; }
-#gridbox {
+
+#gridboxContainer
+{
 	border:solid red 1px;
-	width:640px;
-	height:400px;
+	overflow-x:scroll;
+    overflow-y:scroll;
+	width:100%;
+	height:500px;
+}
+
+.gridNote {
+     pointer-events: none;
+}
+
+#gridbox {
+	width:650%;
+	height:1000px;
 	position:relative;
 	background:whitesmoke url('https://s3.amazonaws.com/com.appgrinders.test/images/grid_20.png') repeat;
-	overflow-x:scroll;
 }
 .selected {opacity:0.7;}
 
