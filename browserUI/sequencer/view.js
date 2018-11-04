@@ -65,11 +65,26 @@ class View
 
     OnRadioButton(event)
     {
-        var filter = $('input:checked');
-        var identifier = filter.parent().parent().parent().attr("id");
-        var eventData = {id:identifier, value:this.value};
+        var eventData = v_this.GetFormData();
+
         v_this.RadioButtonHandler(eventData);
     }
+
+    GetFormData()
+    {
+        var filter = $('input:checked');
+        var identifier = filter.parent().parent().parent().attr("id");
+        var eventData = []
+
+        filter.each(function()
+        {
+            var identifier = $(this).parent().parent().parent().attr("id");
+            eventData.push({id:identifier, value:this.value});
+        });
+
+        return eventData;
+    }
+
     OnMouseMove(event)
     {
         var cursorPosition = { x: -1, y: -1 };
@@ -114,6 +129,16 @@ class View
     DeleteSelectRectangle()
     {
         $(".selectionRectangle").remove();
+    }
+
+    ScrollHorizontal(xOffset)
+    {
+        var mainDiv = $(v_this.Maingrid)
+        var mainDiv = $("#gridboxContainer")
+        var newOffset = mainDiv.scrollLeft()+xOffset
+        mainDiv.scrollLeft(newOffset);
+        console.log(mainDiv)
+
     }
 
     RenderGridArray(numberOfEntries, index)
@@ -177,8 +202,10 @@ class View
     {
         var gridNoteClass = "gridNote";
         var mainGrid = $(v_this.Maingrid);
+        var borderCssString = 'solid '+color+' 1px'
 
-        mainGrid.css({'border':'solid'+color+' 1px'});
+        $("#gridboxContainer").css('border',borderCssString);
+
         $(".gridNote").remove();
 
 

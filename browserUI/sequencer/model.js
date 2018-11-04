@@ -18,12 +18,13 @@ var pitchKey = [
 var Synthesizer = T("OscGen",
 {
     //wave: "fami",
-    wave: "fami",
+    wave: "cos",
 
     //fami, saw, tri, pulse, konami, cos, sin
     mul: 0.25
 
 }).play();
+
 
 class Note
 {
@@ -57,12 +58,15 @@ class Note
         this.Pitch += y_offset;
     }
 
-    Play()
+    Play(millisecondsPerTick)
     {
         var numberOfPitches = pitchKey.length;
         var pitchIndex = this.Pitch % numberOfPitches;
-
-        Synthesizer.noteOnWithFreq(pitchKey[pitchIndex], 200);
+        var milliseconds = millisecondsPerTick * this.Duration
+        
+        var env = T("perc", {a:50, r:milliseconds*1.5});
+        var pluckGenerator  = T("PluckGen", {env:env, mul:0.5}).play();
+        pluckGenerator.noteOn(this.Pitch, 100);
     }
 
     set IsSelected(selected)
@@ -70,7 +74,6 @@ class Note
         this._IsSelected = selected;
         if(selected)
         {
-            console.log("marked position")
             this.SelectedPitchAndTicks = [this.Pitch, this.StartTimeTicks]
         }
     }
@@ -98,7 +101,7 @@ class Model
     {
         array.push(note);
         array.sort(m_this.CompareNotes);
-
+        console.log(array);
         //TODO: efficient sort
         //var arrayLength = array.length;
         //var index = m_this.BinarySearch(array, note, m_this.CompareNotes)
@@ -106,7 +109,10 @@ class Model
         //array.splice( index, 0, note );
     }
 
-
+    SortScoreByTicks()
+    {
+        m_this.Score.sort(m_this.CompareNotes);
+    }
 
     LinearSearchOfScore(note)
     {
@@ -171,20 +177,44 @@ class Model
         var nst1 = note1.StartTimeTicks;
         var nst2 = note2.StartTimeTicks;
 
+        //Same note: return immediately
         if(note1 === note2)
         {
             return 0;
         }
+
+        //Note 1 starts after note 2: place note 1 after note 2
         if(nst1 > nst2)
         {
             return 1;
         }
+
+        //Note 1 starts before note 2: place note 1 before note 2
         else if(nst1 < nst2)
         {
             return -1;
         }
-        else {
-            return 0;
+
+        //if the notes have the same start time, put longer duration notes after short duration notes
+        //so that searches can find suspensions in adjacent notes more easily
+        else
+        {
+            //Note 1 longer than note 2: place note 1 after note 2
+            if(note1.Duration > note2.Duration)
+            {
+                return 1;
+            }
+            //Note 1 shorter: place note 1 before note 2
+            else if(note1.Duration < note2.Duration)
+            {
+                return -1;
+            }
+
+            //Same duration: doesn't matter
+            else
+            {
+                return 0;
+            }
         }
     }
 

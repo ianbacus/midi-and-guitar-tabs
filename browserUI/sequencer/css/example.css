@@ -8,7 +8,6 @@ canvas {
 
 #gridboxContainer
 {
-	border:solid red 1px;
 	overflow-x:scroll;
     overflow-y:scroll;
 	width:100%;
