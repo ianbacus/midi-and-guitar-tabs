@@ -57,13 +57,12 @@ class Controller
         c_this.Playing = false;
         c_this.Hovering = false;
         c_this.SelectingGroup = false;
-        c_this.GridPreviewList = [c_this.Model.Score];
-        c_this.GridPreviewIndex = 0;
         c_this.EditModeColors = ['orange','blue','green'];
         c_this.DefaultNoteDuration = 4;
         c_this.MillisecondsPerTick = 100;
         c_this.NoteIndex = 0;
         c_this.PendingTimeout = null;
+        c_this.MoveSequenceNumber = 0;
 
 
     }
@@ -75,8 +74,10 @@ class Controller
 
     RenderGridArray()
     {
+        var [gridPreviewList, gridPreviewIndex] = [c_this.Model.GridPreviewList.length, c_this.Model.GridPreviewIndex];
+
         c_this.RenderMainGridBox()
-        c_this.View.RenderGridArray(c_this.GridPreviewList.length, c_this.GridPreviewIndex);
+        c_this.View.RenderGridArray(gridPreviewList, gridPreviewIndex);
 
     }
 
@@ -94,7 +95,6 @@ class Controller
             var note = c_this.Model.Score[index]
             if(note.IsSelected)
             {
-                console.log("Deleting note", index)
                 c_this.Model.DeleteNoteWithIndex(index)
                 index--;
             }
@@ -136,20 +136,35 @@ class Controller
         switch(event.keyCode)
         {
         //Mode control: select, edit, delete
-        case 88: //"x" key"
-            console.log("Select mode");
+        case 88: //"x" key": Select mode
             c_this.EditorMode = editModeEnumeration.SELECT;
-            c_this.DeleteSelectedNotes(); //todo don't delete selected groups
+            c_this.HandleSelectionReset();
             c_this.RenderMainGridBox()
 
 
             break;
-        case 90: //"z" key"
-            console.log("Edit mode");
-            c_this.EditorMode = editModeEnumeration.EDIT;
-            c_this.DeleteSelectedNotes(); //todo don't delete selected groups
-            var previewNote = c_this.CreatePreviewNote();
-            c_this.Model.AddNote(previewNote);
+        case 90: //"z" key" undo/redo, Edit mode
+            //Undo
+            if(event.ctrlKey)
+            {
+                c_this.Model.Undo();
+            }
+
+            //Redo
+            else if(event.shiftKey)
+            {
+                c_this.Model.Redo();
+            }
+
+            //Edit mode
+            else
+            {
+                c_this.EditorMode = editModeEnumeration.EDIT;
+                c_this.DeleteSelectedNotes();
+                var previewNote = c_this.CreatePreviewNote();
+                c_this.Model.AddNote(previewNote, c_this.Model.Score, false);
+            }
+
             c_this.RenderMainGridBox()
 
             break;
@@ -161,12 +176,12 @@ class Controller
             break;
 
         case 32: //spacebar
-            console.log("Playing?",c_this.Playing)
             if(!c_this.Playing)
             {
                 var playbackBuffer = []
+
                 //Add all unselected notes to the playback buffer
-                c_this.GridPreviewList.forEach(function(arrayBuffer)
+                c_this.Model.GridPreviewList.forEach(function(arrayBuffer)
                 {
                     arrayBuffer.forEach(function(note)
                     {
@@ -202,52 +217,30 @@ class Controller
             c_this.RenderMainGridBox();
 
             break;
+
         case 81: //"q" key
             break;
-        case 87: //"w" key: Halve durations
-            //c_this.ModifySelectedNotes(function(note){note.Duration = ceil(note.Duration /= 2);});
-            break;
-        case 69: //"e" key: Double durations
-            c_this.CreateGridPreview();
-            console.log(c_this.GridPreviewList);
 
+        case 87: //"w" key: Halve durations
+            break;
+
+        case 69: //"e" key: Add new grid
+            c_this.Model.CreateGridPreview();
             c_this.RenderGridArray();
 
-            //c_this.ModifySelectedNotes(function(note){ note.Duration = min(32, note.Duration *= 2); });
             break;
         case 38: //up arrow: select grid
-
             event.preventDefault();
-            if(c_this.GridPreviewIndex > 0)
-            {
-                c_this.GridPreviewList[c_this.GridPreviewIndex] = c_this.Model.Score;
-                c_this.GridPreviewIndex--;
-
-                c_this.Model.Score = c_this.GridPreviewList[c_this.GridPreviewIndex];
-                c_this.RenderGridArray();
-
-                console.log("Previous grid",c_this.GridPreviewIndex,c_this.GridPreviewList.length, c_this.Model.Score);
-            }
-            else {
-                console.log("BOINK",c_this.GridPreviewIndex,c_this.GridPreviewList.length, c_this.Model.Score);
-            }
+            c_this.Model.SetCurrentGridPreview(c_this.Model.Score);
+            c_this.Model.GotoPreviousGrid();
+            c_this.RenderGridArray();
             break;
+
         case 40: //down arrow: select grid
             event.preventDefault();
-            if(c_this.GridPreviewIndex < c_this.GridPreviewList.length-1)
-            {
-                c_this.GridPreviewList[c_this.GridPreviewIndex] = c_this.Model.Score;
-                c_this.GridPreviewIndex++;
-
-                c_this.Model.Score = c_this.GridPreviewList[c_this.GridPreviewIndex];
-                c_this.RenderGridArray();
-
-                console.log("Next grid",c_this.GridPreviewIndex,c_this.GridPreviewList.length, c_this.Model.Score);
-            }
-            else
-            {
-                console.log("BOINK",c_this.GridPreviewIndex,c_this.GridPreviewList.length, c_this.Model.Score);
-            }
+            c_this.Model.SetCurrentGridPreview(c_this.Model.Score);
+            c_this.Model.GotoNextGrid();
+            c_this.RenderGridArray();
             break;
         }
     }
@@ -278,7 +271,6 @@ class Controller
 
     DoNotesOverlap(note1, note2)
     {
-        console.log("Overlaps?",note1,note2)
         var note1SearchStartTicks = note1.StartTimeTicks;
         var note1SearchEndTicks = note1SearchStartTicks + note1.Duration;
 
@@ -316,7 +308,6 @@ class Controller
                 var suspensionOrChordNote = overlapResult.Note1Subordinate;
                 var chordNote = overlapResult.Note1Subordinate && overlapResult.Note2Subordinate;
                 result = (includeSuspensions && suspensionOrChordNote) || (!includeSuspensions && chordNote);
-                console.log(searchNote, includeSuspensions, suspensionOrChordNote, chordNote)
             }
 
             return result;
@@ -404,7 +395,6 @@ class Controller
             c_this.PlaybackNoteArray = noteArray
 
             c_this.Playing = true;
-            console.log("Playing = true", c_this.Playing);
 
             c_this.OnPlayAllNotes();
         }
@@ -413,7 +403,6 @@ class Controller
     StopPlayingNotes()
     {
         c_this.Playing = false;
-            console.log("Playing = false", c_this.Playing);
         clearTimeout(c_this.PendingTimeout);
 
     }
@@ -428,13 +417,6 @@ class Controller
         return previewNote;
     }
 
-    CreateGridPreview()
-    {
-        console.log("Create grid");
-        c_this.GridPreviewList.push([]);
-
-    }
-
     OnHoverBegin(event)
     {
         if(!c_this.Hovering)
@@ -443,7 +425,7 @@ class Controller
             if(c_this.EditorMode === editModeEnumeration.EDIT)
             {
                 var previewNote = c_this.CreatePreviewNote();
-                c_this.Model.AddNote(previewNote);
+                c_this.Model.AddNote(previewNote, c_this.Model.Score, false);
             }
         }
 
@@ -471,14 +453,17 @@ class Controller
     {
         c_this.ModifySelectedNotes(function(note)
         {
-            note.IsSelected = false;
+            //Unselect and reset the position of notes that existed before selection
             if(note.SelectedPitchAndTicks != null)
             {
+                note.IsSelected = false;
                 note.ResetPosition();
             }
+
+            //Delete preview notes that were not initially selected
             else
             {
-                c_this.Model.DeleteNote(note);
+                c_this.Model.DeleteNote(note, c_this.Model.Score, false);
             }
         });
     }
@@ -508,7 +493,7 @@ class Controller
                 y2: Math.max(c_this.SelectorPosition.y, c_this.CursorPosition.y)
             };
 
-            c_this.DoActionOnAllNotes( function(note)
+            c_this.DoActionOnAllNotes(function(note)
             {
                 var noteRectangle = c_this.GetNoteRectangle(note);
                 var noteIsCaptured = c_this.DoesRectangle1CoverRectangle2(selectRectangle, noteRectangle);
@@ -516,10 +501,13 @@ class Controller
                 if(noteIsCaptured)
                 {
                     note.IsSelected = true;
+                    note.MoveSequenceNumber = c_this.MoveSequenceNumber;
                 }
+
                 else
                 {
                     note.IsSelected = false;
+                    note.MoveSequenceNumber = null;
                 }
             });
 
@@ -595,6 +583,9 @@ class Controller
             else if(selectCount == 0)
             {
                 c_this.SelectingGroup = true;
+                var previousMoveSequenceNumber = c_this.MoveSequenceNumber;
+                c_this.MoveSequenceNumber = (c_this.MoveSequenceNumber+1)%2;
+                console.log("SN " + previousMoveSequenceNumber + " --> " + c_this.MoveSequenceNumber)
 
                 c_this.SelectorPosition = c_this.CursorPosition;
 
@@ -630,7 +621,7 @@ class Controller
         {
             var previewNote = c_this.CreatePreviewNote();
 
-            c_this.Model.AddNote(previewNote);
+            c_this.Model.AddNote(previewNote, c_this.Model.Score, false);
         }
 
         c_this.RenderMainGridBox();
@@ -658,7 +649,6 @@ class Controller
                 }
 
                 var noteOffset =  (note.StartTimeTicks - firstNotePosition);
-                console.log(noteOffset);
 
                 if(!shouldScroll)
                 {
@@ -717,7 +707,6 @@ class Controller
                 }
             });
             c_this.RenderMainGridBox();
-            console.log("Ctrl shift end");
         }
     }
     OnMouseScroll(event)

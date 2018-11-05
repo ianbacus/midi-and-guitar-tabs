@@ -21,7 +21,7 @@ var Synthesizer = T("OscGen",
     wave: "cos",
 
     //fami, saw, tri, pulse, konami, cos, sin
-    mul: 0.25
+    mul: 0.025
 
 }).play();
 
@@ -35,21 +35,7 @@ class Note
         this.Duration = duration;
         this._IsSelected = selected;
         this.SelectedPitchAndTicks = null;
-    }
-
-    ExactMatch(otherNote)
-    {
-        var exactMatch = otherNote === this;
-            //console.log("Exact match?", exactMatch, otherNote, this)
-
-        return exactMatch;
-        /*
-        this.Pitch = otherNote.Pitch;
-        this.StartTimeTicks = otherNote.StartTimeTicks;
-        this.Duration = otherNote.Duration;
-        this._IsSelected = otherNote._IsSelected;
-        this.SelectedPitchAndTicks = otherNote.SelectedPitchAndTicks
-        */
+        this.MoveSequenceNumber = null;
     }
 
     Move(x_offset, y_offset)
@@ -63,18 +49,53 @@ class Note
         var numberOfPitches = pitchKey.length;
         var pitchIndex = this.Pitch % numberOfPitches;
         var milliseconds = millisecondsPerTick * this.Duration
-        
+
         var env = T("perc", {a:50, r:milliseconds*1.5});
         var pluckGenerator  = T("PluckGen", {env:env, mul:0.5}).play();
         pluckGenerator.noteOn(this.Pitch, 100);
     }
 
+
+
     set IsSelected(selected)
     {
-        this._IsSelected = selected;
-        if(selected)
+        console.log("SN",this.MoveSequenceNumber)
+        if(this._IsSelected != selected)
         {
-            this.SelectedPitchAndTicks = [this.Pitch, this.StartTimeTicks]
+            this._IsSelected = selected;
+
+            //Select an existing note
+            if(selected)
+            {
+                this.SelectedPitchAndTicks = [this.Pitch, this.StartTimeTicks]
+            }
+
+            //Unselected an existing note
+            else if(this.SelectedPitchAndTicks != null)
+            {
+                var [initialPitch, initialStartTime] = this.SelectedPitchAndTicks
+                var [pitchDifference, startTimeDifference] = [this.Pitch - initialPitch, this.StartTimeTicks - initialStartTime]
+                if((pitchDifference != 0) && (startTimeDifference != 0))
+                {
+                    m_this.PushAction({
+                        Action:'MOVE',
+                        MoveSequenceNumber:this.MoveSequenceNumber,
+                        GridIndex:m_this.GridPreviewIndex,
+                        MoveBuffer:[],
+                        MoveData:{
+                            Note:this,
+                            Move:[startTimeDifference, pitchDifference]
+                        }
+                    });
+                }
+            }
+
+            //Unselected a preview note
+            else
+            {
+                m_this.PushAction({Action:'ADD',GridIndex:m_this.GridPreviewIndex, Note:this});
+                this.MoveSequenceNumber = null;
+            }
         }
     }
 
@@ -96,12 +117,51 @@ class Note
 
 class Model
 {
-    //Private
+    constructor()
+    {
+        m_this = this;
+        this.Score = [];
+        this.GridPreviewList = [this.Score];
+        this.GridPreviewIndex = 0;
+        this.ActivityStack = []
+        this.ActivityIndex = 0;
+        this.MaximumActivityStackLength = 100;
+    }
+
+    SetCurrentGridPreview(noteArray)
+    {
+        this.GridPreviewList[this.GridPreviewIndex] = noteArray;
+    }
+
+    GotoPreviousGrid()
+    {
+        if(this.GridPreviewIndex > 0)
+        {
+            this.GridPreviewIndex--;
+            this.Score = this.GridPreviewList[this.GridPreviewIndex];
+        }
+            console.log(this.GridPreviewIndex)
+    }
+
+    GotoNextGrid()
+    {
+        if(this.GridPreviewIndex < this.GridPreviewList.length-1)
+        {
+            this.GridPreviewIndex++;
+            this.Score = this.GridPreviewList[this.GridPreviewIndex];
+        }
+            console.log(this.GridPreviewIndex)
+    }
+
+    CreateGridPreview()
+    {
+        this.GridPreviewList.push([]);
+    }
+
     InsertSorted(array, note)
     {
         array.push(note);
         array.sort(m_this.CompareNotes);
-        console.log(array);
         //TODO: efficient sort
         //var arrayLength = array.length;
         //var index = m_this.BinarySearch(array, note, m_this.CompareNotes)
@@ -218,22 +278,157 @@ class Model
         }
     }
 
+    PushAction(action)
+    {
+        var stackLength = this.ActivityStack.length;
+
+        console.log("Pushing action", action);
+
+        //If the index doesn't point to the end of the stack, dump all changes
+        if(this.ActivityIndex != stackLength-1)
+        {
+            //this.ActivityStack = this.ActivityStack.slice(0,this.ActivityIndex);
+        }
+
+        //Lose the last action if the stack is full
+        if(stackLength >= this.MaximumActivityStackLength)
+        {
+            //this.ActivityStack.pop();
+        }
+
+        if((action.Action === "MOVE") && (this.ActivityStack.length > 0))
+        {
+            var stackTop = this.ActivityStack[this.ActivityStack.length - 1];
+            if((stackTop.Action === "MOVE") && (stackTop.MoveSequenceNumber == action.MoveSequenceNumber))
+            {
+                stackTop.MoveBuffer.push(action.MoveData);
+            }
+
+            else
+            {
+                action.MoveBuffer.push(action.MoveData);
+                this.ActivityStack.push(action)
+            }
+        }
+
+        else
+        {
+            this.ActivityStack.push(action)
+        }
+
+        this.ActivityIndex = this.ActivityStack.length - 1;
+
+        console.log(action, this.ActivityStack.length)
+    }
+
+    Undo()
+    {
+        if(this.ActivityIndex >= 0)
+        {
+            var mostRecentAction = this.ActivityStack[this.ActivityIndex];
+            var note = mostRecentAction.Note;
+            var gridIndex = mostRecentAction.GridIndex;
+
+            this.ActivityIndex--;
+
+            //Undo the addition of a note by deleting it
+            if(mostRecentAction.Action === 'ADD')
+            {
+                this.DeleteNote(note, this.GridPreviewList[gridIndex], false)
+            }
+
+            //Undo the deletion of a note by adding it
+            else if(mostRecentAction.Action === 'DELETE')
+            {
+                this.AddNote(note, this.GridPreviewList[gridIndex], false)
+            }
+
+            //Undo a move by moving in the opposite direction
+            else if(mostRecentAction.Action === 'MOVE')
+            {
+                var moveBuffer = mostRecentAction.MoveBuffer;
+
+                moveBuffer.forEach(function(moveData)
+                {
+                    var note = moveData.Note;
+                    var [startTimeDifference, pitchDifference] = moveData.Move;
+                    note.Move(-startTimeDifference, -pitchDifference);
+                });
+            }
+
+            this.GridPreviewList[gridIndex].sort(m_this.CompareNotes);
+        }
+    }
+
+    Redo()
+    {
+        if(this.ActivityIndex < this.ActivityStack.length-1)
+        {
+            this.ActivityIndex++;
+            var mostRecentAction = this.ActivityStack[this.ActivityIndex]
+
+            var note = mostRecentAction.Note;
+            var gridIndex = mostRecentAction.GridIndex;
+
+            //Redo addition
+            if(mostRecentAction.Action === 'ADD')
+            {
+                this.AddNote(note, this.GridPreviewList[gridIndex], false)
+            }
+
+            //Redo deletion
+            else if(mostRecentAction.Action === 'DELETE')
+            {
+                this.DeleteNote(note, this.GridPreviewList[gridIndex], false)
+            }
+
+            //Redo a move
+            else if(mostRecentAction.Action === 'MOVE')
+            {
+                var moveBuffer = mostRecentAction.MoveBuffer;
+                var gridIndex = mostRecentAction.GridIndex;
+
+                moveBuffer.forEach(function(moveData)
+                {
+                    var note = moveData.Note;
+                    var [startTimeDifference, pitchDifference] = moveData.Move;
+                    note.Move(startTimeDifference, pitchDifference);
+                });
+            }
+        }
+
+        this.GridPreviewList[gridIndex].sort(m_this.CompareNotes);
+    }
+
     //Public
-    constructor()
+    AddNote(note, array=this.Score, pushAction=true)
     {
-        m_this = this;
-        m_this.Score = [];
+        var gridIndex = this.GridPreviewIndex;
+
+        if(pushAction)
+        {
+            this.PushAction({Action:'ADD',GridIndex:gridIndex, Note:note});
+        }
+
+        m_this.InsertSorted(array, note);
     }
 
-    AddNote(note)
+    DeleteNoteWithIndex(deletionIndex, array=this.Score, pushAction=true)
     {
-        m_this.InsertSorted(m_this.Score, note);
+        var numberOfDeletions = 1;
+        var deletedNote = this.Score[deletionIndex];
+        var gridIndex = this.GridPreviewIndex;
+
+        if(pushAction)
+        {
+            this.PushAction({Action:'DELETE',GridIndex:gridIndex, Note:deletedNote})
+        }
+
+        array.splice(deletionIndex, numberOfDeletions)
     }
 
-    DeleteNote(note)
+    DeleteNote(note, array=this.Score, pushAction=true)
     {
-        var array = m_this.Score;
-
         for(var deletionIndex in array)
         {
             var otherNote = array[deletionIndex];
@@ -242,13 +437,7 @@ class Model
                 break;
             }
         }
-        m_this.DeleteNoteWithIndex(deletionIndex)
-    }
 
-    DeleteNoteWithIndex(deletionIndex)
-    {
-        var numberOfDeletions = 1;
-        m_this.Score.splice(deletionIndex, numberOfDeletions)
+        m_this.DeleteNoteWithIndex(deletionIndex,array,pushAction)
     }
-
 };

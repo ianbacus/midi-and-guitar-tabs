@@ -3,24 +3,12 @@
 <head>
 <title> Browser Composer </title>
 
-<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
-<link rel="stylesheet" href="/resources/demos/style.css">
 <link rel="stylesheet" href="css/example.css">
+<link rel="stylesheet" href="css/bootstrap.min.css">
 
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-
-<script src="js/jquery.min.js"> </script>
-
-<!-- audio attempt 1 -->
-<script type="text/javascript" src="js/nexusUI.js" ></script>
-<script type="text/javascript" src="js/Tone.js" ></script>
-
-<!-- audio attempt 2 -->
-<script src="http://mohayonao.github.io/timbre.js/timbre.js"></script>
-<script src="http://mohayonao.github.io/timbre.js/src/extras/keyboard.js"></script>
+<script src="jquery.min.js"></script>
+<script src="bootstrap.min.js"></script>
+<script src="timbre.js"></script>
 
 <script src="model.js"></script>
 <script src="view.js"></script>
@@ -51,10 +39,12 @@
 				<div id="keys" class="tab-pane fade">
 					<h3>Keys</h3>
 					<ul>
-						<li>Z: write mode</li>
-						<li>X: select mode</li>
-						<li>C: copy mode</li>
-						<li>W/E: shrink/grow note</li>
+						<li>ctrl+Z: Undo</li>
+						<li>shift+Z: Redo</li>
+						<li>Z: Write mode</li>
+						<li>X: Select mode</li>
+						<li>C: Copy selected note(s)</li>
+						<li>D: Delete selected note(s)</li>
 					</ul>
 
 
@@ -65,7 +55,6 @@
 				<div id="mode" class="tab-pane fade in active">
 					<h3>Mode</h3>
 					Analysis
-					<br>
 					<div class="form-group" id="Analysis">
 						<div class="radio">
 						    <label><input type="radio" name="optradio" value=0>Invertible (10th)</label>
@@ -83,7 +72,6 @@
 						    <label><input type="radio" name="optradio" value=2>Free</label>
 						</div>
 					</div>
-					<br>
 					Playback Options
 					<div class="form-group" id="Playback">
 						<div class="radio">
