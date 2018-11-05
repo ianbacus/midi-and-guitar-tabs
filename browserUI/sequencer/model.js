@@ -28,13 +28,16 @@ var Synthesizer = T("OscGen",
 
 class Note
 {
-    constructor(startTimeTicks, pitch, duration, selected)
+    constructor(startTimeTicks, pitch, duration, selected, selectedPitchAndTicks=null, currentGridIndex=m_this.GridPreviewIndex)
     {
         this.Pitch = pitch;
         this.StartTimeTicks = startTimeTicks;
         this.Duration = duration;
         this._IsSelected = selected;
-        this.SelectedPitchAndTicks = null;
+        this.CurrentGridIndex = currentGridIndex;
+
+        this.SelectedPitchAndTicks = selectedPitchAndTicks;
+        this.SelectedGridIndex = m_this.GridPreviewIndex;
     }
 
     Move(x_offset, y_offset)
@@ -54,9 +57,9 @@ class Note
         pluckGenerator.noteOn(this.Pitch, 100);
     }
 
-    OnMoveComplete(sequenceNumber)
+    OnMoveComplete(sequenceNumber, doAdd=false)
     {
-        if(this.SelectedPitchAndTicks == undefined)
+        if(doAdd || (this.SelectedPitchAndTicks == null))
         {
             m_this.PushAction({
                 Action:'ADD',
@@ -100,6 +103,7 @@ class Note
             if(selected)
             {
                 this.SelectedPitchAndTicks = [this.Pitch, this.StartTimeTicks]
+                this.SelectedGridIndex = m_this.GridPreviewIndex;
             }
         }
     }
@@ -109,11 +113,23 @@ class Note
         return this._IsSelected;
     }
 
-    ResetPosition()
+    ResetPosition(note)
     {
-        if(this.SelectedPitchAndTicks != null)
+        if(note==undefined) note = this;
+        if(note.SelectedPitchAndTicks != null)
         {
-            [this.Pitch,this.StartTimeTicks] = this.SelectedPitchAndTicks;
+            //TODO: note is hacky.. undo will reset the note position because of the transport logic in the controller.
+            // so note method is now dependent on the controller transportation logic's use of the model's state queue
+            if(note.CurrentGridIndex != note.SelectedGridIndex)
+            {
+                console.log("EMERGENCY UNDO",note,note.CurrentGridIndex , note.SelectedGridIndex)
+                m_this.Undo();
+            }
+
+            else
+            {
+                [note.Pitch,note.StartTimeTicks] = note.SelectedPitchAndTicks;
+            }
         }
     }
 
@@ -281,7 +297,7 @@ class Model
         }
     }
 
-    HandleThing(activityStack, action, targetString)
+    HandleBatchInsertion(activityStack, action, targetString)
     {
         var stackLength = activityStack.length;
         var pushSuccessful = false;
@@ -290,8 +306,9 @@ class Model
         {
             var stackTop = activityStack[stackLength - 1];
 
-            //If this move is part of the same sequence number's move, combine it with the top of the stack
-            if((stackTop.Action === targetString) && (stackTop.SequenceNumber == action.SequenceNumber))
+                        //If this move is part of the same sequence number's move, combine it with the top of the stack
+            //if((stackTop.Action === targetString) && (stackTop.SequenceNumber == action.SequenceNumber))
+            if(stackTop.SequenceNumber == action.SequenceNumber)
             {
                 stackTop.MoveBuffer.push(action.MoveData);
                 pushSuccessful = true;
@@ -311,7 +328,6 @@ class Model
 
         console.log("Pushing action", action);
 
-        //[0, 1, 2, 3]
         //If the index doesn't point to the end of the stack, dump all changes
         if(this.ActivityIndex != stackLength-1)
         {
@@ -326,45 +342,22 @@ class Model
 
         actionCases.forEach(function(caseString)
         {
-            var pushedToBatch = m_this.HandleThing(activityStack, action, caseString);
+            //If a group of actions are happening, push them together
+            var pushedToBatch = m_this.HandleBatchInsertion(activityStack, action, caseString);
             if(pushedToBatch)
             {
                 pushSuccessful = true;
                 return;
             }
-        });//If a distinct move is happening, push it to the queue separately
+        });
 
+        //If a distinct move is happening, push it separately
         if(!pushSuccessful)
         {
             console.log("Distinct "+action.Action)
             action.MoveBuffer.push(action.MoveData);
             m_this.ActivityStack.push(action)
         }
-
-        /*
-
-        if((action.Action === "MOVE") && (this.ActivityStack.length > 0))
-        {
-            var stackTop = this.ActivityStack[this.ActivityStack.length - 1];
-
-            //If this move is part of the same sequence number's move, combine it with the top of the stack
-            if((stackTop.Action === "MOVE") && (stackTop.SequenceNumber == action.SequenceNumber))
-            {
-                stackTop.MoveBuffer.push(action.MoveData);
-            }
-
-            //If a distinct move is happening, push it to the queue separately
-            else
-            {
-                action.MoveBuffer.push(action.MoveData);
-                this.ActivityStack.push(action)
-            }
-        }
-
-        else
-        {
-            this.ActivityStack.push(action)
-        }*/
 
         this.ActivityIndex = this.ActivityStack.length - 1;
         console.log("Stack length:"+this.ActivityStack.length + " index:" +this.ActivityIndex);

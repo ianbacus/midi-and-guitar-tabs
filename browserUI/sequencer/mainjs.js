@@ -18,13 +18,5 @@ $( function()
         ScoreController.OnButtonPress, ScoreController.OnRadioButtonPress,
     );
 
-    var target = $('body');
-    html2canvas(target[0], {
-    onrendered: function(canvas) {
-    var data = canvas.toDataURL();
-    alert(data);
-    // data is the Base64-encoded image
-    }
-});
 
 });
