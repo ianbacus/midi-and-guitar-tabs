@@ -62,7 +62,7 @@ class Controller
         c_this.MillisecondsPerTick = 100;
         c_this.NoteIndex = 0;
         c_this.PendingTimeout = null;
-        c_this.MoveSequenceNumber = 0;
+        c_this.SequenceNumber = 0;
 
 
     }
@@ -90,12 +90,13 @@ class Controller
     DeleteSelectedNotes()
     {
         var i = 0;
+        var sequenceNumber = c_this.GetNextSequenceNumber();
         for(var index = 0; index < c_this.Model.Score.length; index++)
         {
             var note = c_this.Model.Score[index]
             if(note.IsSelected)
             {
-                c_this.Model.DeleteNoteWithIndex(index)
+                c_this.Model.DeleteNoteWithIndex(index,sequenceNumber)
                 index--;
             }
         }
@@ -131,6 +132,12 @@ class Controller
         return selectCount;
     }
 
+    GetNextSequenceNumber()
+    {
+        c_this.SequenceNumber = (c_this.SequenceNumber+1)%2;
+        return c_this.SequenceNumber;
+    }
+
     OnKeyUp(event)
     {
         switch(event.keyCode)
@@ -147,13 +154,26 @@ class Controller
             //Undo
             if(event.ctrlKey)
             {
-                c_this.Model.Undo();
+                //If a group is being selected, unselect it
+                var selectCount = c_this.CountSelectedNotes();
+                if(selectCount > 1)
+                {
+                    console.log("Resetting selected notes");
+                    c_this.HandleSelectionReset()
+                }
+                else
+                {
+                    c_this.Model.Undo();
+                    c_this.StopPlayingNotes();
+
+                }
             }
 
             //Redo
             else if(event.shiftKey)
             {
                 c_this.Model.Redo();
+                c_this.StopPlayingNotes();
             }
 
             //Edit mode
@@ -162,7 +182,7 @@ class Controller
                 c_this.EditorMode = editModeEnumeration.EDIT;
                 c_this.DeleteSelectedNotes();
                 var previewNote = c_this.CreatePreviewNote();
-                c_this.Model.AddNote(previewNote, c_this.Model.Score, false);
+                c_this.Model.AddNote(previewNote, 0, c_this.Model.Score, false);
             }
 
             c_this.RenderMainGridBox()
@@ -171,7 +191,6 @@ class Controller
         case 68: //"d" key
             //Delete any selected notes, and enter delete mode
             c_this.DeleteSelectedNotes();
-            //c_this.EditorMode = editModeEnumeration.DELETE;
             c_this.RenderMainGridBox()
             break;
 
@@ -202,20 +221,24 @@ class Controller
             break;
         case 67: //"c" key"
             var copyBuffer = []
+
+            //Copy all selected notes into a buffer
             c_this.ModifySelectedNotes(function(note)
             {
                 var copiedNote = new Note(note.StartTimeTicks, note.Pitch, note.Duration, true);
                 copyBuffer.push(copiedNote);
             });
 
+            //Reset the position of the selected notes in case they were dragged away from their start point
             c_this.HandleSelectionReset();
+
+            //Instantiate the copied notes
             copyBuffer.forEach(function(note)
             {
-                c_this.Model.AddNote(note)
+                c_this.Model.AddNote(note, 0, c_this.Model.Score, false);
             });
 
             c_this.RenderMainGridBox();
-
             break;
 
         case 81: //"q" key
@@ -231,18 +254,58 @@ class Controller
             break;
         case 38: //up arrow: select grid
             event.preventDefault();
-            c_this.Model.SetCurrentGridPreview(c_this.Model.Score);
-            c_this.Model.GotoPreviousGrid();
+            c_this.HandleGridMove(true);
             c_this.RenderGridArray();
             break;
 
         case 40: //down arrow: select grid
             event.preventDefault();
-            c_this.Model.SetCurrentGridPreview(c_this.Model.Score);
-            c_this.Model.GotoNextGrid();
+            c_this.HandleGridMove(false);
             c_this.RenderGridArray();
             break;
         }
+    }
+
+    HandleGridMove(upwardsDirection)
+    {
+        var moveFunction;
+        var copyBuffer = [];
+
+        if(upwardsDirection)
+        {
+            moveFunction = c_this.Model.GotoPreviousGrid;
+        }
+
+        else
+        {
+            moveFunction = c_this.Model.GotoNextGrid;
+        }
+
+        c_this.Model.SetCurrentGridPreview(c_this.Model.Score);
+
+        console.log("Transport begin");
+        //Capture any selected notes and delete them before changing grids
+        c_this.ModifySelectedNotes(function(note)
+        {
+            var copiedNote = new Note(note.StartTimeTicks, note.Pitch, note.Duration, true);
+            console.log("Packing note: ", note);
+            copyBuffer.push(copiedNote);
+        });
+
+        c_this.DeleteSelectedNotes();
+
+        //Change to the next grid
+        moveFunction();
+
+        //Instantiate the copied notes in the next buffer
+        copyBuffer.forEach(function(note)
+        {
+            console.log("Transporting note: ", note);
+            c_this.Model.AddNote(note, 0, c_this.Model.Score, false);
+        });
+
+        console.log("Transport end");
+
     }
 
     GetNextUnselectedNote()
@@ -263,7 +326,6 @@ class Controller
             {
                 note = null;
             }
-
         }
 
         return note;
@@ -425,7 +487,7 @@ class Controller
             if(c_this.EditorMode === editModeEnumeration.EDIT)
             {
                 var previewNote = c_this.CreatePreviewNote();
-                c_this.Model.AddNote(previewNote, c_this.Model.Score, false);
+                c_this.Model.AddNote(previewNote, 0, c_this.Model.Score, false);
             }
         }
 
@@ -463,7 +525,7 @@ class Controller
             //Delete preview notes that were not initially selected
             else
             {
-                c_this.Model.DeleteNote(note, c_this.Model.Score, false);
+                c_this.Model.DeleteNote(note, 0, c_this.Model.Score, false);
             }
         });
     }
@@ -501,13 +563,11 @@ class Controller
                 if(noteIsCaptured)
                 {
                     note.IsSelected = true;
-                    note.MoveSequenceNumber = c_this.MoveSequenceNumber;
                 }
 
                 else
                 {
                     note.IsSelected = false;
-                    note.MoveSequenceNumber = null;
                 }
             });
 
@@ -583,9 +643,6 @@ class Controller
             else if(selectCount == 0)
             {
                 c_this.SelectingGroup = true;
-                var previousMoveSequenceNumber = c_this.MoveSequenceNumber;
-                c_this.MoveSequenceNumber = (c_this.MoveSequenceNumber+1)%2;
-                console.log("SN " + previousMoveSequenceNumber + " --> " + c_this.MoveSequenceNumber)
 
                 c_this.SelectorPosition = c_this.CursorPosition;
 
@@ -607,10 +664,12 @@ class Controller
         else
         {
             var playbackBuffer = []
+            var sequenceNumber = c_this.GetNextSequenceNumber();
 
             c_this.ModifySelectedNotes(function(note)
             {
                 note.IsSelected = false;
+                note.OnMoveComplete(c_this.SequenceNumber);
                 playbackBuffer.push(note);
             });
 
@@ -621,7 +680,7 @@ class Controller
         {
             var previewNote = c_this.CreatePreviewNote();
 
-            c_this.Model.AddNote(previewNote, c_this.Model.Score, false);
+            c_this.Model.AddNote(previewNote, 0, c_this.Model.Score, false);
         }
 
         c_this.RenderMainGridBox();

@@ -234,7 +234,7 @@ class View
                 mainGrid.append(node);
                 $(node).css({'top':offsetY, 'left':offsetX});
                 $(node).css({"opacity":noteOpacity, "height":v_this.gridSnap,"width":noteWidth,"position":"absolute"});
-                $(node).css({'background':colorIndex});
+                $(node).css({'background':colorIndex, 'border': 'solid gray 1px'});
             });
         }
     }
