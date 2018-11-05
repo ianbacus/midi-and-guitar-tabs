@@ -136,7 +136,8 @@ class Controller
 
     GetNextSequenceNumber()
     {
-        c_this.SequenceNumber = (c_this.SequenceNumber+1)%2;
+		var maximumSequenceNumber = Number.MAX_SAFE_INTEGER-1;
+        c_this.SequenceNumber = (c_this.SequenceNumber+1)%maximumSequenceNumber;
         return c_this.SequenceNumber;
     }
 
@@ -532,10 +533,8 @@ class Controller
     {
 		var score = c_this.Model.Score;
 		
-		
 		var resetIndex = score.length;
 		while(resetIndex --> 0)
-        //c_this.ModifySelectedNotes(function(note)
         {
 			var note = c_this.Model.Score[resetIndex];
 			var deletion = true;
@@ -558,9 +557,7 @@ class Controller
 				}
 			}
 			
-        }
-		//);
-		
+        }		
     }
 
     ///Update the cursor position, move all selected notes

@@ -503,6 +503,8 @@ class Model
 
         if(pushAction)
         {
+			deletedNote.ResetPosition();
+			deletedNote.IsSelected = false;
             this.PushAction({
                 Action:'DELETE',
                 SequenceNumber:sequenceNumber,
