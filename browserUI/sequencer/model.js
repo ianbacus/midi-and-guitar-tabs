@@ -57,9 +57,9 @@ class Note
         pluckGenerator.noteOn(this.Pitch, 100);
     }
 
-    OnMoveComplete(sequenceNumber, doAdd=false)
+    OnMoveComplete(sequenceNumber)
     {
-        if(doAdd || (this.SelectedPitchAndTicks == null))
+        if(this.SelectedPitchAndTicks == null)
         {
             m_this.PushAction({
                 Action:'ADD',
@@ -112,25 +112,32 @@ class Note
     {
         return this._IsSelected;
     }
+	
+	HandleGridMoveReset()
+	{
+		var selectStartGridBuffer = m_this.GridPreviewList[this.SelectedGridIndex];
+		var currentGridBuffer = m_this.GridPreviewList[this.CurrentGridIndex];
+						
+		m_this.DeleteNote(this, 0, currentGridBuffer, false);
+		m_this.AddNote(this, 0, selectStartGridBuffer, false);
+	}
 
-    ResetPosition(note)
+    ResetPosition()
     {
-        if(note==undefined) note = this;
-        if(note.SelectedPitchAndTicks != null)
+		var deletion = false;
+		
+        if(this.SelectedPitchAndTicks != null)
         {
-            //TODO: note is hacky.. undo will reset the note position because of the transport logic in the controller.
-            // so note method is now dependent on the controller transportation logic's use of the model's state queue
-            if(note.CurrentGridIndex != note.SelectedGridIndex)
+            [this.Pitch,this.StartTimeTicks] = this.SelectedPitchAndTicks;
+			
+            if(this.CurrentGridIndex != this.SelectedGridIndex)
             {
-                console.log("EMERGENCY UNDO",note,note.CurrentGridIndex , note.SelectedGridIndex)
-                m_this.Undo();
-            }
-
-            else
-            {
-                [note.Pitch,note.StartTimeTicks] = note.SelectedPitchAndTicks;
-            }
+				this.HandleGridMoveReset();
+				deletion = true;
+            }            
         }
+		
+		return deletion;
     }
 
 
@@ -402,6 +409,12 @@ class Model
                 {
                     var note = moveData.Note;
                     var [startTimeDifference, pitchDifference] = moveData.Move;
+					
+					if(note.CurrentGridIndex != note.SelectedGridIndex)
+					{
+						note.HandleGridMoveReset();
+					}
+					
                     note.Move(-startTimeDifference, -pitchDifference);
                 });
             }
