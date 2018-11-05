@@ -1,11 +1,11 @@
 canvas {
-    margin-top: 3px;
+    width:100%;
 }
 
-.selectable { width: 80px; height: 80px; padding: 0.5em; border-style: dotted; }
-.selectable .ui-selecting { background: #FECA40; }
-.selectable .ui-selected { background: #F39814; color: white; }
-
+.container
+{
+     padding-top: 50px;
+}
 #gridboxContainer
 {
 	overflow-x:scroll;
@@ -18,13 +18,17 @@ canvas {
      pointer-events: none;
 }
 
+#GridboxArray{
+    width:100%;
+    overflow-y:scroll;
+	height:400px;
+}
 #gridbox {
 	width:650%;
 	height:1000px;
 	position:relative;
 	background:whitesmoke url('https://s3.amazonaws.com/com.appgrinders.test/images/grid_20.png') repeat;
 }
-.selected {opacity:0.7;}
 
 #feedback { font-size: 1.4em; }
 #selectable .ui-selecting { background: #FECA40; }

@@ -146,7 +146,7 @@ class Controller
         case 88: //"x" key": Select mode
             c_this.EditorMode = editModeEnumeration.SELECT;
             c_this.HandleSelectionReset();
-            c_this.RenderMainGridBox()
+            c_this.RenderGridArray()
 
 
             break;
@@ -185,13 +185,13 @@ class Controller
                 c_this.Model.AddNote(previewNote, 0, c_this.Model.Score, false);
             }
 
-            c_this.RenderMainGridBox()
+            c_this.RenderGridArray()
 
             break;
         case 68: //"d" key
             //Delete any selected notes, and enter delete mode
             c_this.DeleteSelectedNotes();
-            c_this.RenderMainGridBox()
+            c_this.RenderGridArray()
             break;
 
         case 32: //spacebar
@@ -238,7 +238,7 @@ class Controller
                 c_this.Model.AddNote(note, 0, c_this.Model.Score, false);
             });
 
-            c_this.RenderMainGridBox();
+            c_this.RenderGridArray();
             break;
 
         case 81: //"q" key
@@ -683,7 +683,7 @@ class Controller
             c_this.Model.AddNote(previewNote, 0, c_this.Model.Score, false);
         }
 
-        c_this.RenderMainGridBox();
+        c_this.RenderGridArray();
     }
 
     HandleControlScroll(scrollUp)
@@ -765,7 +765,7 @@ class Controller
 
                 }
             });
-            c_this.RenderMainGridBox();
+            c_this.RenderGridArray();
         }
     }
     OnMouseScroll(event)
@@ -801,7 +801,15 @@ class Controller
 
     OnRadioButtonPress(eventData)
     {
-        console.log(eventData)
+        console.log(eventData);
+        /*
+        var html2obj = html2canvas($('body')[0]);
+        var queue  = html2obj.parse();
+        var canvas = html2obj.render(queue);
+        var img = canvas.toDataURL();
+
+        window.open(img);*/
+
     }
 
     GetNoteRectangle(note)
