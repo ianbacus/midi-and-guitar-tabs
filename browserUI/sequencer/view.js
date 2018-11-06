@@ -143,68 +143,52 @@ class View
 
     GetGridboxThumbnail(instance, imageCallback, index)
     {
-        var y = document.body;
         var x = $("#gridboxContainer")[0]
 
         html2canvas(x).then(function(img)
         {
-            try {
-
-                var c = document.getElementById("THEONE");
-                var ctx = c.getContext("2d");
-                var cwidth = c.width;
-                var cheight = c.height;
-                ctx.drawImage(img, 0, 0, cwidth,cheight);
-                console.log("Drawing image with ", cwidth,cheight)
-
-            } catch (e) {
-                console.log(e);
-            }
-            finally
-            {
-                console.log(img);
-                var eventData = {Image: img, GridIndex: index};
-                imageCallback.call(instance, eventData)
-
-            }
-
+            var eventData = {Image: img, GridIndex: index};
+            imageCallback.call(instance, eventData)
         });
     }
 
     RenderGridArray(gridImages, selectedIndex)
     {
-        var numberOfEntries = gridImages.length;
-        var domGridArray = $(v_this.GridArray);
-        domGridArray.empty();
-        var nodeIndex = 0;
-
-        while(nodeIndex < numberOfEntries)
-        {
-            var image = gridImages[nodeIndex];
-            var canvasNode = $('<canvas/>');
-            if(nodeIndex == selectedIndex)
+            var numberOfEntries = gridImages.length;
+            var domGridArray = $(v_this.GridArray);
+            domGridArray.empty();
+            var nodeIndex = 0;
+            while(nodeIndex < numberOfEntries)
             {
-                canvasNode.css({'border':'solid black 1px'});
-                canvasNode.attr('id',"THEONE");
-            }
-
-            try {
-                if(image != null)
-                {
-                    // console.log("RENDER",image);
-                    // var context = canvasNode[0].getContext("2d");
-                    // var cWidth = canvasNode.width();
-                    // var cHeight = canvasNode.height();
-                    // context.drawImage(image, 0, 0, cWidth,cHeight);
-                }
-            } catch (e) {
-                console.log(e);
-            } finally {
-
+                var image = gridImages[nodeIndex];
+                var canvasNode = $('<canvas/>');
                 domGridArray.append(canvasNode);
-                nodeIndex++;
+
+                if(nodeIndex == selectedIndex)
+                {
+                    canvasNode.css({'border':'solid purple 3px'});
+                }
+                else {
+                    canvasNode.css({'border':'solid black 1px'});
+
+                }
+
+                try {
+                    if(image != null)
+                    {
+                        var dataurl = image.toDataURL()
+                        var context = canvasNode[0].getContext("2d");
+                        var cWidth = canvasNode.width();
+                        var cHeight = canvasNode.height();
+                        context.drawImage(image, 0, 0, cWidth,cHeight);
+                    }
+                } catch (e) {
+                    console.log(e);
+                } finally {
+
+                    nodeIndex++;
+                }
             }
-        }
     }
 
     RenderSelectRectangle(selectPosition, cursorPosition)

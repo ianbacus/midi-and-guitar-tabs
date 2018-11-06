@@ -424,7 +424,7 @@ class Model
         }
 
         this.ActivityIndex = this.ActivityStack.length - 1;
-        console.log(this.ActivityStack,"Push complete. Activity stack index: "+ this.ActivityIndex+"/"+(this.ActivityStack.length-1));
+        console.log("Push complete. Activity stack index: "+ this.ActivityIndex+"/"+(this.ActivityStack.length-1));
     }
 
     Undo()
@@ -471,7 +471,7 @@ class Model
             }
 
             gridBuffer.sort(m_this.CompareNotes);
-            console.log(this.ActivityStack,"Undo complete. Activity stack index: "+ this.ActivityIndex+"/"+(this.ActivityStack.length-1));
+            console.log("Undo complete. Activity stack index: "+ this.ActivityIndex+"/"+(this.ActivityStack.length-1));
         }
 
     }
@@ -522,7 +522,7 @@ class Model
             }
 
             gridBuffer.sort(m_this.CompareNotes);
-            console.log(this.ActivityStack,"Redo complete. Activity stack index: "+ this.ActivityIndex+"/"+(this.ActivityStack.length-1));
+            console.log("Redo complete. Activity stack index: "+ this.ActivityIndex+"/"+(this.ActivityStack.length-1));
         }
 
 
