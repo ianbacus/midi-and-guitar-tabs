@@ -143,7 +143,6 @@ class View
 
     RenderGridArray(numberOfEntries, index)
     {
-        console.log("Rendering preview", numberOfEntries, index);
         var domGridArray = $(v_this.GridArray);
         domGridArray.empty();
         var nodeIndex = 0;
@@ -151,14 +150,14 @@ class View
         var y = document.body;
         var x = $("#gridboxContainer")[0]
 
-        html2canvas(x).then(function(img)
-        {
-            var c = document.getElementById("currentCanvas");
-            var ctx = c.getContext("2d");
-            var cwidth = c.width;
-            var cheight = c.height;
-            ctx.drawImage(img, 0, 0, cwidth,cheight);
-        });
+        // html2canvas(x).then(function(img)
+        // {
+            // var c = document.getElementById("currentCanvas");
+            // var ctx = c.getContext("2d");
+            // var cwidth = c.width;
+            // var cheight = c.height;
+            // ctx.drawImage(img, 0, 0, cwidth,cheight);
+        // });
 
         while(nodeIndex < numberOfEntries)
         {

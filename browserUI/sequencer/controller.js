@@ -63,7 +63,6 @@ class Controller
         c_this.NoteIndex = 0;
         c_this.PendingTimeout = null;
         c_this.SequenceNumber = 0;
-        c_this.TransportingAcrossGrids = false;
 
 
     }
@@ -88,11 +87,15 @@ class Controller
         c_this.View.RenderNotes(c_this.Model.Score, editModeColor);
     }
 
-    DeleteSelectedNotes(pushAction, sequenceNumber)
+    DeleteSelectedNotes(pushAction)
     {
         var i = 0;
-        var sequenceNumber = 0;
         var score = c_this.Model.Score;
+        var sequenceNumber = 0;
+        if(pushAction)
+        {
+            sequenceNumber = c_this.GetNextSequenceNumber();
+        }
 
         for(var index = 0; index < score.length; index++)
         {
@@ -137,7 +140,8 @@ class Controller
 
     GetNextSequenceNumber()
     {
-        c_this.SequenceNumber = (c_this.SequenceNumber+1)%2;
+		var maximumSequenceNumber = 10000;//Number.MAX_SAFE_INTEGER-1;
+        c_this.SequenceNumber = (c_this.SequenceNumber+1)%maximumSequenceNumber;
         return c_this.SequenceNumber;
     }
 
@@ -282,35 +286,34 @@ class Controller
     {
         var moveFunction;
         var copyBuffer = [];
-        var sequenceNumber = c_this.GetNextSequenceNumber();
+        var sequenceNumber = 0;//c_this.GetNextSequenceNumber();
         var newGridIndex;
 
         if(upwardsDirection)
         {
             moveFunction = c_this.Model.GotoPreviousGrid;
-            newGridIndex = Math.max(c_this.Model.GridIndex-1, 0);
+            newGridIndex = Math.max(c_this.Model.GridPreviewIndex-1, 0);
         }
 
         else
         {
             moveFunction = c_this.Model.GotoNextGrid;
-            newGridIndex = Math.min(c_this.Model.GridIndex+1, c_this.Model.GridPreviewList.length-1);
+            newGridIndex = Math.min(c_this.Model.GridPreviewIndex+1, c_this.Model.GridPreviewList.length-1);
         }
 
         c_this.Model.SetCurrentGridPreview(c_this.Model.Score);
 
         console.log("Transport begin");
-        c_this.TransportingAcrossGrids = true;
+
         //Capture any selected notes and delete them before changing grids
         c_this.ModifySelectedNotes(function(note)
         {
-            var otherNoteSelectedState = note.SelectedPitchAndTicks;
-            var copiedNote = new Note(note.StartTimeTicks, note.Pitch, note.Duration, true, otherNoteSelectedState, newGridIndex);
+			var copiedNote = note;
             console.log("Packing note: ", note);
             copyBuffer.push(copiedNote);
         });
 
-        c_this.DeleteSelectedNotes(true, sequenceNumber);
+        c_this.DeleteSelectedNotes(false, sequenceNumber);
 
         //Change to the next grid
         moveFunction();
@@ -318,7 +321,8 @@ class Controller
         //Instantiate the copied notes in the next buffer
         copyBuffer.forEach(function(note)
         {
-            console.log("Transporting note: ", note);
+            console.log("Transporting note: ", note, newGridIndex);
+			note.CurrentGridIndex = newGridIndex;
             c_this.Model.AddNote(note, sequenceNumber, c_this.Model.Score, false);
         });
 
@@ -450,7 +454,7 @@ class Controller
         var noteIndex = c_this.NoteIndex;
         var currentNote = playbackNoteArray[noteIndex];
         var nextNoteIndex = c_this.PlayChord(playbackNoteArray, noteIndex,false);
-        console.log("OnPlay");
+
         if(nextNoteIndex < playbackNoteArray.length)
         {
             var nextNote = playbackNoteArray[nextNoteIndex];
@@ -531,22 +535,31 @@ class Controller
 
     HandleSelectionReset()
     {
-        c_this.ModifySelectedNotes(function(note)
-        {
-            //Unselect and reset the position of notes that existed before selection
-            if(note.SelectedPitchAndTicks != null)
-            {
-                note.IsSelected = false;
-                note.ResetPosition(note);
-            }
+		var score = c_this.Model.Score;
 
-            //Delete preview notes that were not initially selected
-            else
-            {
-                c_this.Model.DeleteNote(note, 0, c_this.Model.Score, false);
-            }
-        });
-        c_this.TransportingAcrossGrids = false;
+		var resetIndex = score.length;
+		while(resetIndex --> 0)
+        {
+			var note = c_this.Model.Score[resetIndex];
+			var deletion = true;
+
+			if(note.IsSelected)
+			{
+				//Unselect and reset the position of notes that existed before selection
+				if(note.StateWhenSelected != null)
+				{
+					note.IsSelected = false;
+					deletion = note.ResetPosition();
+				}
+
+				//Delete preview notes that were not initially selected
+				else
+				{
+					c_this.Model.DeleteNote(note, 0, c_this.Model.Score, false);
+				}
+			}
+
+        }
     }
 
     ///Update the cursor position, move all selected notes
@@ -670,6 +683,22 @@ class Controller
         }
     }
 
+	GetPlaybackMode()
+	{
+		var eventData = c_this.View.GetFormData();
+		var playbackMode = 0;
+
+		eventData.forEach(function(formData)
+		{
+			if(formData.id == 'Playback')
+			{
+				playbackMode = formData.value;
+			}
+		});
+
+		return playbackMode;
+	}
+
     ///Unselect all selected notes to anchor them
     OnMouseClickUp(event)
     {
@@ -682,30 +711,11 @@ class Controller
 
         else
         {
-            var playbackMode = 0;
-            var eventData = c_this.View.GetFormData();
+			var playbackBuffer = [];
+            var playbackMode = c_this.GetPlaybackMode();
+            var sequenceNumber = sequenceNumber = c_this.GetNextSequenceNumber();
 
-            var playbackBuffer = []
-            var sequenceNumber = c_this.SequenceNumber;
-            var additionInsteadOfMove = !c_this.TransportingAcrossGrids;
-
-            if(!c_this.TransportingAcrossGrids)
-            {
-                sequenceNumber = c_this.GetNextSequenceNumber();
-            }
-            else
-            {
-                c_this.TransportingAcrossGrids = false;
-            }
-
-            eventData.forEach(function(formData)
-            {
-                if(formData.id == 'Playback')
-                {
-                    playbackMode = formData.value;
-                }
-            });
-
+			//Play notes and handle move completion
             if(playbackMode == 0)
             {
                 note.Play(c_this.MillisecondsPerTick);
@@ -713,11 +723,11 @@ class Controller
                 {
                     playbackBuffer.push(note);
                     note.IsSelected = false;
-                    //todo: merge the move complete with a transport across grid views
-                    note.OnMoveComplete(sequenceNumber, additionInsteadOfMove);
+                    note.OnMoveComplete(sequenceNumber);
                 });
             }
 
+			//Play all intersecting chords and handle move completion
             else
             {
                 c_this.ModifySelectedNotes(function(note)
@@ -725,7 +735,7 @@ class Controller
                     playbackBuffer.push(note);
                 });
 
-                //Todo: play chords of each note by merging the playback buffer with the overlapping parts of the score
+                //play chords of each note by merging the playback buffer with the overlapping parts of the score
                 c_this.DoActionOnAllNotes(function(note)
                 {
                     var firstTick = playbackBuffer[0].StartTimeTicks;
@@ -740,8 +750,7 @@ class Controller
                 c_this.ModifySelectedNotes(function(note)
                 {
                     note.IsSelected = false;
-                    //todo: merge the move complete with a transport across grid views
-                    note.OnMoveComplete(sequenceNumber, additionInsteadOfMove);
+                    note.OnMoveComplete(sequenceNumber);
                 });
 
                 playbackBuffer.sort(m_this.CompareNotes);
@@ -750,10 +759,10 @@ class Controller
             c_this.PlayNotes(playbackBuffer);
         }
 
-        if(c_this.EditorMode != editModeEnumeration.SELECT)
+		//Create a new preview note if edit mode is active
+        if(c_this.EditorMode == editModeEnumeration.EDIT)
         {
             var previewNote = c_this.CreatePreviewNote();
-
             c_this.Model.AddNote(previewNote, 0, c_this.Model.Score, false);
         }
 
@@ -765,16 +774,21 @@ class Controller
         var shouldScroll = true;
         var selectCount = c_this.CountSelectedNotes();
 
-        function shouldResizeNote(note, selectCount)
+        function evaluateNoteScrollBehavior(note, selectCount)
         {
-            return (!note.IsSelected && (selectCount == 0)) || (note.IsSelected  && (selectCount > 0))
+            var resizeNote = (!note.IsSelected && (selectCount == 0)) || (note.IsSelected  && (selectCount > 0))
+            var captureNoteState = !note.IsSelected;
+
+            return [resizeNote, captureNoteState]
         }
 
         var firstNotePosition = undefined;
         c_this.DoActionOnAllNotes(function(note)
         {
+            var [shouldResizeNote, shouldCaptureNoteState] = evaluateNoteScrollBehavior(note,selectCount);
+
             //Determine if the resize request is valid
-            if(shouldResizeNote(note,selectCount))
+            if(shouldResizeNote)
             {
                 if(firstNotePosition == undefined)
                 {
@@ -801,42 +815,43 @@ class Controller
         firstNotePosition = undefined;
         if(shouldScroll)
         {
+            var sequenceNumber = c_this.GetNextSequenceNumber();
+
             //Resize all notes as requested. If only one note is selected, treat it like a preview note and change the default preview note size
             c_this.DoActionOnAllNotes(function(note)
             {
-                if(shouldResizeNote(note,selectCount))
+                var newDuration;
+                var newPosition;
+                var [shouldResizeNote, shouldCaptureNoteState] = evaluateNoteScrollBehavior(note,selectCount);
+
+                if(shouldResizeNote)
                 {
                     if(firstNotePosition == undefined)
                     {
                         firstNotePosition = note.StartTimeTicks;
                     }
 
-                    var newDuration;
-                    var newPosition;
-
-                    var noteOffset =  (note.StartTimeTicks - firstNotePosition);
+                    var noteOffset = (note.StartTimeTicks - firstNotePosition);
 
                     if(scrollUp)
                     {
-                        shouldScroll = note.Duration <= 16;
                         newDuration = note.Duration*2;
                         newPosition = firstNotePosition + noteOffset*2;
                     }
                     else
                     {
-                        shouldScroll = note.Duration > 1;
                         newDuration = note.Duration/2;
                         newPosition = firstNotePosition + noteOffset/2;
                     }
 
+                    //Update the default note duration when the preview note is resized
                     if(selectCount == 1)
                     {
                         c_this.DefaultNoteDuration = newDuration;
+                        shouldCaptureNoteState = false;
                     }
 
-                    note.Duration = newDuration;
-                    note.StartTimeTicks = newPosition;
-
+                    note.HorizontalModify(newPosition, newDuration, sequenceNumber, shouldCaptureNoteState);
                 }
             });
             c_this.RenderMainGridBox();

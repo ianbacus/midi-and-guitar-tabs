@@ -36,6 +36,7 @@ class Note
         this._IsSelected = selected;
         this.CurrentGridIndex = currentGridIndex;
 
+        this.StateWhenSelected = null
         this.SelectedPitchAndTicks = selectedPitchAndTicks;
         this.SelectedGridIndex = m_this.GridPreviewIndex;
     }
@@ -52,14 +53,41 @@ class Note
         var pitchIndex = this.Pitch % numberOfPitches;
         var milliseconds = millisecondsPerTick * this.Duration
 
-        var env = T("perc", {a:50, r:milliseconds*1.5});
+        var env = T("perc", {a:55, r:milliseconds*1.5});
         var pluckGenerator  = T("PluckGen", {env:env, mul:0.5}).play();
         pluckGenerator.noteOn(this.Pitch, 100);
     }
 
-    OnMoveComplete(sequenceNumber, doAdd=false)
+    HorizontalModify(startTime,duration, sequenceNumber, shouldModify)
     {
-        if(doAdd || (this.SelectedPitchAndTicks == null))
+        var initialState = this.CaptureState();
+
+        this.Duration = duration;
+        this.StartTimeTicks = startTime;
+
+        var currentState = this.CaptureState();
+
+        if(shouldModify)
+        {
+            m_this.PushAction({
+                Action:'MODIFY',
+                SequenceNumber:sequenceNumber,
+                GridIndex:m_this.GridPreviewIndex,
+                MoveBuffer:[],
+                MoveData:{
+                    Note:this,
+                    OriginalState:initialState,
+                    TargetState:currentState
+                }
+            });
+        }
+    }
+
+    OnMoveComplete(sequenceNumber)
+    {
+        var currentState = this.CaptureState();
+
+        if(this.StateWhenSelected == null)
         {
             m_this.PushAction({
                 Action:'ADD',
@@ -72,40 +100,83 @@ class Note
             });
         }
 
-        else
+        else if(!this.StatesAreEqual(currentState, this.StateWhenSelected))
         {
-            var [initialPitch, initialStartTime] = this.SelectedPitchAndTicks
-            var [pitchDifference, startTimeDifference] = [this.Pitch - initialPitch, this.StartTimeTicks - initialStartTime]
-            if((pitchDifference != 0) && (startTimeDifference != 0))
-            {
-                m_this.PushAction({
-                    Action:'MOVE',
-                    SequenceNumber:sequenceNumber,
-                    GridIndex:m_this.GridPreviewIndex,
-                    MoveBuffer:[],
-                    MoveData:{
-                        Note:this,
-                        Move:[startTimeDifference, pitchDifference]
-                    }
-                });
-            }
+            m_this.PushAction({
+                Action:'MODIFY',
+                SequenceNumber:sequenceNumber,
+                GridIndex:m_this.GridPreviewIndex,
+                MoveBuffer:[],
+                MoveData:{
+                    Note:this,
+                    OriginalState:this.StateWhenSelected,
+                    TargetState:currentState
+                }
+            });
+        }
+
+        this.StateWhenSelected = null;
+    }
+
+    StatesAreEqual(state1, state2)
+    {
+        var exactMatch =
+            (state1.Pitch === state2.Pitch) &&
+            (state1.StartTimeTicks === state2.StartTimeTicks) &&
+            (state1.duration === state2.duration) &&
+            (state1.GridIndex === state2.GridIndex);
+
+        return exactMatch;
+    }
+
+    CaptureState()
+    {
+        var capturedState =
+        {
+            Pitch : this.Pitch,
+            StartTimeTicks : this.StartTimeTicks,
+            Duration : this.Duration,
+            GridIndex : this.CurrentGridIndex
+        }
+
+        return capturedState;
+    }
+
+    RestoreState(capturedState)
+    {
+        var currentGridIndex = this.CurrentGridIndex;
+        var selectedGridIndex = capturedState.GridIndex;
+
+        if(currentGridIndex != selectedGridIndex)
+        {
+            this.HandleGridMoveReset(currentGridIndex,selectedGridIndex);
+        }
+
+        this.Pitch = capturedState.Pitch;
+        this.StartTimeTicks = capturedState.StartTimeTicks;
+        this.Duration = capturedState.Duration;
+        this.CurrentGridIndex = selectedGridIndex;
+
+        this.StateWhenSelected = null;
+    }
+
+    ResetPosition()
+    {
+        if(this.StateWhenSelected != null)
+        {
+            this.RestoreState(this.StateWhenSelected);
         }
     }
 
     set IsSelected(selected)
     {
-        //console.log("SN",this.SequenceNumber)
-        if(this._IsSelected != selected)
+        //When selecting an unselected note, capture its state
+        if((this._IsSelected != selected) && (selected))
         {
-            this._IsSelected = selected;
-
-            //Select an existing note
-            if(selected)
-            {
-                this.SelectedPitchAndTicks = [this.Pitch, this.StartTimeTicks]
-                this.SelectedGridIndex = m_this.GridPreviewIndex;
-            }
+            this.StateWhenSelected = this.CaptureState();
         }
+
+        this._IsSelected = selected;
     }
 
     get IsSelected()
@@ -113,25 +184,15 @@ class Note
         return this._IsSelected;
     }
 
-    ResetPosition(note)
-    {
-        if(note==undefined) note = this;
-        if(note.SelectedPitchAndTicks != null)
-        {
-            //TODO: note is hacky.. undo will reset the note position because of the transport logic in the controller.
-            // so note method is now dependent on the controller transportation logic's use of the model's state queue
-            if(note.CurrentGridIndex != note.SelectedGridIndex)
-            {
-                console.log("EMERGENCY UNDO",note,note.CurrentGridIndex , note.SelectedGridIndex)
-                m_this.Undo();
-            }
+	HandleGridMoveReset(currentGridIndex,selectedGridIndex)
+	{
+		var selectStartGridBuffer = m_this.GridPreviewList[selectedGridIndex];
+		var currentGridBuffer = m_this.GridPreviewList[currentGridIndex];
 
-            else
-            {
-                [note.Pitch,note.StartTimeTicks] = note.SelectedPitchAndTicks;
-            }
-        }
-    }
+		m_this.DeleteNote(this, 0, currentGridBuffer, false);
+		m_this.AddNote(this, 0, selectStartGridBuffer, false);
+	}
+
 
 
 };
@@ -306,13 +367,13 @@ class Model
         {
             var stackTop = activityStack[stackLength - 1];
 
-                        //If this move is part of the same sequence number's move, combine it with the top of the stack
+            //If this move is part of the same sequence number's move, combine it with the top of the stack
             //if((stackTop.Action === targetString) && (stackTop.SequenceNumber == action.SequenceNumber))
             if(stackTop.SequenceNumber == action.SequenceNumber)
             {
                 stackTop.MoveBuffer.push(action.MoveData);
                 pushSuccessful = true;
-                console.log("Batch "+action.Action + ": " + stackTop.MoveBuffer.length + " datums")
+                console.log("Group "+action.Action + ": " + stackTop.MoveBuffer.length + " datums")
             }
         }
 
@@ -323,20 +384,21 @@ class Model
     {
         var activityStack = m_this.ActivityStack;
         var stackLength = this.ActivityStack.length;
-        var actionCases = ["MOVE", "ADD", "DELETE"]
+        var actionCases = ["MODIFY", "ADD", "DELETE"]
         var pushSuccessful = false;
-
-        console.log("Pushing action", action);
 
         //If the index doesn't point to the end of the stack, dump all changes
         if(this.ActivityIndex != stackLength-1)
         {
-            this.ActivityStack = this.ActivityStack.slice(0,this.ActivityIndex+1);
+            var resetIndex = this.ActivityIndex+1;
+            console.log("Resetting stack up to and including index "+resetIndex);
+            this.ActivityStack = this.ActivityStack.slice(0,resetIndex);
         }
 
         //Lose the last action if the stack is full
         if(stackLength >= this.MaximumActivityStackLength)
         {
+            console.log("Maximum undo length reached. Discarding old state information.")
             this.ActivityStack.pop();
         }
 
@@ -354,13 +416,13 @@ class Model
         //If a distinct move is happening, push it separately
         if(!pushSuccessful)
         {
-            console.log("Distinct "+action.Action)
             action.MoveBuffer.push(action.MoveData);
             m_this.ActivityStack.push(action)
+            console.log("Distinct "+action.Action +". New stack length: "+this.ActivityStack.length);
         }
 
         this.ActivityIndex = this.ActivityStack.length - 1;
-        console.log("Stack length:"+this.ActivityStack.length + " index:" +this.ActivityIndex);
+        console.log(this.ActivityStack,"Push complete. Activity stack index: "+ this.ActivityIndex+"/"+(this.ActivityStack.length-1));
     }
 
     Undo()
@@ -371,7 +433,7 @@ class Model
             var moveBuffer = mostRecentAction.MoveBuffer;
             var gridBuffer = this.GridPreviewList[mostRecentAction.GridIndex];
 
-            console.log("Undoing " + mostRecentAction.Action + " on " + moveBuffer.length + " notes, SN = " + mostRecentAction.SequenceNumber);
+            console.log("Undoing " + mostRecentAction.Action + " on " + moveBuffer.length + " notes, actionID = " + mostRecentAction.SequenceNumber);
 
             this.ActivityIndex--;
 
@@ -396,18 +458,18 @@ class Model
             }
 
             //Undo a move by moving in the opposite direction
-            else if(mostRecentAction.Action === 'MOVE')
+            else if(mostRecentAction.Action === 'MODIFY')
             {
                 moveBuffer.forEach(function(moveData)
                 {
                     var note = moveData.Note;
-                    var [startTimeDifference, pitchDifference] = moveData.Move;
-                    note.Move(-startTimeDifference, -pitchDifference);
+                    var state = moveData.OriginalState;
+                    note.RestoreState(state);
                 });
             }
 
             gridBuffer.sort(m_this.CompareNotes);
-            console.log(this.ActivityStack.length, this.ActivityIndex);
+            console.log(this.ActivityStack,"Undo complete. Activity stack index: "+ this.ActivityIndex+"/"+(this.ActivityStack.length-1));
         }
 
     }
@@ -421,7 +483,7 @@ class Model
             var moveBuffer = mostRecentAction.MoveBuffer;
             var gridBuffer = this.GridPreviewList[mostRecentAction.GridIndex];
 
-            console.log("Redoing " + mostRecentAction.Action + " on " + moveBuffer.length + " notes, SN = " + mostRecentAction.SequenceNumber);
+            console.log("Redoing " + mostRecentAction.Action + " on " + moveBuffer.length + " notes, actionID = " + mostRecentAction.SequenceNumber);
 
             //Redo addition
             if(mostRecentAction.Action === 'ADD')
@@ -444,18 +506,21 @@ class Model
             }
 
             //Redo a move
-            else if(mostRecentAction.Action === 'MOVE')
+            else if(mostRecentAction.Action === 'MODIFY')
             {
                 moveBuffer.forEach(function(moveData)
                 {
                     var note = moveData.Note;
-                    var [startTimeDifference, pitchDifference] = moveData.Move;
-                    note.Move(startTimeDifference, pitchDifference);
+                    var state = moveData.TargetState;
+                    note.RestoreState(state);
+
+                    //var [startTimeDifference, pitchDifference] = moveData.Move;
+                    //note.Move(startTimeDifference, pitchDifference);
                 });
             }
 
             gridBuffer.sort(m_this.CompareNotes);
-            console.log(this.ActivityStack.length, this.ActivityIndex);
+            console.log(this.ActivityStack,"Redo complete. Activity stack index: "+ this.ActivityIndex+"/"+(this.ActivityStack.length-1));
         }
 
 
@@ -490,6 +555,8 @@ class Model
 
         if(pushAction)
         {
+			deletedNote.ResetPosition();
+			deletedNote.IsSelected = false;
             this.PushAction({
                 Action:'DELETE',
                 SequenceNumber:sequenceNumber,
