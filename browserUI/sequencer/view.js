@@ -141,36 +141,54 @@ class View
 
     }
 
-    RenderGridArray(numberOfEntries, index)
+    GetGridboxThumbnail(instance, imageCallback, index)
     {
-        console.log("Rendering preview", numberOfEntries, index);
-        var domGridArray = $(v_this.GridArray);
-        domGridArray.empty();
-        var nodeIndex = 0;
-
-        var y = document.body;
         var x = $("#gridboxContainer")[0]
 
-        // html2canvas(x).then(function(img)
-        // {
-            // var c = document.getElementById("currentCanvas");
-            // var ctx = c.getContext("2d");
-            // var cwidth = c.width;
-            // var cheight = c.height;
-            // ctx.drawImage(img, 0, 0, cwidth,cheight);
-        // });
-
-        while(nodeIndex < numberOfEntries)
+        html2canvas(x).then(function(img)
         {
-            var entryNode = '<canvas style="border:1px solid #d3d3d3;"> </canvas>';
-            //TODO: use image of entry
-            if(nodeIndex === index)
+            var eventData = {Image: img, GridIndex: index};
+            imageCallback.call(instance, eventData)
+        });
+    }
+
+    RenderGridArray(gridImages, selectedIndex)
+    {
+            var numberOfEntries = gridImages.length;
+            var domGridArray = $(v_this.GridArray);
+            domGridArray.empty();
+            var nodeIndex = 0;
+            while(nodeIndex < numberOfEntries)
             {
-                entryNode = '<canvas id="currentCanvas" style="border:1px solid #d3d3d3;"> </canvas>'
+                var image = gridImages[nodeIndex];
+                var canvasNode = $('<canvas/>');
+                domGridArray.append(canvasNode);
+
+                if(nodeIndex == selectedIndex)
+                {
+                    canvasNode.css({'border':'solid purple 3px'});
+                }
+                else {
+                    canvasNode.css({'border':'solid black 1px'});
+
+                }
+
+                try {
+                    if(image != null)
+                    {
+                        var dataurl = image.toDataURL()
+                        var context = canvasNode[0].getContext("2d");
+                        var cWidth = canvasNode.width();
+                        var cHeight = canvasNode.height();
+                        context.drawImage(image, 0, 0, cWidth,cHeight);
+                    }
+                } catch (e) {
+                    console.log(e);
+                } finally {
+
+                    nodeIndex++;
+                }
             }
-            domGridArray.append(entryNode);
-            nodeIndex++;
-        }
     }
 
     RenderSelectRectangle(selectPosition, cursorPosition)
