@@ -141,34 +141,69 @@ class View
 
     }
 
-    RenderGridArray(numberOfEntries, index)
+    GetGridboxThumbnail(instance, imageCallback, index)
     {
+        var y = document.body;
+        var x = $("#gridboxContainer")[0]
+
+        html2canvas(x).then(function(img)
+        {
+            try {
+
+                var c = document.getElementById("THEONE");
+                var ctx = c.getContext("2d");
+                var cwidth = c.width;
+                var cheight = c.height;
+                ctx.drawImage(img, 0, 0, cwidth,cheight);
+                console.log("Drawing image with ", cwidth,cheight)
+
+            } catch (e) {
+                console.log(e);
+            }
+            finally
+            {
+                console.log(img);
+                var eventData = {Image: img, GridIndex: index};
+                imageCallback.call(instance, eventData)
+
+            }
+
+        });
+    }
+
+    RenderGridArray(gridImages, selectedIndex)
+    {
+        var numberOfEntries = gridImages.length;
         var domGridArray = $(v_this.GridArray);
         domGridArray.empty();
         var nodeIndex = 0;
 
-        var y = document.body;
-        var x = $("#gridboxContainer")[0]
-
-        // html2canvas(x).then(function(img)
-        // {
-            // var c = document.getElementById("currentCanvas");
-            // var ctx = c.getContext("2d");
-            // var cwidth = c.width;
-            // var cheight = c.height;
-            // ctx.drawImage(img, 0, 0, cwidth,cheight);
-        // });
-
         while(nodeIndex < numberOfEntries)
         {
-            var entryNode = '<canvas style="border:1px solid #d3d3d3;"> </canvas>';
-            //TODO: use image of entry
-            if(nodeIndex === index)
+            var image = gridImages[nodeIndex];
+            var canvasNode = $('<canvas/>');
+            if(nodeIndex == selectedIndex)
             {
-                entryNode = '<canvas id="currentCanvas" style="border:1px solid #d3d3d3;"> </canvas>'
+                canvasNode.css({'border':'solid black 1px'});
+                canvasNode.attr('id',"THEONE");
             }
-            domGridArray.append(entryNode);
-            nodeIndex++;
+
+            try {
+                if(image != null)
+                {
+                    // console.log("RENDER",image);
+                    // var context = canvasNode[0].getContext("2d");
+                    // var cWidth = canvasNode.width();
+                    // var cHeight = canvasNode.height();
+                    // context.drawImage(image, 0, 0, cWidth,cHeight);
+                }
+            } catch (e) {
+                console.log(e);
+            } finally {
+
+                domGridArray.append(canvasNode);
+                nodeIndex++;
+            }
         }
     }
 

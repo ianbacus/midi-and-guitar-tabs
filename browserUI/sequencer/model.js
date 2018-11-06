@@ -204,6 +204,7 @@ class Model
         m_this = this;
         this.Score = [];
         this.GridPreviewList = [this.Score];
+        this.GridImageList = [null]
         this.GridPreviewIndex = 0;
         this.ActivityStack = []
         this.ActivityIndex = 0;
@@ -236,6 +237,7 @@ class Model
     CreateGridPreview()
     {
         this.GridPreviewList.push([]);
+        this.GridImageList.push([]);
     }
 
     InsertSorted(array, note)

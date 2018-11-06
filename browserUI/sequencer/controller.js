@@ -72,13 +72,20 @@ class Controller
         c_this.RenderGridArray();
     }
 
+    OnThumbnailRender(eventData)
+    {
+        var image = eventData.Image;
+        var index = eventData.GridIndex;
+
+        c_this.Model.GridImageList[index] = image;
+
+        c_this.View.RenderGridArray(c_this.Model.GridImageList, index);
+    }
+
     RenderGridArray()
     {
-        var [gridPreviewList, gridPreviewIndex] = [c_this.Model.GridPreviewList.length, c_this.Model.GridPreviewIndex];
-
-        c_this.RenderMainGridBox()
-        c_this.View.RenderGridArray(gridPreviewList, gridPreviewIndex);
-
+        c_this.RenderMainGridBox();
+        c_this.View.GetGridboxThumbnail(c_this, c_this.OnThumbnailRender, c_this.Model.GridPreviewIndex);
     }
 
     RenderMainGridBox()
@@ -226,7 +233,7 @@ class Controller
                     });
                 });
 
-                c_this.PlayNotes(playbackBuffer);
+                c_this.PlayNotes(playbackBuffer, false);
             }
             else
             {
@@ -448,12 +455,13 @@ class Controller
         return returnIndex;
     }
 
-    OnPlayAllNotes()
+    OnPlayAllNotes(includeSuspensions=false)
     {
+        includeSuspensions = c_this.IncludeSuspensions;
         var playbackNoteArray = c_this.PlaybackNoteArray;
         var noteIndex = c_this.NoteIndex;
         var currentNote = playbackNoteArray[noteIndex];
-        var nextNoteIndex = c_this.PlayChord(playbackNoteArray, noteIndex,false);
+        var nextNoteIndex = c_this.PlayChord(playbackNoteArray, noteIndex, includeSuspensions);
 
         if(nextNoteIndex < playbackNoteArray.length)
         {
@@ -470,7 +478,7 @@ class Controller
         }
     }
 
-    PlayNotes(noteArray)
+    PlayNotes(noteArray, includeSuspensions)
     {
         c_this.NoteIndex = 0;
         c_this.StopPlayingNotes();
@@ -480,7 +488,7 @@ class Controller
 
             c_this.Playing = true;
 
-            c_this.OnPlayAllNotes();
+            c_this.OnPlayAllNotes(includeSuspensions);
         }
     }
 
@@ -628,18 +636,9 @@ class Controller
 
     HandleIndividualNotePlayback(noteIndex)
     {
-        var playbackMode = 2;
+        var playbackMode = c_this.GetPlaybackMode();
         var score = c_this.Model.Score;
         var note = score[noteIndex];
-
-        var eventData = c_this.View.GetFormData();
-        eventData.forEach(function(formData)
-        {
-            if(formData.id == 'Playback')
-            {
-                playbackMode = formData.value;
-            }
-        });
 
         if(playbackMode == 0)
         {
@@ -668,7 +667,7 @@ class Controller
             //If a note is clicked, play it
             if((0 <= clickedNoteIndex) && (clickedNoteIndex < score.length))
             {
-                c_this.HandleIndividualNotePlayback(clickedNoteIndex);
+                score[clickedNoteIndex].IsSelected = true;
             }
 
             //If there are no selected notes, create a select rectangle
@@ -699,7 +698,7 @@ class Controller
 		return playbackMode;
 	}
 
-    ///Unselect all selected notes to anchor them
+    ///Unselect all selected notes to anchor them and play them
     OnMouseClickUp(event)
     {
         c_this.StopPlayingNotes();
@@ -711,6 +710,7 @@ class Controller
 
         else
         {
+            var selectCount = c_this.CountSelectedNotes();
 			var playbackBuffer = [];
             var playbackMode = c_this.GetPlaybackMode();
             var sequenceNumber = sequenceNumber = c_this.GetNextSequenceNumber();
@@ -718,7 +718,6 @@ class Controller
 			//Play notes and handle move completion
             if(playbackMode == 0)
             {
-                note.Play(c_this.MillisecondsPerTick);
                 c_this.ModifySelectedNotes(function(note)
                 {
                     playbackBuffer.push(note);
@@ -728,35 +727,53 @@ class Controller
             }
 
 			//Play all intersecting chords and handle move completion
-            else
+            else if(selectCount > 0)
             {
+                //Push all selected notes to the playback buffer
                 c_this.ModifySelectedNotes(function(note)
                 {
                     playbackBuffer.push(note);
                 });
 
-                //play chords of each note by merging the playback buffer with the overlapping parts of the score
+                var startTickBoundary = playbackBuffer[0].StartTimeTicks;
+                var playbackBufferEndIndex = playbackBuffer.length-1;
+
+                var endTickBoundary =
+                    playbackBuffer[playbackBufferEndIndex].StartTimeTicks +
+                    playbackBuffer[playbackBufferEndIndex].Duration;
+
+                //Find all notes in the score that intersect with the selected notes
                 c_this.DoActionOnAllNotes(function(note)
                 {
-                    var firstTick = playbackBuffer[0].StartTimeTicks;
-                    var lastTick = playbackBuffer[playbackBuffer.length-1].StartTimeTicks + playbackBuffer[playbackBuffer.length-1].Duration;
-                    var bounded = (firstTick <= note.StartTimeTicks) && (note.StartTimeTicks < lastTick)
-                    if(!note.IsSelected && bounded)
+                    var intersectsSelectedNote =
+                        (startTickBoundary <= note.StartTimeTicks) &&
+                        (note.StartTimeTicks < endTickBoundary);
+
+                    if(!note.IsSelected && intersectsSelectedNote)
                     {
                         playbackBuffer.push(note);
+                        console.log("Fon");
                     }
                 });
 
+                //Place all selected notes
                 c_this.ModifySelectedNotes(function(note)
                 {
                     note.IsSelected = false;
                     note.OnMoveComplete(sequenceNumber);
                 });
 
+                //Sort the playback buffer
                 playbackBuffer.sort(m_this.CompareNotes);
             }
-
-            c_this.PlayNotes(playbackBuffer);
+            if(playbackMode == 1)
+            {
+                c_this.PlayNotes(playbackBuffer,false);
+            }
+            else
+            {
+                c_this.PlayNotes(playbackBuffer,true);
+            }
         }
 
 		//Create a new preview note if edit mode is active
