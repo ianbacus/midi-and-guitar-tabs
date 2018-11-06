@@ -46,7 +46,7 @@
         # The maximum number of frets your instrument has (or that you feel
         #comfortable playing).
         ##################################################################
-        Frets:16
+        Frets:10
 
         ###Capo placement
         ##################################################################
@@ -78,13 +78,13 @@
         ##################################################################
         #Increases as a chord or note moves up the neck
         ##################################################################
-        NeckPositionCost:580
+        NeckPositionCost:250
 
         ###Inter-Chord Neck Distance cost
         ##################################################################
         #Increases as the distance between adjacent chords or notes increases
         ##################################################################
-        NeckDiffCost:400
+        NeckDiffCost:800
 
         ###Inter-Chord String Overlap cost
         ##################################################################
