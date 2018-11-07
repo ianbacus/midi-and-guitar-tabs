@@ -1,5 +1,5 @@
 
-console.log = function() {}
+//console.log = function() {}
 
 let ScoreView = new View();
 let ScoreModel = new Model();

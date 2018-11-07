@@ -135,9 +135,14 @@ class View
     {
         var mainDiv = $(v_this.Maingrid)
         var mainDiv = $("#gridboxContainer")
-        var newOffset = mainDiv.scrollLeft()+xOffset
+		var currentScroll = mainDiv.scrollLeft();
+        var newOffset = currentScroll+xOffset;
         mainDiv.scrollLeft(newOffset);
-        console.log(mainDiv)
+		
+		var newScrollPosition = mainDiv.scrollLeft();
+		var actualOffset = newScrollPosition - currentScroll;
+		
+		return actualOffset;
 
     }
 

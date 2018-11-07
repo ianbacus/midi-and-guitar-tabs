@@ -162,7 +162,7 @@ class Controller
             {
                 c_this.EditorMode = editModeEnumeration.SELECT;
                 c_this.HandleSelectionReset();
-                c_this.RenderGridArray()
+                c_this.RenderGridArray();
             }
 
             break;
@@ -182,7 +182,6 @@ class Controller
                 {
                     c_this.Model.Undo();
                     c_this.StopPlayingNotes();
-
                 }
             }
 
@@ -871,7 +870,6 @@ class Controller
                     note.HorizontalModify(newPosition, newDuration, sequenceNumber, shouldCaptureNoteState);
                 }
             });
-            c_this.RenderMainGridBox();
         }
     }
     OnMouseScroll(event)
@@ -884,19 +882,30 @@ class Controller
         //Change horizontal scale
         if(ctrl)
         {
-            c_this.HandleControlScroll(scrollUp)
             event.preventDefault();
+            c_this.HandleControlScroll(scrollUp)
+            c_this.RenderMainGridBox();
         }
         else if(shift)
         {
             event.preventDefault();
+
+			var cursorPosition = 
+			{
+				x:null, 
+				y:c_this.CursorPosition.y
+			}
+			
             var xOffset = 100;
             if(scrollUp)
             {
                 xOffset *= -1;
             }
-
-            c_this.View.ScrollHorizontal(xOffset)
+			
+            var actualXOffset = c_this.View.ScrollHorizontal(xOffset);
+			cursorPosition.x = c_this.CursorPosition.x + actualXOffset
+			c_this.OnMouseMove(cursorPosition);
+            c_this.RenderMainGridBox();
         }
 
         else
