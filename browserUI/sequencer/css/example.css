@@ -12,7 +12,7 @@ canvas {
 	overflow-x:scroll;
     overflow-y:scroll;
 	width:100%;
-	height:500px;
+	height:700px;
 }
 
 .gridNote {
@@ -28,7 +28,7 @@ canvas {
 	width:650%;
 	height:1000px;
 	position:relative;
-	background:whitesmoke url('https://s3.amazonaws.com/com.appgrinders.test/images/grid_20.png') repeat;
+	background:dark grey url('https://s3.amazonaws.com/com.appgrinders.test/images/grid_20.png') repeat;
 }
 
 #feedback { font-size: 1.4em; }

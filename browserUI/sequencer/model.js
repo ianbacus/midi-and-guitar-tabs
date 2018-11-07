@@ -29,7 +29,7 @@ class Note
         this.Pitch += y_offset;
     }
 
-    Play(millisecondsPerTick, instrumentCode=InstrumentEnum.Guitar)
+    Play(millisecondsPerTick, caller, onStopCallback, instrumentCode=InstrumentEnum.Guitar)
     {
         var milliseconds = millisecondsPerTick * this.Duration
 
@@ -65,8 +65,10 @@ class Note
                 synth  = T("PluckGen", {env:env, mul:0.75}).play();
                 break;
         }
-        synth.noteOn(this.Pitch, 100);
+        synth.noteOn(this.Pitch, 200);
+		this.OnStopCallback = {Caller:caller, Callback: onStopCallback};
         this.IsHighlighted = true;
+		
         this.PendingTimeout = setTimeout(
             $.proxy(this.StopPlaying, this),milliseconds);
     }
@@ -74,6 +76,7 @@ class Note
     StopPlaying()
     {
         this.IsHighlighted = false;
+		this.OnStopCallback.Callback.call(this.OnStopCallback.Caller);
     }
 
     HorizontalModify(startTime,duration, sequenceNumber)

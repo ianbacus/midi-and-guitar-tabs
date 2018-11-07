@@ -11,8 +11,7 @@ class View
         this.previewObjs = ['cell', 'wire'];
         this.console = null;
 
-        this.MaximumPitch = 72;
-        this.MinimumPitch = 54;
+        this.MaximumPitch = 77;
 
         this.selectP = { x: 0, y: 0};
 
@@ -100,7 +99,6 @@ class View
 
     ConvertPitchToYIndex(pitch)
     {
-        var pitchRange = v_this.MaximumPitch - v_this.MinimumPitch;
         var pitchOffset = v_this.MaximumPitch - pitch;
 
         return v_this.gridSnap*pitchOffset;
@@ -131,16 +129,39 @@ class View
     {
         $(".selectionRectangle").remove();
     }
+	
+	ScrollVertical(yOffset)
+	{
+        var mainDiv = $("#gridboxContainer")
+		var currentScroll = mainDiv.scrollTop();
+        var newOffset = currentScroll+yOffset;
+		var gridSnap = v_this.gridSnap;
+        mainDiv.scrollTop(newOffset);
+		
+		var newScrollPosition = mainDiv.scrollTop();
+		var actualOffset = newScrollPosition - currentScroll;
+		if(actualOffset > 0)
+			actualOffset = Math.ceil(actualOffset/gridSnap) * gridSnap;
+		else if( actualOffset < 0)
+			actualOffset = Math.floor(actualOffset/gridSnap) * gridSnap;
+		
+		return actualOffset;
+	}
 
     ScrollHorizontal(xOffset)
     {
         var mainDiv = $("#gridboxContainer")
 		var currentScroll = mainDiv.scrollLeft();
         var newOffset = currentScroll+xOffset;
+		var gridSnap = v_this.gridSnap;
         mainDiv.scrollLeft(newOffset);
 		
 		var newScrollPosition = mainDiv.scrollLeft();
 		var actualOffset = newScrollPosition - currentScroll;
+		if(actualOffset > 0)
+			actualOffset = Math.ceil(actualOffset/gridSnap) * gridSnap;
+		else if( actualOffset < 0)
+			actualOffset = Math.floor(actualOffset/gridSnap) * gridSnap;
 		
 		return actualOffset;
     }
@@ -151,13 +172,27 @@ class View
         mainDiv.stop();
     }
 
-    SmoothScroll(xCoordinate, milliseconds)
+    SmoothScroll(xCoordinate, yCoordinate, milliseconds)
     {
         var mainDiv = $("#gridboxContainer");
         var gridWidth = mainDiv.width();
+		
         var halfGridWidth = gridWidth/2;
+		
         var xAdjustedCoordinate = xCoordinate - halfGridWidth;
-        mainDiv.animate({scrollLeft:xAdjustedCoordinate},milliseconds);
+		if(yCoordinate === undefined)
+		{
+			mainDiv.animate({scrollLeft:xAdjustedCoordinate},milliseconds);
+		}
+		else
+		{
+			var gridHeight = mainDiv.height();
+			var halfGridheight = gridHeight/2;
+			var yAdjustedCoordinate = yCoordinate - halfGridheight;
+			
+			console.log(yAdjustedCoordinate, yCoordinate, halfGridheight)
+			mainDiv.animate({scrollTop:yAdjustedCoordinate, scrollLeft:xAdjustedCoordinate},milliseconds);
+		}
     }
 
     GetGridboxThumbnail(instance, imageCallback, index)
@@ -189,7 +224,6 @@ class View
                 }
                 else {
                     canvasNode.css({'border':'solid black 1px'});
-
                 }
 
                 try {
@@ -245,51 +279,81 @@ class View
                  'width':rect_width,'height':rect_height});
     }
 
+	RenderKeys(modeArray)
+	{
+        var keyNoteClass = "keynote";
+        var mainGrid = $(v_this.Maingrid);
+		var mainGridWidth = mainGrid.width();
+		var mainGridHeight = mainGrid.height();
+        $(".keynote").remove();
+		
+		//Give the tonic more opacity than other notes
+		modeArray.some(function(modeSlot)
+		{
+			var offsetY = 0;
+			var repeatOffset = 0;
+			console.log("Handling p",pitch);
+			var pitch = modeSlot.Pitch;
+			var noteOpacity = modeSlot.Opacity;
+			
+			while(offsetY < mainGridHeight)
+			{
+				var colorIndex = v_this.GetColorKey(pitch);
+				offsetY = repeatOffset + v_this.ConvertPitchToYIndex(pitch);
+				console.log("\t",repeatOffset, offsetY);
+				if(offsetY < mainGridHeight)
+				{
+					var node = document.createElement('div');
+					$(node).addClass(keyNoteClass);
+					mainGrid.append(node);
+					$(node).css({'background':colorIndex });
+					$(node).css({'top':offsetY, 'left':0});
+					$(node).css({"opacity":noteOpacity, "height":v_this.gridSnap,"width":mainGridWidth,"position":"absolute"});
+				}
+				repeatOffset += (12)*v_this.gridSnap;
+			}
+		});
+	}
 
     RenderNotes(noteArray, color)
     {
         var gridNoteClass = "gridNote";
         var mainGrid = $(v_this.Maingrid);
         var borderCssString = 'solid '+color+' 1px'
+		var initialNoteStartTimeTicks = 0;
 
         $("#gridboxContainer").css('border',borderCssString);
-
         $(".gridNote").remove();
+		
+		noteArray.forEach(function(note)
+		{
+			var noteWidth = note.Duration*v_this.gridSnap;
+			var pitch = note.Pitch;
+			var node = document.createElement('div');
+			var noteOpacity = 1.0;
+			var noteGridStartTimeTicks = note.StartTimeTicks - initialNoteStartTimeTicks;
 
+			var offsetY = v_this.ConvertPitchToYIndex(pitch);
+			var offsetX = v_this.ConvertTicksToXIndex(noteGridStartTimeTicks);
+			var colorIndex = v_this.GetColorKey(pitch);
 
-        if(noteArray.length > 0)
-        {
-            var initialNoteStartTimeTicks = 0;
-            noteArray.forEach(function(note)
-            {
-                var noteWidth = note.Duration*v_this.gridSnap;
-                var pitch = note.Pitch;
-                var node = document.createElement('div');
-                var noteOpacity = 1.0;
-                var noteGridStartTimeTicks = note.StartTimeTicks - initialNoteStartTimeTicks;
+			$(node).addClass(gridNoteClass);
+			mainGrid.append(node);
+			$(node).css({'background':colorIndex, 'border': 'solid gray 1px'});
 
-                var offsetY = v_this.ConvertPitchToYIndex(pitch);
-                var offsetX = v_this.ConvertTicksToXIndex(noteGridStartTimeTicks);
-                var colorIndex = v_this.GetColorKey(pitch);
+			if(note.IsSelected)
+			{
+				$(node).addClass("selected");
+				noteOpacity = 0.5;
+			}
 
-                $(node).addClass(gridNoteClass);
-                mainGrid.append(node);
-                $(node).css({'background':colorIndex, 'border': 'solid gray 1px'});
+			if(note.IsHighlighted)
+			{
+				$(node).css({'background':'white', 'border': 'solid gray 1px'});
+			}
+			$(node).css({'top':offsetY, 'left':offsetX});
+			$(node).css({"opacity":noteOpacity, "height":v_this.gridSnap,"width":noteWidth,"position":"absolute"});
 
-                if(note.IsSelected)
-                {
-                    $(node).addClass("selected");
-                    noteOpacity = 0.5;
-                }
-
-                if(note.IsHighlighted)
-                {
-                    $(node).css({'background':'white', 'border': 'solid gray 1px'});
-                }
-                $(node).css({'top':offsetY, 'left':offsetX});
-                $(node).css({"opacity":noteOpacity, "height":v_this.gridSnap,"width":noteWidth,"position":"absolute"});
-
-            });
-        }
-    }
+		});
+	}
 }

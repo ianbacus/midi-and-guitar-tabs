@@ -41,6 +41,27 @@ class Controller
     Initialize()
     {
         this.RenderEverything();
+		var noteOpacity = 0.035;
+		var tonicOpacity = 0.25;
+		var dominantOpacity = 0.20;
+		
+		// var startKeys = Array.apply(null, {length: 12}).map(49+Number.call, Number)
+		// console.log(startKeys);
+		
+		// function getModeBuffer(tonic, dominantInterval, intervals)
+		// {
+			// var modeBuffer = [];
+			// intervals.some(function(interval)
+			// {
+				// var modeSlot = {}
+			// }
+		// }
+		
+		var modeBuffer = [
+			{Pitch:60,Opacity:tonicOpacity},{Pitch:62,Opacity:noteOpacity},{Pitch:64,Opacity:noteOpacity},{Pitch:65,Opacity:noteOpacity},{Pitch:67,Opacity:dominantOpacity},
+			{Pitch:69,Opacity:noteOpacity}, {Pitch:71,Opacity:noteOpacity},{Pitch:72,Opacity:noteOpacity},{Pitch:74,Opacity:noteOpacity},{Pitch:76,Opacity:noteOpacity}, 
+			{Pitch:77,Opacity:noteOpacity}];
+		c_this.View.RenderKeys(modeBuffer);
     }
 
     OnThumbnailRender(eventData)
@@ -50,7 +71,7 @@ class Controller
 
         c_this.Model.GridImageList[index] = image;
 
-        c_this.View.RenderEverything(c_this.Model.GridImageList, index);
+        c_this.View.RenderGridArray(c_this.Model.GridImageList, index);
     }
 
     RenderEverything()
@@ -486,6 +507,11 @@ class Controller
         return [chordNotes,returnIndex];
     }
 
+	OnStopNote()
+	{
+        c_this.RenderMainGridBox();
+	}
+	
     PlayChord(noteArray, noteIndex, includeSuspensions)
     {
         //Get all notes that play during this note, return the index of the first note that won't be played in this chord
@@ -494,7 +520,7 @@ class Controller
 
         chordNotes.forEach(function(note)
         {
-            note.Play(c_this.MillisecondsPerTick);
+            note.Play(c_this.MillisecondsPerTick, c_this, c_this.OnStopNote);
         });
 
         c_this.RenderMainGridBox();
@@ -544,10 +570,23 @@ class Controller
             var startX = c_this.View.ConvertTicksToXIndex(startTime);
             var endX = c_this.View.ConvertTicksToXIndex(endTime);
             var playbackDurationMilliseconds = (endTime - startTime)*c_this.MillisecondsPerTick;
-            c_this.View.SmoothScroll(startX,500);
-
-            c_this.View.SmoothScroll(endX, playbackDurationMilliseconds);
             c_this.OnPlayAllNotes(includeSuspensions);
+			
+			if(firstNote.StartTimeTicks != lastNote.StartTimeTicks)
+			{
+				var [chord,x] = c_this.GetChordNotes(noteArray, 0, includeSuspensions);
+				var averagePitchSum = 0;
+				chord.forEach(function(note)
+				{
+					averagePitchSum += note.Pitch;
+				});
+				
+				var averagePitch = averagePitchSum / chord.length;
+				var ycoord = c_this.View.ConvertPitchToYIndex(averagePitch);
+				c_this.View.SmoothScroll(startX,ycoord, 500);
+				c_this.View.SmoothScroll(endX, undefined, playbackDurationMilliseconds);
+			}
+			
         }
     }
 
@@ -986,7 +1025,24 @@ class Controller
 
         else
         {
-            //Regular scroll: do nothing
+            event.preventDefault();
+			
+			var cursorPosition = 
+			{
+				x:c_this.CursorPosition.x, 
+				y:null
+			}
+			
+            var yOffset = 100;
+            if(scrollUp)
+            {
+                yOffset *= -1;
+            }
+			
+            var actualYOffset = c_this.View.ScrollVertical(yOffset);
+			cursorPosition.y = c_this.CursorPosition.y + actualYOffset
+			c_this.OnMouseMove(cursorPosition);
+            c_this.RenderMainGridBox();
         }
     }
 
