@@ -5,24 +5,25 @@ class View
     constructor()
     {
         v_this = this;
-        v_this.Maingrid = "#gridbox";
-        v_this.GridArray = "#GridboxArray";
-        v_this.PlayButton = "#PlayButton";
-        v_this.previewObjs = ['cell', 'wire'];
+        this.Maingrid = "#gridbox";
+        this.GridArray = "#GridboxArray";
+        this.PlayButton = "#PlayButton";
+        this.previewObjs = ['cell', 'wire'];
+        this.console = null;
 
-        v_this.MaximumPitch = 72;
-        v_this.MinimumPitch = 54;
+        this.MaximumPitch = 72;
+        this.MinimumPitch = 54;
 
-        v_this.selectP = { x: 0, y: 0};
+        this.selectP = { x: 0, y: 0};
 
-        v_this.gridSnap = 20;
+        this.gridSnap = 20;
 
-        v_this.colorKey = [
+        this.colorKey = [
             'red',    '#CC0099','yellow', '#669999',
             '#003399','#990000','#000099','#ff6600',
             '#660066','#006600','#669999','#003399'];
 
-        v_this.pitchKey = [
+        this.pitchKey = [
             261.626,277.183,293.665,311.127,
             329.628,349.228,369.994,391.995,
             415.305,440.000,466.164,493.883,
@@ -45,21 +46,21 @@ class View
         onButtonPress,
         radioButtonHandler)
     {
-    	$(v_this.Maingrid)
-            .mousemove(v_this.OnMouseMove)
+    	$(this.Maingrid)
+            .mousemove(this.OnMouseMove)
             .mousedown(onMouseClickDown)
             .mouseup(onMouseClickUp)
             .mouseenter(onHoverBegin)
             .mouseleave(onHoverEnd);
 
-        $(v_this.PlayButton).click(onButtonPress);
-        $('input[type=radio]').change(v_this.OnRadioButton);
+        $(this.PlayButton).click(onButtonPress);
+        $('input[type=radio]').change(this.OnRadioButton);
 
         $(document).keydown(onKeyUp);
-        v_this.GridMouseHandler = onMouseMove;
-        v_this.RadioButtonHandler = radioButtonHandler;
+        this.GridMouseHandler = onMouseMove;
+        this.RadioButtonHandler = radioButtonHandler;
 
-        $(v_this.Maingrid).bind('mousewheel DOMMouseScroll', onMouseScroll);
+        $(this.Maingrid).bind('mousewheel DOMMouseScroll', onMouseScroll);
 
     }
 
@@ -133,11 +134,27 @@ class View
 
     ScrollHorizontal(xOffset)
     {
-        var mainDiv = $(v_this.Maingrid)
         var mainDiv = $("#gridboxContainer")
         var newOffset = mainDiv.scrollLeft()+xOffset
         mainDiv.scrollLeft(newOffset);
-        console.log(mainDiv)
+    }
+
+    CancelScroll()
+    {
+        var mainDiv = $("#gridboxContainer")
+        mainDiv.stop();
+    }
+
+    SmoothScroll(xCoordinate, milliseconds)
+    {
+        var mainDiv = $("#gridboxContainer");
+        var gridWidth = mainDiv.width();
+        var halfGridWidth = gridWidth/2;
+        var xAdjustedCoordinate = xCoordinate - halfGridWidth;
+        //var newOffset = mainDiv.scrollLeft()+xOffset
+
+        mainDiv.animate({scrollLeft:xAdjustedCoordinate},milliseconds);
+        console.log(milliseconds,"TICKS");
 
     }
 
@@ -145,7 +162,7 @@ class View
     {
         var x = $("#gridboxContainer")[0]
 
-        html2canvas(x).then(function(img)
+        html2canvas(x, {logging:false}).then(function(img)
         {
             var eventData = {Image: img, GridIndex: index};
             imageCallback.call(instance, eventData)
@@ -183,7 +200,7 @@ class View
                         context.drawImage(image, 0, 0, cWidth,cHeight);
                     }
                 } catch (e) {
-                    console.log(e);
+                    v_this.console.log(e);
                 } finally {
 
                     nodeIndex++;
@@ -224,8 +241,8 @@ class View
         $(node).css({'top':top, 'left':left,
                  'border':'solid black 1px', 'position':'absolute',
                  'width':rect_width,'height':rect_height});
-
     }
+
 
     RenderNotes(noteArray, color)
     {
@@ -253,17 +270,23 @@ class View
                 var offsetX = v_this.ConvertTicksToXIndex(noteGridStartTimeTicks);
                 var colorIndex = v_this.GetColorKey(pitch);
 
+                $(node).addClass(gridNoteClass);
+                mainGrid.append(node);
+                $(node).css({'background':colorIndex, 'border': 'solid gray 1px'});
+
                 if(note.IsSelected)
                 {
                     $(node).addClass("selected");
                     noteOpacity = 0.5;
                 }
 
-                $(node).addClass(gridNoteClass);
-                mainGrid.append(node);
+                if(note.IsHighlighted)
+                {
+                    $(node).css({'background':'white', 'border': 'solid gray 1px'});
+                }
                 $(node).css({'top':offsetY, 'left':offsetX});
                 $(node).css({"opacity":noteOpacity, "height":v_this.gridSnap,"width":noteWidth,"position":"absolute"});
-                $(node).css({'background':colorIndex, 'border': 'solid gray 1px'});
+
             });
         }
     }

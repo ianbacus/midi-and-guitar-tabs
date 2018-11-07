@@ -13,63 +13,34 @@ var editModeEnumeration = {
 
 let c_this = undefined;
 
-
-class SelectModeController
-{
-    constructor()
-    {
-        //SelectMode = sm.BEGIN;
-    }
-
-    OnMouseMove(event)
-    {
-        //case 1: render preview
-        //case 2: move selected items
-        //case 3:
-    }
-};
-
-class EditModeController
-{
-    constructor()
-    {
-        //EditMode = em.BEGIN;
-    }
-
-    OnMouseMove(event)
-    {
-        //case 1: render preview
-        //case 2: move selected items
-        //case 3:
-    }
-};
-
 class Controller
 {
     constructor(view, model)
     {
         c_this = this;
-        c_this.EditorMode = editModeEnumeration.EDIT;
-        c_this.View = view;
-        c_this.Model = model;
-        c_this.CursorPosition = { x: -1, y: -1 };
-        c_this.SelectorPosition = { x: -1, y: -1 };
-        c_this.Playing = false;
-        c_this.Hovering = false;
-        c_this.SelectingGroup = false;
-        c_this.EditModeColors = ['orange','blue','green'];
-        c_this.DefaultNoteDuration = 4;
-        c_this.MillisecondsPerTick = 100;
-        c_this.NoteIndex = 0;
-        c_this.PendingTimeout = null;
-        c_this.SequenceNumber = 0;
+        this.EditorMode = editModeEnumeration.EDIT;
+        this.View = view;
+        this.Model = model;
+        this.CursorPosition = { x: -1, y: -1 };
+        this.SelectorPosition = { x: -1, y: -1 };
+        this.Playing = false;
+        this.Hovering = false;
+        this.SelectingGroup = false;
+        this.EditModeColors = ['orange','blue','green'];
+        this.DefaultNoteDuration = 4;
+        this.MillisecondsPerTick = 100;
+        this.NoteIndex = 0;
+        this.PendingTimeout = null;
+        this.SequenceNumber = 0;
+        this.console = null;
 
+        this.PasteBuffer = []
 
     }
 
     Initialize()
     {
-        c_this.RenderGridArray();
+        this.RenderGridArray();
     }
 
     OnThumbnailRender(eventData)
@@ -117,7 +88,7 @@ class Controller
 
     ModifySelectedNotes(transform)
     {
-        c_this.Model.Score.forEach( function(note)
+        c_this.Model.Score.some( function(note)
         {
             if(note.IsSelected)
             {
@@ -128,7 +99,7 @@ class Controller
 
     DoActionOnAllNotes(transform)
     {
-        c_this.Model.Score.forEach( function(note)
+        c_this.Model.Score.some( function(note)
         {
             transform(note)
         });
@@ -150,6 +121,66 @@ class Controller
 		var maximumSequenceNumber = 10000;//Number.MAX_SAFE_INTEGER-1;
         c_this.SequenceNumber = (c_this.SequenceNumber+1)%maximumSequenceNumber;
         return c_this.SequenceNumber;
+    }
+
+    PreparePasteBuffer(copyBuffer)
+    {
+        var pasteBuffer = [];
+        copyBuffer.forEach(function(noteToCopy)
+        {
+            var noteCopy = new Note(noteToCopy.StartTimeTicks, noteToCopy.Pitch, noteToCopy.Duration, false);
+
+            var offsetX = c_this.View.ConvertTicksToXIndex(noteToCopy.StartTimeTicks);
+            var offsetY = c_this.View.ConvertPitchToYIndex(noteToCopy.Pitch);
+
+            var noteCursorDisplacement =
+            {
+                x: offsetX - c_this.CursorPosition.x,
+                y: offsetY - c_this.CursorPosition.y,
+            }
+
+            var pasteData =
+            {
+                NoteCopy:noteCopy,
+                NoteCursorDisplacement: noteCursorDisplacement,
+            }
+
+            pasteBuffer.push(pasteData);
+        });
+
+        return pasteBuffer;
+    }
+
+    InstantiatePasteBuffer(pasteBuffer)
+    {
+        // c_this.console.log(pasteBuffer);
+        //Reset the position of the selected notes in case they were dragged away from their start point
+        c_this.HandleSelectionReset();
+
+        //Instantiate the copied notes
+        pasteBuffer.forEach(function(pasteData)
+        {
+            var noteToPaste = pasteData.NoteCopy;
+            var noteCursorDisplacement = pasteData.NoteCursorDisplacement;
+
+            var xticks = noteCursorDisplacement.x + c_this.CursorPosition.x;
+            var yticks = noteCursorDisplacement.y + c_this.CursorPosition.y;
+
+            var startTimeTicks =
+                c_this.View.ConvertXIndexToTicks(c_this.CursorPosition.x) +
+                c_this.View.ConvertXIndexToTicks(noteCursorDisplacement.x);
+
+            var pitch =
+                c_this.View.ConvertYIndexToPitch(c_this.CursorPosition.y) +
+                c_this.View.ConvertYIndexToPitch(noteCursorDisplacement.y);
+
+            var p2 = c_this.View.ConvertYIndexToPitch(yticks);
+
+            console.log(p2, pitch, noteCursorDisplacement.y);
+
+            var instantiatedNote = new Note(startTimeTicks, p2, noteToPaste.Duration, true);
+            c_this.Model.AddNote(instantiatedNote, 0, c_this.Model.Score, false);
+        });
     }
 
     OnKeyUp(event)
@@ -175,7 +206,7 @@ class Controller
                 var selectCount = c_this.CountSelectedNotes();
                 if(selectCount > 1)
                 {
-                    console.log("Resetting selected notes");
+                    c_this.console.log("Resetting selected notes");
                     c_this.HandleSelectionReset()
                 }
                 else
@@ -243,27 +274,42 @@ class Controller
             break;
 
         case 67: //"c" key"
-            var copyBuffer = []
+            var copyBuffer = [];
 
             //Copy all selected notes into a buffer
-            c_this.ModifySelectedNotes(function(note)
+            c_this.ModifySelectedNotes(function(noteToCopy)
             {
-                var copiedNote = new Note(note.StartTimeTicks, note.Pitch, note.Duration, true);
-                copyBuffer.push(copiedNote);
+                copyBuffer.push(noteToCopy);
             });
 
-            //Reset the position of the selected notes in case they were dragged away from their start point
-            c_this.HandleSelectionReset();
-
-            //Instantiate the copied notes
-            copyBuffer.forEach(function(note)
-            {
-                c_this.Model.AddNote(note, 0, c_this.Model.Score, false);
-            });
+            c_this.PasteBuffer = c_this.PreparePasteBuffer(copyBuffer);
+            c_this.InstantiatePasteBuffer(c_this.PasteBuffer);
 
             c_this.RenderGridArray();
             break;
 
+        case 86: //"v" key
+
+            c_this.InstantiatePasteBuffer(c_this.PasteBuffer);
+            c_this.RenderGridArray();
+            break;
+
+        case 65: //"a key"
+            //ctrl+a: select all
+            event.preventDefault();
+            if(c_this.EditorMode != editModeEnumeration.SELECT)
+            {
+                c_this.EditorMode = editModeEnumeration.SELECT;
+                c_this.HandleSelectionReset();
+            }
+            if(event.ctrlKey)
+            {
+                c_this.DoActionOnAllNotes(function(note)
+                {
+                    note.IsSelected = true;
+                });
+            }
+            c_this.RenderGridArray();
         case 81: //"q" key
             break;
 
@@ -310,13 +356,13 @@ class Controller
 
         c_this.Model.SetCurrentGridPreview(c_this.Model.Score);
 
-        console.log("Transport begin");
+        c_this.console.log("Transport begin");
 
         //Capture any selected notes and delete them before changing grids
         c_this.ModifySelectedNotes(function(note)
         {
 			var copiedNote = note;
-            console.log("Packing note: ", note);
+            c_this.console.log("Packing note: ", note);
             copyBuffer.push(copiedNote);
         });
 
@@ -328,12 +374,12 @@ class Controller
         //Instantiate the copied notes in the next buffer
         copyBuffer.forEach(function(note)
         {
-            console.log("Transporting note: ", note, newGridIndex);
+            c_this.console.log("Transporting note: ", note, newGridIndex);
 			note.CurrentGridIndex = newGridIndex;
             c_this.Model.AddNote(note, sequenceNumber, c_this.Model.Score, false);
         });
 
-        console.log("Transport end");
+        c_this.console.log("Transport end");
 
     }
 
@@ -463,14 +509,17 @@ class Controller
         var currentNote = playbackNoteArray[noteIndex];
         var nextNoteIndex = c_this.PlayChord(playbackNoteArray, noteIndex, includeSuspensions);
 
+        var delta = 0;
+        var xOffset = c_this.View.ConvertTicksToXIndex(currentNote.StartTimeTicks);
+
         if(nextNoteIndex < playbackNoteArray.length)
         {
             var nextNote = playbackNoteArray[nextNoteIndex];
             var relativeDelta = nextNote.StartTimeTicks - currentNote.StartTimeTicks;
-            var delta = relativeDelta*c_this.MillisecondsPerTick;
+            delta = relativeDelta*c_this.MillisecondsPerTick;
 
             c_this.NoteIndex = nextNoteIndex;
-            c_this.PendingTimeout = setTimeout(c_this.OnPlayAllNotes, delta)
+            c_this.PendingTimeout = setTimeout(c_this.OnPlayAllNotes, delta);
         }
         else
         {
@@ -487,7 +536,16 @@ class Controller
             c_this.PlaybackNoteArray = noteArray
 
             c_this.Playing = true;
+            var firstNote = noteArray[0];
+            var lastNote = noteArray[noteArray.length-1];
+            var startTime = firstNote.StartTimeTicks;
+            var endTime = lastNote.StartTimeTicks + lastNote.Duration;
+            var startX = c_this.View.ConvertTicksToXIndex(startTime);
+            var endX = c_this.View.ConvertTicksToXIndex(endTime);
+            var playbackDurationMilliseconds = (endTime - startTime)*c_this.MillisecondsPerTick;
+            c_this.View.SmoothScroll(startX,500);
 
+            c_this.View.SmoothScroll(endX, playbackDurationMilliseconds);
             c_this.OnPlayAllNotes(includeSuspensions);
         }
     }
@@ -495,6 +553,7 @@ class Controller
     StopPlayingNotes()
     {
         c_this.Playing = false;
+        c_this.View.CancelScroll();
         clearTimeout(c_this.PendingTimeout);
 
     }
@@ -689,7 +748,7 @@ class Controller
 
 		eventData.forEach(function(formData)
 		{
-			if(formData.id == 'Playback')
+			if(formData.id == 'PlayPreview')
 			{
 				playbackMode = formData.value;
 			}
@@ -752,7 +811,6 @@ class Controller
                     if(!note.IsSelected && intersectsSelectedNote)
                     {
                         playbackBuffer.push(note);
-                        console.log("Fon");
                     }
                 });
 
@@ -786,25 +844,30 @@ class Controller
         c_this.RenderGridArray();
     }
 
+    //Resize notes
     HandleControlScroll(scrollUp)
     {
         var shouldScroll = true;
         var selectCount = c_this.CountSelectedNotes();
 
+        //Only allow all selected notes or all unselected notes, depending on the select count.
+        //case 1: select count of 0 -> resize all notes
+        //case 2: select count != 0 -> resize all selected notes
         function evaluateNoteScrollBehavior(note, selectCount)
         {
-            var resizeNote = (!note.IsSelected && (selectCount == 0)) || (note.IsSelected  && (selectCount > 0))
-            var captureNoteState = !note.IsSelected;
+            var selected = note.IsSelected;
+            var resizeNote = (!selected && (selectCount == 0)) || (selected  && (selectCount > 0))
+            var unselectedNotesOnly = !selected;
 
-            return [resizeNote, captureNoteState]
-        }
+            return resizeNote
+        };
 
         var firstNotePosition = undefined;
+        //Determine if the resize request is valid
         c_this.DoActionOnAllNotes(function(note)
         {
-            var [shouldResizeNote, shouldCaptureNoteState] = evaluateNoteScrollBehavior(note,selectCount);
+            var shouldResizeNote = evaluateNoteScrollBehavior(note,selectCount);
 
-            //Determine if the resize request is valid
             if(shouldResizeNote)
             {
                 if(firstNotePosition == undefined)
@@ -814,17 +877,18 @@ class Controller
 
                 var noteOffset =  (note.StartTimeTicks - firstNotePosition);
 
-                if(!shouldScroll)
-                {
-                    return;
-                }
-                else if(scrollUp)
+                if(scrollUp)
                 {
                     shouldScroll = note.Duration <= 8;
                 }
                 else
                 {
-                    shouldScroll = (note.Duration > 1)  && ((noteOffset % 2) == 0);;
+                    shouldScroll = (note.Duration > 1)  && ((noteOffset % 2) == 0);
+                }
+
+                if(!shouldScroll)
+                {
+                    return;
                 }
             }
         });
@@ -839,13 +903,22 @@ class Controller
             {
                 var newDuration;
                 var newPosition;
-                var [shouldResizeNote, shouldCaptureNoteState] = evaluateNoteScrollBehavior(note,selectCount);
+                var shouldResizeNote = evaluateNoteScrollBehavior(note,selectCount);
 
                 if(shouldResizeNote)
                 {
                     if(firstNotePosition == undefined)
                     {
                         firstNotePosition = note.StartTimeTicks;
+                        //TODO: Not sure about this yet
+                        // if(scrollUp && unselectedNotesOnly && (c_this.MillisecondsPerTick > 100))
+                        // {
+                        //     c_this.MillisecondsPerTick /= 2;
+                        // }
+                        // else if(!scrollUp && unselectedNotesOnly && (c_this.MillisecondsPerTick < 1000))
+                        // {
+                        //     c_this.MillisecondsPerTick *= 2;
+                        // }
                     }
 
                     var noteOffset = (note.StartTimeTicks - firstNotePosition);
@@ -865,10 +938,9 @@ class Controller
                     if(selectCount == 1)
                     {
                         c_this.DefaultNoteDuration = newDuration;
-                        shouldCaptureNoteState = false;
                     }
 
-                    note.HorizontalModify(newPosition, newDuration, sequenceNumber, shouldCaptureNoteState);
+                    note.HorizontalModify(newPosition, newDuration, sequenceNumber);
                 }
             });
             c_this.RenderMainGridBox();
@@ -907,7 +979,7 @@ class Controller
 
     OnRadioButtonPress(eventData)
     {
-        console.log(eventData);
+        c_this.console.log(eventData);
         /*
         var html2obj = html2canvas($('body')[0]);
         var queue  = html2obj.parse();
@@ -1000,7 +1072,7 @@ class Controller
             var duration = parseInt($(this).css('width'),10)/snapX;
             var entry = {'pitch':pitch,'delta':delta,'duration':duration};
             noteArray.push(entry);
-            //console.log(entry);
+            //c_this.console.log(entry);
         	});
         	return noteArray;
         }
@@ -1044,8 +1116,8 @@ class Controller
             }
         	}
         	//merged dict of temporal events
-        	//console.log('temporary: '+JSON.stringify(temporaryDict));
-        	//console.log('main: '+JSON.stringify(temporalDict));
+        	//c_this.console.log('temporary: '+JSON.stringify(temporaryDict));
+        	//c_this.console.log('main: '+JSON.stringify(temporalDict));
 
         	for(var delta in temporaryDict)
         	{
@@ -1075,7 +1147,7 @@ class Controller
             }
         	}
         	var intervals = []
-        	console.log(JSON.stringify(temporalDict));
+        	c_this.console.log(JSON.stringify(temporalDict));
         	for(var delta in temporalDict)
         	{
             //If more than 2 entries, just ignore it.. use outer eventually
@@ -1083,7 +1155,7 @@ class Controller
             	intervals.push(Math.abs(temporalDict[delta][0].pitch - temporalDict[delta][1].pitch));
 
         	}
-        	console.log(intervals);
+        	c_this.console.log(intervals);
         	return intervals;
 
         }

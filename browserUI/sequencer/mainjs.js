@@ -1,14 +1,28 @@
 
-console.log = function() {}
+//console = function() {}
 
+class disabledConsole
+{
+    constructor()
+    {
+
+    }
+    log()
+    {
+        //Do nothing
+    }
+}
 let ScoreView = new View();
 let ScoreModel = new Model();
 let ScoreController = new Controller(ScoreView,ScoreModel);
 
+ScoreView.console = new disabledConsole();
+ScoreModel.console = new disabledConsole();
+ScoreController.console = console;
+
 
 $( function()
 {
-    console.log("begin");
     ScoreController.Initialize();
     ScoreView.Initialize(
         ScoreController.OnKeyUp,

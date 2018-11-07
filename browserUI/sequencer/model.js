@@ -1,34 +1,14 @@
 let m_this = undefined;
 
-var pitchKey = [
-
-18, 19, 20, 21, 23, 24, 25, 27, 29, 30.86, 32.7, 32, 36, 38, 41, 43, 46, 48, 51, 55, 58, 61, 65, 69, 73, 77, 82, 87, 92, 103, 110, 116, 123, 130, 138, 146, 155, 164, 174, 184, 195, 207, 220, 233, 246, 261,
-
-    261.626,277.183,293.665,311.127,
-    329.628,349.228,369.994,391.995,
-    415.305,440.000,466.164,493.883,
-
-    523.251,554.365,587.330,622.254,
-    659.255,698.456,739.989,783.991,
-    830.609,880.000,932.328,987.767,
-
-    1046.50,1108.73,1174.66,1244.51,
-    1318.51,1396.61,1479.98,1567.98];
-
-var Synthesizer = T("OscGen",
-{
-    //wave: "fami",
-    wave: "cos",
-
-    //fami, saw, tri, pulse, konami, cos, sin
-    mul: 0.025
-
-}).play();
-
+var InstrumentEnum = {
+	Violin: 0,
+	Guitar: 1,
+	Flute: 2
+};
 
 class Note
 {
-    constructor(startTimeTicks, pitch, duration, selected, selectedPitchAndTicks=null, currentGridIndex=m_this.GridPreviewIndex)
+    constructor(startTimeTicks, pitch, duration, selected, currentGridIndex=m_this.GridPreviewIndex)
     {
         this.Pitch = pitch;
         this.StartTimeTicks = startTimeTicks;
@@ -37,8 +17,10 @@ class Note
         this.CurrentGridIndex = currentGridIndex;
 
         this.StateWhenSelected = null
-        this.SelectedPitchAndTicks = selectedPitchAndTicks;
         this.SelectedGridIndex = m_this.GridPreviewIndex;
+        this.console = null;
+
+        this.IsHighlighted = false;
     }
 
     Move(x_offset, y_offset)
@@ -47,28 +29,63 @@ class Note
         this.Pitch += y_offset;
     }
 
-    Play(millisecondsPerTick)
+    Play(millisecondsPerTick, instrumentCode=InstrumentEnum.Guitar)
     {
-        var numberOfPitches = pitchKey.length;
-        var pitchIndex = this.Pitch % numberOfPitches;
         var milliseconds = millisecondsPerTick * this.Duration
 
-        var env = T("perc", {a:55, r:milliseconds*1.5});
-        var pluckGenerator  = T("PluckGen", {env:env, mul:0.5}).play();
-        pluckGenerator.noteOn(this.Pitch, 100);
+        var env;
+        var synth;
+        switch(instrumentCode)
+        {
+            //TODO: improve instruments
+            case InstrumentEnum.Violin:
+                env = T("perc", {a:655, r:milliseconds*1.5});
+                synth  = T("PluckGen", {env:env, mul:0.75}).play();
+                break;
+
+            case InstrumentEnum.Guitar:
+                env = T("perc", {a:100, r:milliseconds*1.0});
+                synth  = T("PluckGen", {env:env, mul:0.75}).play();
+                break;
+
+            case InstrumentEnum.Flute:
+                //fami, saw, tri, pulse, konami, cos, sin
+                var table = [10,
+                    [10, milliseconds/10], [50, milliseconds/9], [100, milliseconds/8],
+                    [50, milliseconds/7], [150, milliseconds/6], [200, milliseconds/5],
+                    [150, milliseconds/4], [100, milliseconds/3], [50, milliseconds/2],
+                    [10, milliseconds]];
+                //env   = T("env", {table:table, loopNode:0}).bang();
+                env = T("perc", {a:250, ar:true, r:milliseconds*1.0});
+                synth = T("OscGen", {env:env, wave: "konami", mul: 0.75 }).play();
+                break;
+
+            default:
+                env = T("perc", {a:5, r:milliseconds*1.0});
+                synth  = T("PluckGen", {env:env, mul:0.75}).play();
+                break;
+        }
+        synth.noteOn(this.Pitch, 100);
+        this.IsHighlighted = true;
+        this.PendingTimeout = setTimeout(
+            $.proxy(this.StopPlaying, this),milliseconds);
     }
 
-    HorizontalModify(startTime,duration, sequenceNumber, shouldModify)
+    StopPlaying()
+    {
+        this.IsHighlighted = false;
+    }
+
+    HorizontalModify(startTime,duration, sequenceNumber)
     {
         var initialState = this.CaptureState();
 
         this.Duration = duration;
         this.StartTimeTicks = startTime;
-
-        var currentState = this.CaptureState();
-
-        if(shouldModify)
+        if(!this.IsSelected)
         {
+            var currentState = this.CaptureState();
+
             m_this.PushAction({
                 Action:'MODIFY',
                 SequenceNumber:sequenceNumber,
@@ -123,7 +140,7 @@ class Note
         var exactMatch =
             (state1.Pitch === state2.Pitch) &&
             (state1.StartTimeTicks === state2.StartTimeTicks) &&
-            (state1.duration === state2.duration) &&
+            (state1.Duration === state2.Duration) &&
             (state1.GridIndex === state2.GridIndex);
 
         return exactMatch;
@@ -266,7 +283,7 @@ class Model
     {
         var returnIndex2 = undefined;
         var lastCompareResult = undefined;
-        console.log("Begin searching for ", searchNote);
+        m_this.console.log("Begin searching for ", searchNote);
 
         for(var returnIndex in array)
         {
@@ -277,12 +294,12 @@ class Model
             //-1: searchNote < otherNoteotherNote: stop
             //0: searchNote == otherNote: return the index of an exact match (the pitch and duration are the same), or the index after all 'inexact' matches
 
-            console.log("Searching, index " + returnIndex + ", cmp=" + compareResult, otherNote)
+            m_this.console.log("Searching, index " + returnIndex + ", cmp=" + compareResult, otherNote)
             if((compareResult === 0) || ((lastCompareResult != undefined) && (lastCompareResult != compareResult)))
             {
                 if(returnIndex2 == undefined)
                 {
-                    console.log("Search complete", compareResult, otherNote);
+                    m_this.console.log("Search complete", compareResult, otherNote);
                     returnIndex2 = returnIndex;
                 }
             }
@@ -291,7 +308,7 @@ class Model
 
         }
 
-        console.log("Search complete. Index ="+returnIndex);
+        m_this.console.log("Search complete. Index ="+returnIndex);
         return returnIndex2;
     }
 
@@ -375,7 +392,7 @@ class Model
             {
                 stackTop.MoveBuffer.push(action.MoveData);
                 pushSuccessful = true;
-                console.log("Group "+action.Action + ": " + stackTop.MoveBuffer.length + " datums")
+                m_this.console.log("Group "+action.Action + ": " + stackTop.MoveBuffer.length + " datums")
             }
         }
 
@@ -393,14 +410,14 @@ class Model
         if(this.ActivityIndex != stackLength-1)
         {
             var resetIndex = this.ActivityIndex+1;
-            console.log("Resetting stack up to and including index "+resetIndex);
+            m_this.console.log("Resetting stack up to and including index "+resetIndex);
             this.ActivityStack = this.ActivityStack.slice(0,resetIndex);
         }
 
         //Lose the last action if the stack is full
         if(stackLength >= this.MaximumActivityStackLength)
         {
-            console.log("Maximum undo length reached. Discarding old state information.")
+            m_this.console.log("Maximum undo length reached. Discarding old state information.")
             this.ActivityStack.pop();
         }
 
@@ -420,11 +437,11 @@ class Model
         {
             action.MoveBuffer.push(action.MoveData);
             m_this.ActivityStack.push(action)
-            console.log("Distinct "+action.Action +". New stack length: "+this.ActivityStack.length);
+            m_this.console.log("Distinct "+action.Action +". New stack length: "+this.ActivityStack.length);
         }
 
         this.ActivityIndex = this.ActivityStack.length - 1;
-        console.log("Push complete. Activity stack index: "+ this.ActivityIndex+"/"+(this.ActivityStack.length-1));
+        m_this.console.log("Push complete. Activity stack index: "+ this.ActivityIndex+"/"+(this.ActivityStack.length-1));
     }
 
     Undo()
@@ -435,7 +452,7 @@ class Model
             var moveBuffer = mostRecentAction.MoveBuffer;
             var gridBuffer = this.GridPreviewList[mostRecentAction.GridIndex];
 
-            console.log("Undoing " + mostRecentAction.Action + " on " + moveBuffer.length + " notes, actionID = " + mostRecentAction.SequenceNumber);
+            m_this.console.log("Undoing " + mostRecentAction.Action + " on " + moveBuffer.length + " notes, actionID = " + mostRecentAction.SequenceNumber);
 
             this.ActivityIndex--;
 
@@ -471,7 +488,7 @@ class Model
             }
 
             gridBuffer.sort(m_this.CompareNotes);
-            console.log("Undo complete. Activity stack index: "+ this.ActivityIndex+"/"+(this.ActivityStack.length-1));
+            m_this.console.log("Undo complete. Activity stack index: "+ this.ActivityIndex+"/"+(this.ActivityStack.length-1));
         }
 
     }
@@ -485,7 +502,7 @@ class Model
             var moveBuffer = mostRecentAction.MoveBuffer;
             var gridBuffer = this.GridPreviewList[mostRecentAction.GridIndex];
 
-            console.log("Redoing " + mostRecentAction.Action + " on " + moveBuffer.length + " notes, actionID = " + mostRecentAction.SequenceNumber);
+            m_this.console.log("Redoing " + mostRecentAction.Action + " on " + moveBuffer.length + " notes, actionID = " + mostRecentAction.SequenceNumber);
 
             //Redo addition
             if(mostRecentAction.Action === 'ADD')
@@ -522,7 +539,7 @@ class Model
             }
 
             gridBuffer.sort(m_this.CompareNotes);
-            console.log("Redo complete. Activity stack index: "+ this.ActivityIndex+"/"+(this.ActivityStack.length-1));
+            m_this.console.log("Redo complete. Activity stack index: "+ this.ActivityIndex+"/"+(this.ActivityStack.length-1));
         }
 
 
