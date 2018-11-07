@@ -40,7 +40,7 @@ class Controller
 
     Initialize()
     {
-        this.RenderGridArray();
+        this.RenderEverything();
     }
 
     OnThumbnailRender(eventData)
@@ -50,10 +50,10 @@ class Controller
 
         c_this.Model.GridImageList[index] = image;
 
-        c_this.View.RenderGridArray(c_this.Model.GridImageList, index);
+        c_this.View.RenderEverything(c_this.Model.GridImageList, index);
     }
 
-    RenderGridArray()
+    RenderEverything()
     {
         c_this.RenderMainGridBox();
         c_this.View.GetGridboxThumbnail(c_this, c_this.OnThumbnailRender, c_this.Model.GridPreviewIndex);
@@ -193,7 +193,7 @@ class Controller
             {
                 c_this.EditorMode = editModeEnumeration.SELECT;
                 c_this.HandleSelectionReset();
-                c_this.RenderGridArray()
+                c_this.RenderEverything()
             }
 
             break;
@@ -237,14 +237,14 @@ class Controller
             }
             if(renderGrid)
             {
-                c_this.RenderGridArray();
+                c_this.RenderEverything();
             }
 
             break;
         case 68: //"d" key
             //Delete any selected notes, and enter delete mode
             c_this.DeleteSelectedNotes(true);
-            c_this.RenderGridArray()
+            c_this.RenderEverything()
             break;
 
         case 32: //spacebar
@@ -285,13 +285,13 @@ class Controller
             c_this.PasteBuffer = c_this.PreparePasteBuffer(copyBuffer);
             c_this.InstantiatePasteBuffer(c_this.PasteBuffer);
 
-            c_this.RenderGridArray();
+            c_this.RenderEverything();
             break;
 
         case 86: //"v" key
 
             c_this.InstantiatePasteBuffer(c_this.PasteBuffer);
-            c_this.RenderGridArray();
+            c_this.RenderEverything();
             break;
 
         case 65: //"a key"
@@ -309,7 +309,7 @@ class Controller
                     note.IsSelected = true;
                 });
             }
-            c_this.RenderGridArray();
+            c_this.RenderEverything();
         case 81: //"q" key
             break;
 
@@ -318,19 +318,19 @@ class Controller
 
         case 69: //"e" key: Add new grid
             c_this.Model.CreateGridPreview();
-            c_this.RenderGridArray();
+            c_this.RenderEverything();
 
             break;
         case 38: //up arrow: select grid
             event.preventDefault();
             c_this.HandleGridMove(true);
-            c_this.RenderGridArray();
+            c_this.RenderEverything();
             break;
 
         case 40: //down arrow: select grid
             event.preventDefault();
             c_this.HandleGridMove(false);
-            c_this.RenderGridArray();
+            c_this.RenderEverything();
             break;
         }
     }
@@ -498,6 +498,8 @@ class Controller
             note.Play(c_this.MillisecondsPerTick);
         });
 
+        c_this.RenderMainGridBox();
+
         return returnIndex;
     }
 
@@ -555,6 +557,7 @@ class Controller
         c_this.Playing = false;
         c_this.View.CancelScroll();
         clearTimeout(c_this.PendingTimeout);
+        c_this.RenderMainGridBox();
 
     }
 
@@ -701,7 +704,8 @@ class Controller
 
         if(playbackMode == 0)
         {
-            note.Play(c_this.MillisecondsPerTick);
+            //note.Play(c_this.MillisecondsPerTick);
+            c_this.PlayChord([note], noteIndex, false)
         }
 
         else if(playbackMode == 1)
@@ -841,7 +845,7 @@ class Controller
             c_this.Model.AddNote(previewNote, 0, c_this.Model.Score, false);
         }
 
-        c_this.RenderGridArray();
+        c_this.RenderEverything();
     }
 
     //Resize notes
