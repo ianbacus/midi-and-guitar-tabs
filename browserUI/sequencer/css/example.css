@@ -2,7 +2,10 @@ canvas {
     width:100%;
     background:whitesmoke;
 }
-
+html,body {
+    margin:0;
+    padding:0;
+}
 .container
 {
      padding-top: 50px;
@@ -26,9 +29,10 @@ canvas {
 }
 #gridbox {
 	width:650%;
-	height:1000px;
+	height:1200px;
 	position:relative;
-	background:dark grey url('https://s3.amazonaws.com/com.appgrinders.test/images/grid_20.png') repeat;
+	/*background:#2F4F4F url('https://s3.amazonaws.com/com.appgrinders.test/images/grid_20.png') repeat;*/
+	background:#2F4F4F url('grid_horizontal.png') repeat;
 }
 
 #feedback { font-size: 1.4em; }

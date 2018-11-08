@@ -29,7 +29,7 @@ class Note
         this.Pitch += y_offset;
     }
 
-    Play(millisecondsPerTick, caller, onStopCallback, instrumentCode=InstrumentEnum.Guitar)
+    Play(millisecondsPerTick, caller, onStopCallback, instrumentCode=InstrumentEnum.Flute)
     {
         var milliseconds = millisecondsPerTick * this.Duration
 
@@ -55,8 +55,8 @@ class Note
                     [50, milliseconds/7], [150, milliseconds/6], [200, milliseconds/5],
                     [150, milliseconds/4], [100, milliseconds/3], [50, milliseconds/2],
                     [10, milliseconds]];
-                //env   = T("env", {table:table, loopNode:0}).bang();
-                env = T("perc", {a:250, ar:true, r:milliseconds*1.0});
+                env   = T("env", {table:table, loopNode:0}).bang();
+                //env = T("perc", {a:250, ar:true, r:milliseconds*1.0});
                 synth = T("OscGen", {env:env, wave: "konami", mul: 0.75 }).play();
                 break;
 
@@ -68,7 +68,7 @@ class Note
         synth.noteOn(this.Pitch, 200);
 		this.OnStopCallback = {Caller:caller, Callback: onStopCallback};
         this.IsHighlighted = true;
-		
+
         this.PendingTimeout = setTimeout(
             $.proxy(this.StopPlaying, this),milliseconds);
     }

@@ -11,6 +11,12 @@ var editModeEnumeration = {
 	DELETE: 2
 }
 
+var Modes =
+[
+    [2,2,1,2,2,1], //major
+    [2,1,2,2,2,1,1,1], //minor
+];
+
 let c_this = undefined;
 
 class Controller
@@ -33,35 +39,47 @@ class Controller
         this.PendingTimeout = null;
         this.SequenceNumber = 0;
         this.console = null;
+        c_this.TonicKey = 0;
+        c_this.MusicalModeIndex = 0;
 
         this.PasteBuffer = []
 
     }
 
+    SetKeyReference(tonic, modeIndex)
+    {
+        var tonicOpacity = 0.25;
+        var dominantOpacity = 0.20;
+		var modeBuffer = [{Pitch:tonic, Opacity: tonicOpacity}];
+        var currentTone = tonic;
+        var intervals = Modes[modeIndex]
+
+        console.log(Modes, modeIndex)
+
+		intervals.some(function(interval)
+		{
+            var noteOpacity = 0.050;
+            currentTone += interval;
+            var relativeInterval = Math.abs(currentTone - tonic)
+
+            //Dominant
+            if(relativeInterval === 7)
+            {
+                noteOpacity = dominantOpacity;
+            }
+
+            var modeSlot = {Pitch:currentTone, Opacity: noteOpacity};
+            modeBuffer.push(modeSlot);
+		});
+
+		c_this.View.RenderKeys(modeBuffer);
+    }
+
     Initialize()
     {
         this.RenderEverything();
-		var noteOpacity = 0.035;
-		var tonicOpacity = 0.25;
-		var dominantOpacity = 0.20;
-		
-		// var startKeys = Array.apply(null, {length: 12}).map(49+Number.call, Number)
-		// console.log(startKeys);
-		
-		// function getModeBuffer(tonic, dominantInterval, intervals)
-		// {
-			// var modeBuffer = [];
-			// intervals.some(function(interval)
-			// {
-				// var modeSlot = {}
-			// }
-		// }
-		
-		var modeBuffer = [
-			{Pitch:60,Opacity:tonicOpacity},{Pitch:62,Opacity:noteOpacity},{Pitch:64,Opacity:noteOpacity},{Pitch:65,Opacity:noteOpacity},{Pitch:67,Opacity:dominantOpacity},
-			{Pitch:69,Opacity:noteOpacity}, {Pitch:71,Opacity:noteOpacity},{Pitch:72,Opacity:noteOpacity},{Pitch:74,Opacity:noteOpacity},{Pitch:76,Opacity:noteOpacity}, 
-			{Pitch:77,Opacity:noteOpacity}];
-		c_this.View.RenderKeys(modeBuffer);
+        this.SetKeyReference(c_this.TonicKey, c_this.MusicalModeIndex);
+
     }
 
     OnThumbnailRender(eventData)
@@ -197,8 +215,6 @@ class Controller
 
             var p2 = c_this.View.ConvertYIndexToPitch(yticks);
 
-            console.log(p2, pitch, noteCursorDisplacement.y);
-
             var instantiatedNote = new Note(startTimeTicks, p2, noteToPaste.Duration, true);
             c_this.Model.AddNote(instantiatedNote, 0, c_this.Model.Score, false);
         });
@@ -227,7 +243,6 @@ class Controller
                 var selectCount = c_this.CountSelectedNotes();
                 if(selectCount > 1)
                 {
-                    c_this.console.log("Resetting selected notes");
                     c_this.HandleSelectionReset()
                 }
                 else
@@ -266,7 +281,24 @@ class Controller
             c_this.DeleteSelectedNotes(true);
             c_this.RenderEverything()
             break;
+        case 9: //tab key
+            event.preventDefault();
+            var keys = 12;
+            if(event.shiftKey)
+            {
+                c_this.TonicKey = (c_this.TonicKey+(keys-7))%keys;
+            }
+            else
+            {
+                c_this.TonicKey = (c_this.TonicKey+7)%keys;
+            }
+            c_this.SetKeyReference(c_this.TonicKey, c_this.MusicalModeIndex);
 
+            break;
+        case 192: //` tilde key
+            c_this.MusicalModeIndex = (c_this.MusicalModeIndex+1) % Modes.length;
+            c_this.SetKeyReference(c_this.TonicKey, c_this.MusicalModeIndex);
+            break;
         case 32: //spacebar
             if(!c_this.Playing)
             {
@@ -511,7 +543,7 @@ class Controller
 	{
         c_this.RenderMainGridBox();
 	}
-	
+
     PlayChord(noteArray, noteIndex, includeSuspensions)
     {
         //Get all notes that play during this note, return the index of the first note that won't be played in this chord
@@ -571,7 +603,7 @@ class Controller
             var endX = c_this.View.ConvertTicksToXIndex(endTime);
             var playbackDurationMilliseconds = (endTime - startTime)*c_this.MillisecondsPerTick;
             c_this.OnPlayAllNotes(includeSuspensions);
-			
+
 			if(firstNote.StartTimeTicks != lastNote.StartTimeTicks)
 			{
 				var [chord,x] = c_this.GetChordNotes(noteArray, 0, includeSuspensions);
@@ -580,13 +612,13 @@ class Controller
 				{
 					averagePitchSum += note.Pitch;
 				});
-				
+
 				var averagePitch = averagePitchSum / chord.length;
 				var ycoord = c_this.View.ConvertPitchToYIndex(averagePitch);
 				c_this.View.SmoothScroll(startX,ycoord, 500);
 				c_this.View.SmoothScroll(endX, undefined, playbackDurationMilliseconds);
 			}
-			
+
         }
     }
 
@@ -1005,18 +1037,18 @@ class Controller
         {
             event.preventDefault();
 
-			var cursorPosition = 
+			var cursorPosition =
 			{
-				x:null, 
+				x:null,
 				y:c_this.CursorPosition.y
 			}
-			
+
             var xOffset = 100;
             if(scrollUp)
             {
                 xOffset *= -1;
             }
-			
+
             var actualXOffset = c_this.View.ScrollHorizontal(xOffset);
 			cursorPosition.x = c_this.CursorPosition.x + actualXOffset
 			c_this.OnMouseMove(cursorPosition);
@@ -1026,19 +1058,19 @@ class Controller
         else
         {
             event.preventDefault();
-			
-			var cursorPosition = 
+
+			var cursorPosition =
 			{
-				x:c_this.CursorPosition.x, 
+				x:c_this.CursorPosition.x,
 				y:null
 			}
-			
+
             var yOffset = 100;
             if(scrollUp)
             {
                 yOffset *= -1;
             }
-			
+
             var actualYOffset = c_this.View.ScrollVertical(yOffset);
 			cursorPosition.y = c_this.CursorPosition.y + actualYOffset
 			c_this.OnMouseMove(cursorPosition);

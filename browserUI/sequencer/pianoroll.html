@@ -26,8 +26,9 @@
         <div class="col-sm-2">
             <!--- This column contains edit palletes-->
 			<ul class="nav nav-tabs">
-				<li><a data-toggle="tab" href="#keys">Help</a></li>
-				<li class="active"><a data-toggle="tab" href="#settings">Settings</a></li>
+				<li id="ktab"><a data-toggle="tab" href="#keys">🔑</a></li>
+				<li id="stab" class="active"><a data-toggle="tab" href="#settings">✌</a></li>
+				<li id="ptab" ><a data-toggle="tab" href="#preview">👁</a></li>
 			</ul>
 			<div class="tab-content">
 				<div id="keys" class="tab-pane fade">
@@ -112,22 +113,19 @@
 						<label><input type="radio" name="optradio3" value=2>2</label>
 						</div>
 					</div>
-
-
 				</div> <!-- end mode tab -->
+                <div id="preview" class="tab-pane fade">
+                    <div id="gridboxNavigator">
+                        <div id="GridboxArray" style="border: 1px solid black">
+                        </div>
+                    </div>
+                </div>
             </div> <!-- end tab content -->
 		</div> <!-- end column -->
-        <div class="col-sm-8">
+        <div class="col-sm-10">
             <!--- This column contains the main editing box -->
             <div id="gridboxContainer">
                 <div id="gridbox"></div>
-            </div>
-        </div>
-
-        <div class ="col-sm-2">
-            <div id="gridboxNavigator">
-                <div id="GridboxArray" style="border: 1px solid black">
-                </div>
             </div>
         </div>
     </div> <!-- end row -->

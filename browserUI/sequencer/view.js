@@ -6,6 +6,7 @@ class View
     {
         v_this = this;
         this.Maingrid = "#gridbox";
+        this.GridboxContainer = "#gridboxContainer";
         this.GridArray = "#GridboxArray";
         this.PlayButton = "#PlayButton";
         this.previewObjs = ['cell', 'wire'];
@@ -99,9 +100,12 @@ class View
 
     ConvertPitchToYIndex(pitch)
     {
+        var mainGrid = $(v_this.Maingrid);
         var pitchOffset = v_this.MaximumPitch - pitch;
+		var mainGridHeight = mainGrid.height();
 
-        return v_this.gridSnap*pitchOffset;
+        var result = (v_this.gridSnap*pitchOffset) % mainGridHeight;
+        return result;
     }
 
     ConvertTicksToXIndex(ticks)
@@ -129,56 +133,56 @@ class View
     {
         $(".selectionRectangle").remove();
     }
-	
+
 	ScrollVertical(yOffset)
 	{
-        var mainDiv = $("#gridboxContainer")
+        var mainDiv = $(this.GridboxContainer)
 		var currentScroll = mainDiv.scrollTop();
         var newOffset = currentScroll+yOffset;
 		var gridSnap = v_this.gridSnap;
         mainDiv.scrollTop(newOffset);
-		
+
 		var newScrollPosition = mainDiv.scrollTop();
 		var actualOffset = newScrollPosition - currentScroll;
 		if(actualOffset > 0)
 			actualOffset = Math.ceil(actualOffset/gridSnap) * gridSnap;
 		else if( actualOffset < 0)
 			actualOffset = Math.floor(actualOffset/gridSnap) * gridSnap;
-		
+
 		return actualOffset;
 	}
 
     ScrollHorizontal(xOffset)
     {
-        var mainDiv = $("#gridboxContainer")
+        var mainDiv = $(this.GridboxContainer)
 		var currentScroll = mainDiv.scrollLeft();
         var newOffset = currentScroll+xOffset;
 		var gridSnap = v_this.gridSnap;
         mainDiv.scrollLeft(newOffset);
-		
+
 		var newScrollPosition = mainDiv.scrollLeft();
 		var actualOffset = newScrollPosition - currentScroll;
 		if(actualOffset > 0)
 			actualOffset = Math.ceil(actualOffset/gridSnap) * gridSnap;
 		else if( actualOffset < 0)
 			actualOffset = Math.floor(actualOffset/gridSnap) * gridSnap;
-		
+
 		return actualOffset;
     }
 
     CancelScroll()
     {
-        var mainDiv = $("#gridboxContainer")
+        var mainDiv = $(this.GridboxContainer)
         mainDiv.stop();
     }
 
     SmoothScroll(xCoordinate, yCoordinate, milliseconds)
     {
-        var mainDiv = $("#gridboxContainer");
+        var mainDiv = $(this.GridboxContainer);
         var gridWidth = mainDiv.width();
-		
+
         var halfGridWidth = gridWidth/2;
-		
+
         var xAdjustedCoordinate = xCoordinate - halfGridWidth;
 		if(yCoordinate === undefined)
 		{
@@ -189,15 +193,14 @@ class View
 			var gridHeight = mainDiv.height();
 			var halfGridheight = gridHeight/2;
 			var yAdjustedCoordinate = yCoordinate - halfGridheight;
-			
-			console.log(yAdjustedCoordinate, yCoordinate, halfGridheight)
+
 			mainDiv.animate({scrollTop:yAdjustedCoordinate, scrollLeft:xAdjustedCoordinate},milliseconds);
 		}
     }
 
     GetGridboxThumbnail(instance, imageCallback, index)
     {
-        var x = $("#gridboxContainer")[0]
+        var x = $(this.GridboxContainer)[0]
 
         html2canvas(x, {logging:false}).then(function(img)
         {
@@ -208,40 +211,41 @@ class View
 
     RenderGridArray(gridImages, selectedIndex)
     {
-            var numberOfEntries = gridImages.length;
-            var domGridArray = $(v_this.GridArray);
-            domGridArray.empty();
-            var nodeIndex = 0;
-            while(nodeIndex < numberOfEntries)
+        var numberOfEntries = gridImages.length;
+        var domGridArray = $(v_this.GridArray);
+        domGridArray.empty();
+        var nodeIndex = 0;
+        return;
+        while(nodeIndex < numberOfEntries)
+        {
+            var image = gridImages[nodeIndex];
+            var canvasNode = $('<canvas/>');
+            domGridArray.append(canvasNode);
+
+            if(nodeIndex == selectedIndex)
             {
-                var image = gridImages[nodeIndex];
-                var canvasNode = $('<canvas/>');
-                domGridArray.append(canvasNode);
-
-                if(nodeIndex == selectedIndex)
-                {
-                    canvasNode.css({'border':'solid purple 3px'});
-                }
-                else {
-                    canvasNode.css({'border':'solid black 1px'});
-                }
-
-                try {
-                    if(image != null)
-                    {
-                        var dataurl = image.toDataURL()
-                        var context = canvasNode[0].getContext("2d");
-                        var cWidth = canvasNode.width();
-                        var cHeight = canvasNode.height();
-                        context.drawImage(image, 0, 0, cWidth,cHeight);
-                    }
-                } catch (e) {
-                    v_this.console.log(e);
-                } finally {
-
-                    nodeIndex++;
-                }
+                canvasNode.css({'border':'solid purple 3px'});
             }
+            else {
+                canvasNode.css({'border':'solid black 1px'});
+            }
+
+            try {
+                if(image != null)
+                {
+                    var dataurl = image.toDataURL()
+                    var context = canvasNode[0].getContext("2d");
+                    var cWidth = canvasNode.width()*2;
+                    var cHeight = canvasNode.height()*2;
+                    context.drawImage(image, 0, 0, cWidth,cHeight);
+                }
+            } catch (e) {
+
+            } finally {
+
+                nodeIndex++;
+            }
+        }
     }
 
     RenderSelectRectangle(selectPosition, cursorPosition)
@@ -285,33 +289,54 @@ class View
         var mainGrid = $(v_this.Maingrid);
 		var mainGridWidth = mainGrid.width();
 		var mainGridHeight = mainGrid.height();
+        var isTonicNote = true;
         $(".keynote").remove();
-		
+
+        console.log("H",mainGridHeight);
+
+        function functionRenderKeyRow(offsetY, colorIndex, noteOpacity, isTonicNote)
+        {
+            var node = document.createElement('div');
+
+            $(node).addClass(keyNoteClass);
+            mainGrid.append(node);
+            $(node).css({'background':colorIndex });
+            $(node).css({'top':offsetY, 'left':0});
+            $(node).css({"opacity":noteOpacity, "height":v_this.gridSnap,"width":mainGridWidth,"position":"absolute"});
+            if(isTonicNote)
+            {
+                $(node).css({"border-bottom":'solid black 2px'});
+            }
+        }
+
 		//Give the tonic more opacity than other notes
 		modeArray.some(function(modeSlot)
 		{
-			var offsetY = 0;
-			var repeatOffset = 0;
-			console.log("Handling p",pitch);
-			var pitch = modeSlot.Pitch;
-			var noteOpacity = modeSlot.Opacity;
-			
-			while(offsetY < mainGridHeight)
-			{
-				var colorIndex = v_this.GetColorKey(pitch);
-				offsetY = repeatOffset + v_this.ConvertPitchToYIndex(pitch);
-				console.log("\t",repeatOffset, offsetY);
-				if(offsetY < mainGridHeight)
-				{
-					var node = document.createElement('div');
-					$(node).addClass(keyNoteClass);
-					mainGrid.append(node);
-					$(node).css({'background':colorIndex });
-					$(node).css({'top':offsetY, 'left':0});
-					$(node).css({"opacity":noteOpacity, "height":v_this.gridSnap,"width":mainGridWidth,"position":"absolute"});
-				}
-				repeatOffset += (12)*v_this.gridSnap;
-			}
+			const pitch = modeSlot.Pitch;
+			const colorIndex = v_this.GetColorKey(pitch);
+            const incrementOffset = 12 * v_this.gridSnap;
+			const noteOpacity = modeSlot.Opacity;
+            const keyOffsetY = v_this.ConvertPitchToYIndex(pitch);
+
+            var lowerOffset = keyOffsetY-incrementOffset;
+            var upperOffset = keyOffsetY+incrementOffset;
+
+                console.log("k",keyOffsetY)
+            functionRenderKeyRow(keyOffsetY, colorIndex, noteOpacity, isTonicNote);
+            while(lowerOffset >= 0)
+            {
+                console.log("l",lowerOffset)
+                functionRenderKeyRow(lowerOffset, colorIndex, noteOpacity, isTonicNote);
+                lowerOffset -= incrementOffset;
+            }
+            while (upperOffset <= mainGridHeight)
+            {
+                console.log("h",upperOffset)
+                functionRenderKeyRow(upperOffset, colorIndex, noteOpacity, isTonicNote);
+                upperOffset += incrementOffset;
+            }
+
+            isTonicNote = false;
 		});
 	}
 
@@ -322,9 +347,9 @@ class View
         var borderCssString = 'solid '+color+' 1px'
 		var initialNoteStartTimeTicks = 0;
 
-        $("#gridboxContainer").css('border',borderCssString);
+        $(this.GridboxContainer).css('border',borderCssString);
         $(".gridNote").remove();
-		
+
 		noteArray.forEach(function(note)
 		{
 			var noteWidth = note.Duration*v_this.gridSnap;
