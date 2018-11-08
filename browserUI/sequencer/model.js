@@ -13,14 +13,13 @@ class Note
         this.Pitch = pitch;
         this.StartTimeTicks = startTimeTicks;
         this.Duration = duration;
-        this._IsSelected = selected;
         this.CurrentGridIndex = currentGridIndex;
+		
+        this._IsSelected = selected;
+        this.IsHighlighted = false;
 
         this.StateWhenSelected = null
         this.SelectedGridIndex = m_this.GridPreviewIndex;
-        this.console = null;
-
-        this.IsHighlighted = false;
     }
 
     Move(x_offset, y_offset)
@@ -29,7 +28,7 @@ class Note
         this.Pitch += y_offset;
     }
 
-    Play(millisecondsPerTick, caller, onStopCallback, instrumentCode=InstrumentEnum.Flute)
+    Play(millisecondsPerTick, caller, onStopCallback, instrumentCode=InstrumentEnum.Guitar)
     {
         var milliseconds = millisecondsPerTick * this.Duration
 
@@ -212,9 +211,6 @@ class Note
 		m_this.DeleteNote(this, 0, currentGridBuffer, false);
 		m_this.AddNote(this, 0, selectStartGridBuffer, false);
 	}
-
-
-
 };
 
 class Model
@@ -262,23 +258,13 @@ class Model
 
     InsertSorted(array, note)
     {
-        array.push(note);
-        array.sort(m_this.CompareNotes);
-        //TODO: efficient sort
-        //var arrayLength = array.length;
-        //var index = m_this.BinarySearch(array, note, m_this.CompareNotes)
-        //var index = m_this.LinearSearch(array,note);
-        //array.splice( index, 0, note );
+		var index = m_this.BinarySearch(array, note, m_this.CompareNotes);
+		array.splice( index, 0, note );
     }
 
     SortScoreByTicks()
     {
         m_this.Score.sort(m_this.CompareNotes);
-    }
-
-    LinearSearchOfScore(note)
-    {
-        return m_this.LinearSearch(m_this.Score, note)
     }
 
     //Return the index of an exact match, or the index where the element would be if it were present
@@ -297,7 +283,6 @@ class Model
             //-1: searchNote < otherNoteotherNote: stop
             //0: searchNote == otherNote: return the index of an exact match (the pitch and duration are the same), or the index after all 'inexact' matches
 
-            m_this.console.log("Searching, index " + returnIndex + ", cmp=" + compareResult, otherNote)
             if((compareResult === 0) || ((lastCompareResult != undefined) && (lastCompareResult != compareResult)))
             {
                 if(returnIndex2 == undefined)
@@ -315,13 +300,13 @@ class Model
         return returnIndex2;
     }
 
-    BinarySearch(array, element, compare_fn)
+    BinarySearch(array, note, compare_fn)
     {
         var m = 0;
         var n = array.length - 1;
         while (m <= n) {
             var k = (n + m) >> 1;
-            var cmp = m_this.CompareNotes(element, array[k]);
+            var cmp = m_this.CompareNotes(note, array[k]);
             if (cmp > 0) {
                 m = k + 1;
             } else if(cmp < 0) {
@@ -333,51 +318,53 @@ class Model
         var returnIndex = -m - 1;
     }
 
-
+	
+	
     CompareNotes(note1, note2)
     {
-        var nst1 = note1.StartTimeTicks;
-        var nst2 = note2.StartTimeTicks;
+		function assertInt1GreaterThanInt2(int1, int2)
+		{
+			//Same value: return immediately
+			if(int1 === int2)
+			{
+				return 0;
+			}
 
-        //Same note: return immediately
+			//Note 1 starts after note 2: place note 1 after note 2
+			if(int1 > int2)
+			{
+				return 1;
+			}
+
+			//Note 1 starts before note 2: place note 1 before note 2
+			else if(int1 < int2)
+			{
+				return -1;
+			}
+		}
+		
+		//Same value: return immediately
         if(note1 === note2)
         {
             return 0;
         }
+		
+		var compareResult = assertInt1GreaterThanInt2(note1.CurrentGridIndex, note2.CurrentGridIndex);
 
-        //Note 1 starts after note 2: place note 1 after note 2
-        if(nst1 > nst2)
-        {
-            return 1;
-        }
-
-        //Note 1 starts before note 2: place note 1 before note 2
-        else if(nst1 < nst2)
-        {
-            return -1;
-        }
-
-        //if the notes have the same start time, put longer duration notes after short duration notes
-        //so that searches can find suspensions in adjacent notes more easily
-        else
-        {
-            //Note 1 longer than note 2: place note 1 after note 2
-            if(note1.Duration > note2.Duration)
-            {
-                return 1;
-            }
-            //Note 1 shorter: place note 1 before note 2
-            else if(note1.Duration < note2.Duration)
-            {
-                return -1;
-            }
-
-            //Same duration: doesn't matter
-            else
-            {
-                return 0;
-            }
-        }
+		if(compareResult === 0)
+		{
+			compareResult = assertInt1GreaterThanInt2(note1.StartTimeTicks, note2.StartTimeTicks);
+			if(compareResult === 0)
+			{
+				compareResult = assertInt1GreaterThanInt2(note1.Duration, note2.Duration);
+				if(compareResult === 0)
+				{
+					compareResult = assertInt1GreaterThanInt2(note1.Pitch, note2.Pitch);
+				}
+			}
+		}
+		
+		return compareResult;
     }
 
     HandleBatchInsertion(activityStack, action, targetString)
@@ -395,7 +382,9 @@ class Model
             {
                 stackTop.MoveBuffer.push(action.MoveData);
                 pushSuccessful = true;
-                m_this.console.log("Group "+action.Action + ": " + stackTop.MoveBuffer.length + " datums")
+                m_this.console.log(
+					"Group "+action.Action + ": " + 
+					stackTop.MoveBuffer.length + " datums")
             }
         }
 
@@ -413,15 +402,17 @@ class Model
         if(this.ActivityIndex != stackLength-1)
         {
             var resetIndex = this.ActivityIndex+1;
-            m_this.console.log("Resetting stack up to and including index "+resetIndex);
+            m_this.console.log(
+				"Resetting stack up to and including index "+resetIndex);
             this.ActivityStack = this.ActivityStack.slice(0,resetIndex);
         }
 
         //Lose the last action if the stack is full
         if(stackLength >= this.MaximumActivityStackLength)
         {
-            m_this.console.log("Maximum undo length reached. Discarding old state information.")
-            this.ActivityStack.pop();
+            m_this.console.log(
+				"Maximum undo length reached. Discarding old state information.")
+            this.ActivityStack.shift();
         }
 
         actionCases.forEach(function(caseString)
@@ -440,11 +431,17 @@ class Model
         {
             action.MoveBuffer.push(action.MoveData);
             m_this.ActivityStack.push(action)
-            m_this.console.log("Distinct "+action.Action +". New stack length: "+this.ActivityStack.length);
+            m_this.console.log(
+				"Distinct "+action.Action +
+				". New stack length: "+this.ActivityStack.length);
         }
 
         this.ActivityIndex = this.ActivityStack.length - 1;
-        m_this.console.log("Push complete. Activity stack index: "+ this.ActivityIndex+"/"+(this.ActivityStack.length-1));
+		
+		m_this.console.log(
+			"Push complete." + 
+			"Activity stack index: "+ 
+			this.ActivityIndex+ "/"+(this.ActivityStack.length-1));
     }
 
     Undo()
@@ -455,7 +452,10 @@ class Model
             var moveBuffer = mostRecentAction.MoveBuffer;
             var gridBuffer = this.GridPreviewList[mostRecentAction.GridIndex];
 
-            m_this.console.log("Undoing " + mostRecentAction.Action + " on " + moveBuffer.length + " notes, actionID = " + mostRecentAction.SequenceNumber);
+            m_this.console.log(
+				"Undoing " + mostRecentAction.Action + 
+				" on " + moveBuffer.length + 
+				" notes, actionID = " + mostRecentAction.SequenceNumber);
 
             this.ActivityIndex--;
 
@@ -488,10 +488,13 @@ class Model
                     var state = moveData.OriginalState;
                     note.RestoreState(state);
                 });
+				gridBuffer.sort(m_this.CompareNotes);
             }
 
-            gridBuffer.sort(m_this.CompareNotes);
-            m_this.console.log("Undo complete. Activity stack index: "+ this.ActivityIndex+"/"+(this.ActivityStack.length-1));
+            m_this.console.log(
+				"Undo complete." + 
+				"Activity stack index: "+ 
+				this.ActivityIndex+ "/"+(this.ActivityStack.length-1));
         }
 
     }
@@ -505,7 +508,10 @@ class Model
             var moveBuffer = mostRecentAction.MoveBuffer;
             var gridBuffer = this.GridPreviewList[mostRecentAction.GridIndex];
 
-            m_this.console.log("Redoing " + mostRecentAction.Action + " on " + moveBuffer.length + " notes, actionID = " + mostRecentAction.SequenceNumber);
+            m_this.console.log(
+				"Redoing " + mostRecentAction.Action + 
+				" on " + moveBuffer.length + 
+				" notes, actionID = " + mostRecentAction.SequenceNumber);
 
             //Redo addition
             if(mostRecentAction.Action === 'ADD')
@@ -535,13 +541,10 @@ class Model
                     var note = moveData.Note;
                     var state = moveData.TargetState;
                     note.RestoreState(state);
-
-                    //var [startTimeDifference, pitchDifference] = moveData.Move;
-                    //note.Move(startTimeDifference, pitchDifference);
                 });
+				gridBuffer.sort(m_this.CompareNotes);
             }
 
-            gridBuffer.sort(m_this.CompareNotes);
             m_this.console.log("Redo complete. Activity stack index: "+ this.ActivityIndex+"/"+(this.ActivityStack.length-1));
         }
 
@@ -595,15 +598,7 @@ class Model
 
     DeleteNote(note, sequenceNumber, array=this.Score, pushAction=true)
     {
-        for(var deletionIndex in array)
-        {
-            var otherNote = array[deletionIndex];
-            if(otherNote === note)
-            {
-                break;
-            }
-        }
-
+		var deletionIndex = m_this.BinarySearch(array, note, m_this.CompareNotes);
         m_this.DeleteNoteWithIndex(deletionIndex,sequenceNumber,array,pushAction)
     }
 };

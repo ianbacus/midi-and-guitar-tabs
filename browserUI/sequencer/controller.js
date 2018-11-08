@@ -77,7 +77,7 @@ class Controller
 
     Initialize()
     {
-        this.RenderEverything();
+        this.RefreshGridPreview();
         this.SetKeyReference(c_this.TonicKey, c_this.MusicalModeIndex);
 
     }
@@ -92,13 +92,13 @@ class Controller
         c_this.View.RenderGridArray(c_this.Model.GridImageList, index);
     }
 
-    RenderEverything()
+    RefreshGridPreview()
     {
-        c_this.RenderMainGridBox();
+        c_this.RefreshEditBoxNotes();
         c_this.View.GetGridboxThumbnail(c_this, c_this.OnThumbnailRender, c_this.Model.GridPreviewIndex);
     }
 
-    RenderMainGridBox()
+    RefreshEditBoxNotes()
     {
         var editModeColor = c_this.EditModeColors[c_this.EditorMode];
         c_this.View.RenderNotes(c_this.Model.Score, editModeColor);
@@ -230,7 +230,7 @@ class Controller
             {
                 c_this.EditorMode = editModeEnumeration.SELECT;
                 c_this.HandleSelectionReset();
-                c_this.RenderEverything()
+                c_this.RefreshEditBoxNotes()
             }
 
             break;
@@ -272,14 +272,14 @@ class Controller
             }
             if(renderGrid)
             {
-                c_this.RenderEverything();
+                c_this.RefreshEditBoxNotes();
             }
 
             break;
         case 68: //"d" key
             //Delete any selected notes, and enter delete mode
             c_this.DeleteSelectedNotes(true);
-            c_this.RenderEverything()
+            c_this.RefreshGridPreview()
             break;
         case 9: //tab key
             event.preventDefault();
@@ -303,6 +303,7 @@ class Controller
             if(!c_this.Playing)
             {
                 var playbackBuffer = []
+				c_this.HandleSelectionReset();
 
                 //Add all unselected notes to the playback buffer
                 c_this.Model.GridPreviewList.forEach(function(arrayBuffer)
@@ -337,13 +338,13 @@ class Controller
             c_this.PasteBuffer = c_this.PreparePasteBuffer(copyBuffer);
             c_this.InstantiatePasteBuffer(c_this.PasteBuffer);
 
-            c_this.RenderEverything();
+            c_this.RefreshEditBoxNotes();
             break;
 
         case 86: //"v" key
 
             c_this.InstantiatePasteBuffer(c_this.PasteBuffer);
-            c_this.RenderEverything();
+            c_this.RefreshGridPreview();
             break;
 
         case 65: //"a key"
@@ -361,7 +362,7 @@ class Controller
                     note.IsSelected = true;
                 });
             }
-            c_this.RenderEverything();
+            c_this.RefreshEditBoxNotes();
         case 81: //"q" key
             break;
 
@@ -370,19 +371,19 @@ class Controller
 
         case 69: //"e" key: Add new grid
             c_this.Model.CreateGridPreview();
-            c_this.RenderEverything();
+            c_this.RefreshGridPreview();
 
             break;
         case 38: //up arrow: select grid
             event.preventDefault();
             c_this.HandleGridMove(true);
-            c_this.RenderEverything();
+            c_this.RefreshGridPreview();
             break;
 
         case 40: //down arrow: select grid
             event.preventDefault();
             c_this.HandleGridMove(false);
-            c_this.RenderEverything();
+            c_this.RefreshGridPreview();
             break;
         }
     }
@@ -541,7 +542,7 @@ class Controller
 
 	OnStopNote()
 	{
-        c_this.RenderMainGridBox();
+        c_this.RefreshEditBoxNotes();
 	}
 
     PlayChord(noteArray, noteIndex, includeSuspensions)
@@ -555,7 +556,7 @@ class Controller
             note.Play(c_this.MillisecondsPerTick, c_this, c_this.OnStopNote);
         });
 
-        c_this.RenderMainGridBox();
+        c_this.RefreshEditBoxNotes();
 
         return returnIndex;
     }
@@ -627,7 +628,7 @@ class Controller
         c_this.Playing = false;
         c_this.View.CancelScroll();
         clearTimeout(c_this.PendingTimeout);
-        c_this.RenderMainGridBox();
+        c_this.RefreshEditBoxNotes();
 
     }
 
@@ -650,10 +651,9 @@ class Controller
             {
                 var previewNote = c_this.CreatePreviewNote();
                 c_this.Model.AddNote(previewNote, 0, c_this.Model.Score, false);
+				c_this.RefreshEditBoxNotes()
             }
         }
-
-        c_this.RenderMainGridBox()
     }
 
     OnHoverEnd(event)
@@ -664,7 +664,7 @@ class Controller
             c_this.HandleSelectionReset();
         }
 
-        c_this.RenderMainGridBox()
+        c_this.RefreshEditBoxNotes()
     }
 
     OnButtonPress(event)
@@ -705,65 +705,60 @@ class Controller
     ///Update the cursor position, move all selected notes
     OnMouseMove(cursorPosition)
     {
+		//Only process mouse move events if the position changes		
         if(c_this.LastCursorPosition != c_this.CursorPosition)
         {
             c_this.LastCursorPosition = c_this.CursorPosition;
-        }
 
-        c_this.CursorPosition = cursorPosition;
+			c_this.CursorPosition = cursorPosition;
 
-        //If there are selected notes, move them
-        var selectCount = c_this.CountSelectedNotes();
+			//If there are selected notes, move them
+			var selectCount = c_this.CountSelectedNotes();
 
-        //If a selection rectangle is being drawn, begin selecting notes caught in the rectangle
-        if(c_this.SelectingGroup)
-        {
-            c_this.View.RenderSelectRectangle(c_this.SelectorPosition, c_this.CursorPosition);
-            var selectRectangle =
-            {
-                x1: Math.min(c_this.SelectorPosition.x, c_this.CursorPosition.x),
-                y1: Math.min(c_this.SelectorPosition.y, c_this.CursorPosition.y),
-                x2: Math.max(c_this.SelectorPosition.x, c_this.CursorPosition.x),
-                y2: Math.max(c_this.SelectorPosition.y, c_this.CursorPosition.y)
-            };
+			//If a selection rectangle is being drawn, begin selecting notes caught in the rectangle
+			if(c_this.SelectingGroup)
+			{
+				c_this.View.RenderSelectRectangle(c_this.SelectorPosition, c_this.CursorPosition);
+				var selectRectangle =
+				{
+					x1: Math.min(c_this.SelectorPosition.x, c_this.CursorPosition.x),
+					y1: Math.min(c_this.SelectorPosition.y, c_this.CursorPosition.y),
+					x2: Math.max(c_this.SelectorPosition.x, c_this.CursorPosition.x),
+					y2: Math.max(c_this.SelectorPosition.y, c_this.CursorPosition.y)
+				};
 
-            c_this.DoActionOnAllNotes(function(note)
-            {
-                var noteRectangle = c_this.GetNoteRectangle(note);
-                var noteIsCaptured = c_this.DoesRectangle1CoverRectangle2(selectRectangle, noteRectangle);
+				c_this.DoActionOnAllNotes(function(note)
+				{
+					var noteRectangle = c_this.GetNoteRectangle(note);
+					var noteIsCaptured = c_this.DoesRectangle1CoverRectangle2(selectRectangle, noteRectangle);
 
-                if(noteIsCaptured)
-                {
-                    note.IsSelected = true;
-                }
+					if(noteIsCaptured)
+					{
+						note.IsSelected = true;
+					}
 
-                else
-                {
-                    note.IsSelected = false;
-                }
-            });
+					else
+					{
+						note.IsSelected = false;
+					}
+				});
 
-            c_this.RenderMainGridBox()
-        }
+				c_this.RefreshEditBoxNotes()
+			}
 
-        //If no selection rectangle is being drawn,
-        else if(selectCount > 0)
-        {
-            var x_offset = c_this.View.ConvertXIndexToTicks(c_this.CursorPosition.x) - c_this.View.ConvertXIndexToTicks(c_this.LastCursorPosition.x);
-            var y_offset = c_this.View.ConvertYIndexToPitch(c_this.CursorPosition.y) - c_this.View.ConvertYIndexToPitch(c_this.LastCursorPosition.y);
+			//If no selection rectangle is being drawn, move all selected notes
+			else if(selectCount > 0)
+			{
+				var x_offset = c_this.View.ConvertXIndexToTicks(c_this.CursorPosition.x) - c_this.View.ConvertXIndexToTicks(c_this.LastCursorPosition.x);
+				var y_offset = c_this.View.ConvertYIndexToPitch(c_this.CursorPosition.y) - c_this.View.ConvertYIndexToPitch(c_this.LastCursorPosition.y);
 
-            //Todo: move notes relative to start position
-            c_this.ModifySelectedNotes(function(note){
-                note.Move(x_offset, y_offset);
-            });
-            c_this.Model.SortScoreByTicks();
-            c_this.RenderMainGridBox()
-        }
-
-        else
-        {
-
-        }
+				c_this.ModifySelectedNotes(function(note){
+					note.Move(x_offset, y_offset);
+				});
+				c_this.Model.SortScoreByTicks();
+				c_this.RefreshEditBoxNotes()
+			}
+		}
     }
 
     HandleIndividualNotePlayback(noteIndex)
@@ -772,17 +767,19 @@ class Controller
         var score = c_this.Model.Score;
         var note = score[noteIndex];
 
+		//Solo
         if(playbackMode == 0)
         {
-            //note.Play(c_this.MillisecondsPerTick);
             c_this.PlayChord([note], noteIndex, false)
         }
 
+		//Chords: play notes that have the same start time
         else if(playbackMode == 1)
         {
             c_this.PlayChord(score, noteIndex, false)
         }
 
+		//Suspensions: play notes whose durations extend over the selected note
         else
         {
             c_this.PlayChord(score, noteIndex, true)
@@ -915,7 +912,7 @@ class Controller
             c_this.Model.AddNote(previewNote, 0, c_this.Model.Score, false);
         }
 
-        c_this.RenderEverything();
+        c_this.RefreshGridPreview();
     }
 
     //Resize notes
@@ -1031,7 +1028,7 @@ class Controller
         {
             event.preventDefault();
             c_this.HandleControlScroll(scrollUp)
-            c_this.RenderMainGridBox();
+            c_this.RefreshEditBoxNotes();
         }
         else if(shift)
         {
@@ -1052,7 +1049,7 @@ class Controller
             var actualXOffset = c_this.View.ScrollHorizontal(xOffset);
 			cursorPosition.x = c_this.CursorPosition.x + actualXOffset
 			c_this.OnMouseMove(cursorPosition);
-            c_this.RenderMainGridBox();
+            c_this.RefreshEditBoxNotes();
         }
 
         else
@@ -1074,7 +1071,7 @@ class Controller
             var actualYOffset = c_this.View.ScrollVertical(yOffset);
 			cursorPosition.y = c_this.CursorPosition.y + actualYOffset
 			c_this.OnMouseMove(cursorPosition);
-            c_this.RenderMainGridBox();
+            c_this.RefreshEditBoxNotes();
         }
     }
 
