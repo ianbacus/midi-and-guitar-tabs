@@ -215,7 +215,7 @@ class View
         var domGridArray = $(v_this.GridArray);
         domGridArray.empty();
         var nodeIndex = 0;
-        return;
+        
         while(nodeIndex < numberOfEntries)
         {
             var image = gridImages[nodeIndex];
