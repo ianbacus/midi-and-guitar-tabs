@@ -46,6 +46,12 @@ vector<Chunk*> ParseIntermediateFile(
     int deltaExpansion,
     int durationExpansion);
 
+vector<Chunk*> ParseIntermediateDataString(
+    std::string& inputData,
+    int pitchOffset,
+    int deltaExpansion,
+    int durationExpansion);
+
 void ParseTabberSettingsFile(
     std::string infile, 
     std::map<std::string,uint32_t>& parsedConstants,

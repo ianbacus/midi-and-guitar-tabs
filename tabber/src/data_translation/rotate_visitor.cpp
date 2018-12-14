@@ -14,10 +14,10 @@ ostream NullStream(nullptr);
 ostream& TerminalStream = cout;
 
 
-#define FEATURE_STREAM FileStream << "\tFeatures: "
-#define COST_STREAM FileStream << "\tCosts: "
+#define FEATURE_STREAM NullStream << "\tFeatures: "
+#define COST_STREAM NullStream << "\tCosts: "
 #define ERROR_STREAM NullStream<< "\tError: "
-#define RESULT_STREAM FileStream<< "Results: "
+#define RESULT_STREAM NullStream<< "Results: "
 
 
 void TablatureOptimizer::EmitDebugString(std::string debugString)
@@ -1022,7 +1022,7 @@ void TablatureOptimizer::VisitNote(Note* noteToReposition)
 }
 
 bool TablatureOptimizer::MarkConfigurationProcessed(
-        vector<NotePositionEntry > processedChunkConfiguration)
+        vector<NotePositionEntry >& processedChunkConfiguration)
 {
     bool chunkAlreadyProcessed = WasConfigurationProcessed(processedChunkConfiguration);
     
@@ -1030,6 +1030,8 @@ bool TablatureOptimizer::MarkConfigurationProcessed(
     {
         ProcessedChunkConfigurations.push_back(processedChunkConfiguration);
     }
+	
+	return chunkAlreadyProcessed;
 }
  /*
   *	Determine if the chunk configuration has already been evaluated as an optimum

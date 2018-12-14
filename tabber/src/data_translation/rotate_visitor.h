@@ -92,14 +92,11 @@ class TablatureOptimizer : public Visitor
         vector< vector<NotePositionEntry > > ProcessedChunkConfigurations;
         
         vector<uint32_t> StringIndexedRemainingDeltaTicks;
-        vector<uint32_t> StringIndexedFrettedNotes;
-        
-        
+        vector<uint32_t> StringIndexedFrettedNotes;        
         
         bool ValidateStringOverlapsForNotePositions(vector<NotePositionEntry> notePositionsEntries);
         
-        
-        bool MarkConfigurationProcessed(vector<NotePositionEntry > processedChunkConfiguration);
+        bool MarkConfigurationProcessed(vector<NotePositionEntry >& processedChunkConfiguration);
         bool WasConfigurationProcessed(vector<NotePositionEntry > input);
         void ResetMarkedChunks(void);
         
@@ -112,7 +109,6 @@ class TablatureOptimizer : public Visitor
         
         void SelectOptimalFingering(Chunk *chunkToConfigure, 
                 uint32_t& currentLowestCost);
-        
 
     public:
         TablatureOptimizer(

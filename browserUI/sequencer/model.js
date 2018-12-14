@@ -14,8 +14,13 @@ class Note
         this.StartTimeTicks = startTimeTicks;
         this.Duration = duration;
         this.CurrentGridIndex = currentGridIndex;
-		
+
         this._IsSelected = selected;
+        if(selected)
+        {
+            m_this.AddNote(this, 0, m_this.SelectedNotes, false);
+            //console.log("Added SELECT note ",m_this.SelectedNotes.length)
+        }
         this.IsHighlighted = false;
 
         this.StateWhenSelected = null
@@ -56,7 +61,7 @@ class Note
                     [10, milliseconds]];
                 //env   = T("env", {table:table, loopNode:0}).bang();
                 env = T("perc", {a:450, ar:false, r:milliseconds*1.0});
-                synth = T("OscGen", {env:env, wave: "cos", mul: 0.75 }).play();
+                synth = T("OscGen", {env:env, wave: "cos", mul: 0.075 }).play();
                 break;
 
             default:
@@ -134,6 +139,7 @@ class Note
             });
         }
 
+        console.log("ON MOVE COMPLETE", this)
         this.StateWhenSelected = null;
     }
 
@@ -190,9 +196,20 @@ class Note
     set IsSelected(selected)
     {
         //When selecting an unselected note, capture its state
-        if((this._IsSelected != selected) && (selected))
+        if(this._IsSelected != selected)
         {
-            this.StateWhenSelected = this.CaptureState();
+            if(selected)
+            {
+                this.StateWhenSelected = this.CaptureState();
+                m_this.AddNote(this, 0, m_this.SelectedNotes, false);
+                console.log("Added SELECT note, captured state ", this, m_this.SelectedNotes.length)
+            }
+
+            else
+            {
+                m_this.DeleteNote(this, 0, m_this.SelectedNotes, false);
+                console.log("Deleted SELECT note ",m_this.SelectedNotes.length)
+            }
         }
 
         this._IsSelected = selected;
@@ -225,6 +242,7 @@ class Model
         this.ActivityStack = []
         this.ActivityIndex = 0;
         this.MaximumActivityStackLength = 100;
+        this.SelectedNotes = [];
     }
 
     SetCurrentGridPreview(noteArray)
@@ -316,10 +334,11 @@ class Model
             }
         }
         var returnIndex = -m - 1;
+        return returnIndex;
     }
 
-	
-	
+
+
     CompareNotes(note1, note2)
     {
 		function assertInt1GreaterThanInt2(int1, int2)
@@ -342,13 +361,13 @@ class Model
 				return -1;
 			}
 		}
-		
+
 		//Same value: return immediately
         if(note1 === note2)
         {
             return 0;
         }
-		
+
 		var compareResult = assertInt1GreaterThanInt2(note1.CurrentGridIndex, note2.CurrentGridIndex);
 
 		if(compareResult === 0)
@@ -363,7 +382,7 @@ class Model
 				}
 			}
 		}
-		
+
 		return compareResult;
     }
 
@@ -383,7 +402,7 @@ class Model
                 stackTop.MoveBuffer.push(action.MoveData);
                 pushSuccessful = true;
                 m_this.console.log(
-					"Group "+action.Action + ": " + 
+					"Group "+action.Action + ": " +
 					stackTop.MoveBuffer.length + " datums")
             }
         }
@@ -415,10 +434,12 @@ class Model
             this.ActivityStack.shift();
         }
 
-        actionCases.forEach(function(caseString)
+        //Check all cases
+        actionCases.some(function(caseString)
         {
             //If a group of actions are happening, push them together
             var pushedToBatch = m_this.HandleBatchInsertion(activityStack, action, caseString);
+            //Exit after a successful case is reached, since an event only can have one case
             if(pushedToBatch)
             {
                 pushSuccessful = true;
@@ -437,10 +458,10 @@ class Model
         }
 
         this.ActivityIndex = this.ActivityStack.length - 1;
-		
+
 		m_this.console.log(
-			"Push complete." + 
-			"Activity stack index: "+ 
+			"Push complete." +
+			"Activity stack index: "+
 			this.ActivityIndex+ "/"+(this.ActivityStack.length-1));
     }
 
@@ -453,8 +474,8 @@ class Model
             var gridBuffer = this.GridPreviewList[mostRecentAction.GridIndex];
 
             m_this.console.log(
-				"Undoing " + mostRecentAction.Action + 
-				" on " + moveBuffer.length + 
+				"Undoing " + mostRecentAction.Action +
+				" on " + moveBuffer.length +
 				" notes, actionID = " + mostRecentAction.SequenceNumber);
 
             this.ActivityIndex--;
@@ -492,8 +513,8 @@ class Model
             }
 
             m_this.console.log(
-				"Undo complete." + 
-				"Activity stack index: "+ 
+				"Undo complete." +
+				"Activity stack index: "+
 				this.ActivityIndex+ "/"+(this.ActivityStack.length-1));
         }
 
@@ -509,8 +530,8 @@ class Model
             var gridBuffer = this.GridPreviewList[mostRecentAction.GridIndex];
 
             m_this.console.log(
-				"Redoing " + mostRecentAction.Action + 
-				" on " + moveBuffer.length + 
+				"Redoing " + mostRecentAction.Action +
+				" on " + moveBuffer.length +
 				" notes, actionID = " + mostRecentAction.SequenceNumber);
 
             //Redo addition
@@ -575,8 +596,13 @@ class Model
     DeleteNoteWithIndex(deletionIndex, sequenceNumber, array=this.Score, pushAction=true)
     {
         var numberOfDeletions = 1;
-        var deletedNote = this.Score[deletionIndex];
+        var deletedNote = array[deletionIndex];
         var gridIndex = this.GridPreviewIndex;
+
+        if((array===this.Score) && (deletedNote.IsSelected))
+        {
+            m_this.DeleteNote(deletedNote, 0, m_this.SelectedNotes, false);
+        }
 
         if(pushAction)
         {

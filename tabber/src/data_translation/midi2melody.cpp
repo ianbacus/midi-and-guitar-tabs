@@ -15,23 +15,23 @@ using namespace std;
 
 
 void ParseTabberSettingsFile(
-    std::string infile,     
+    std::string infile,
     map<string,uint32_t>& parsedConstants,
     TabberSettings& tabSettings)
 {
     const regex keyValueRegex("\\s*([a-zA-Z]+)\\s*?:\\s*?([0-9]+)\\s*");
     const regex tuningRegex("\\s*Tuning\\s*?:\\s*?([a-gA-G][\\-0-9][,\\s]*)+");
     const regex tuningRegex2("([a-gA-G])([0-9])[,\\s]*");
-    
+
     ifstream file( infile );
-    
+
     string line;
-    
-    while(getline( file, line ) ) 
+
+    while(getline( file, line ) )
     {
         std::smatch keyValMatchResults;
         std::smatch tuningMatchResults;
-		
+
         std::regex_search(line, keyValMatchResults, keyValueRegex);
         std::regex_match(line, tuningMatchResults, tuningRegex);
 
@@ -39,86 +39,86 @@ void ParseTabberSettingsFile(
         {
             string key = keyValMatchResults[1];
             uint32_t value = stoi(keyValMatchResults[2]);
-            
+
             parsedConstants[key] = value;
         }
-        
-        if(tuningMatchResults.size() > 0) 
+
+        if(tuningMatchResults.size() > 0)
         {
             //Note length indications to print above the notes
 
-            map<string,uint32_t> noteAlphabetToPitchMidiValue = 
+            map<string,uint32_t> noteAlphabetToPitchMidiValue =
             {
                 {"c",12},{"d",14},{"e",16},{"f",17},{"g",19},{"a",21},{"b",23},
             };
-            
+
             vector<uint16_t> midiPitches;
             vector<string> midiPitchStrings;
-            
-            while(regex_search(line, tuningMatchResults, 
+
+            while(regex_search(line, tuningMatchResults,
                 tuningRegex2, regex_constants::match_any))
             {
                 const uint32_t octavePitchMidiValue = 12;
-                
+
                 const string stringName = tuningMatchResults[1];
                 const uint32_t stringOctave = stoi(tuningMatchResults[2]);
                 const uint32_t octaveOffset = octavePitchMidiValue*stringOctave;
-                
-                uint32_t pitchMidiValue = 
+
+                uint32_t pitchMidiValue =
                     noteAlphabetToPitchMidiValue[stringName]+octaveOffset;
-                
+
                 midiPitches.push_back(pitchMidiValue);
                 midiPitchStrings.push_back(stringName);
-                
+
                 line = tuningMatchResults.suffix();
             }
 
             tabSettings.InstrumentInfo.StringIndexedMidiPitches = midiPitches;
             tabSettings.InstrumentInfo.StringIndexedNoteNames = midiPitchStrings;
             //for (auto x : midiPitchStrings) cout << x << endl;
-			
-        }       
+
+        }
     }
 }
 
 vector<Chunk*> ParseIntermediateFile(
-    std::string infile, 
+    std::string infile,
     int pitchOffset,
     int deltaExpansion,
-    int durationExpansion) 
+    int durationExpansion)
 {
     ifstream file( infile );
 
     uint32_t measureIndex = 0;
     uint32_t chunkIndex = 0;
-    
+
 	uint32_t ticksAccumulatedForCurrentMeasure = 0;
 	uint32_t ticksPerMeasure = 36;
 	vector<Chunk*> scoreTree;
-	
-    
+
+
 	string line;
-    
+
     const int shift = 24 - pitchOffset;
 
-    while( std::getline( file, line ) ) 
+    while( std::getline( file, line ) )
     {
-       	const bool currentMeasureIsFull = (ticksAccumulatedForCurrentMeasure >= ticksPerMeasure); 
+       	const bool currentMeasureIsFull = (ticksAccumulatedForCurrentMeasure >= ticksPerMeasure);
 		istringstream pitchDeltaInputStringStream( line );
         string pitchString;
         string deltaString;
         string trackNumberString;
         string noteDurationString;
-        
+
         //Case 0: Time signature event
 		if(line.find("SIGEVENT") != string::npos)
 		{
 			std::getline(file, line);
 			std::istringstream pitchDeltaInputStringStream( line );
-			std::string beatsPerBarString, beatUnitString; 
+			std::string beatsPerBarString, beatUnitString;
 
-			if( std::getline( pitchDeltaInputStringStream, beatsPerBarString, ',') && 
-				std::getline( pitchDeltaInputStringStream, beatUnitString )) 
+			if( std::getline( pitchDeltaInputStringStream, beatsPerBarString, ',') &&
+				std::getline( pitchDeltaInputStringStream, beatUnitString ))
 			{
 				const float beatsPerBar = std::stof(beatsPerBarString);
 				const float beatUnit = std::stof(beatUnitString);
@@ -130,76 +130,197 @@ vector<Chunk*> ParseIntermediateFile(
 		}
 
         //Case 1: pitch event
-		if( std::getline( pitchDeltaInputStringStream, pitchString , ',') && 
-			std::getline( pitchDeltaInputStringStream, deltaString, ',' ) && 
-			std::getline( pitchDeltaInputStringStream, trackNumberString, ',' ) && 
-			std::getline( pitchDeltaInputStringStream, noteDurationString) ) 
+		if( std::getline( pitchDeltaInputStringStream, pitchString , ',') &&
+			std::getline( pitchDeltaInputStringStream, deltaString, ',' ) &&
+			std::getline( pitchDeltaInputStringStream, trackNumberString, ',' ) &&
+			std::getline( pitchDeltaInputStringStream, noteDurationString) )
 		{
 			const uint32_t currentTrackNumber = stoi(trackNumberString);
 			const uint32_t delta = stoi(deltaString)*pow(2.0,deltaExpansion);
-			const uint32_t noteDuration = 
+			const uint32_t noteDuration =
                 std::max(
                     (uint32_t)(stoi(noteDurationString)*pow(2.0,deltaExpansion)),
                     (uint32_t)durationExpansion);
-            
+
 			const uint32_t pitch = stoi(pitchString)- shift;
-            
+
             Note * const currentNote = new Note(pitch,noteDuration,currentTrackNumber);
-            
+
             Chunk* const currentChunk = (scoreTree.size() > 0 ) ? scoreTree.back() : nullptr;
-			
-			
+
+			//cout << "DP: " << delta << " " << pitch <<  endl;
+
 			//This note must be added to the current chunk in the current bar
 			if((delta == 0) && (currentChunk != nullptr))
 			{
 				currentChunk->PushElement(currentNote);
 			}
-			
+
 			//A new chunk in the current bar is needed
 			else
-			{                
+			{
 				//Chunk* const nextChunk = new Chunk(delta,measureIndex);
 				Chunk* const nextChunk = new Chunk(delta,measureIndex);
-                
+
                 chunkIndex++;
-                
+
 				nextChunk->PushElement(currentNote);
  				scoreTree.push_back(nextChunk);
-                
+
                 if(currentChunk != nullptr)
                 {
                     //Initialize the current optimal note positions to their default
                     //placements
-                    vector<NotePositionEntry> currentNotePositionEntires = 
+                    vector<NotePositionEntry> currentNotePositionEntires =
                       currentChunk->GetCurrentNotePositionEntries();
-                    
+
                     currentChunk->SetOptimalNotePositions(currentNotePositionEntires);
 
                     currentChunk->SetNextChunk(nextChunk);
                     nextChunk->SetPreviousChunk(currentChunk);
-                    
+
                     if(currentMeasureIsFull)
                     {
                         currentChunk->SetIsMeasureEnd(true);
                     }
                 }
-                
-                //The bar is full, create a new measure with an empty initial chunk	
+
+                //The bar is full, create a new measure with an empty initial chunk
                 if(currentMeasureIsFull)
                 {
-                    //Find the delta remainder and carry it over to the next bar. 
-                    //Omit rests across all voices that last more than one bar.  
+                    //Find the delta remainder and carry it over to the next bar.
+                    //Omit rests across all voices that last more than one bar.
                     measureIndex++;
                     ticksAccumulatedForCurrentMeasure %= ticksPerMeasure;
                 }
-                
-			}	
+
+			}
 
 			ticksAccumulatedForCurrentMeasure += abs((double)delta);
 		}
 	}
-    
+
     scoreTree.back()->SetIsMeasureEnd(true);
-    
+
+	return scoreTree;
+}
+
+vector<Chunk*> ParseIntermediateDataString(
+    std::string& inputData,
+    int32_t pitchOffset,
+    int deltaExpansion,
+    int durationExpansion)
+{
+    istringstream file( inputData );
+
+    uint32_t measureIndex = 0;
+    uint32_t chunkIndex = 0;
+
+	uint32_t ticksAccumulatedForCurrentMeasure = 0;
+	uint32_t ticksPerMeasure = 36;
+	vector<Chunk*> scoreTree;
+	
+	string line;
+
+    const int shift = 24 - pitchOffset;
+
+    while( std::getline( file, line ) )
+    {
+       	const bool currentMeasureIsFull = (ticksAccumulatedForCurrentMeasure >= ticksPerMeasure);
+		istringstream pitchDeltaInputStringStream( line );
+        string pitchString;
+        string deltaString;
+        string trackNumberString;
+        string noteDurationString;
+
+        //Case 0: Time signature event
+		if(line.find("SIGEVENT") != string::npos)
+		{
+			std::getline(file, line);
+			std::istringstream pitchDeltaInputStringStream( line );
+			std::string beatsPerBarString, beatUnitString;
+
+			if( std::getline( pitchDeltaInputStringStream, beatsPerBarString, ',') &&
+				std::getline( pitchDeltaInputStringStream, beatUnitString ))
+			{
+				const float beatsPerBar = std::stof(beatsPerBarString);
+				const float beatUnit = std::stof(beatUnitString);
+				const float meterRatio = (beatsPerBar/beatUnit);
+
+				ticksPerMeasure = meterRatio * beatUnit * 8;
+				cout << ticksPerMeasure << "key sig" << endl;
+			}
+		}
+
+        //Case 1: pitch event
+		if( std::getline( pitchDeltaInputStringStream, pitchString , ',') &&
+			std::getline( pitchDeltaInputStringStream, deltaString, ',' ) &&
+			std::getline( pitchDeltaInputStringStream, trackNumberString, ',' ) &&
+			std::getline( pitchDeltaInputStringStream, noteDurationString) )
+		{
+			const uint32_t currentTrackNumber = stoi(trackNumberString);
+			const uint32_t delta = stoi(deltaString)*pow(2.0,deltaExpansion);
+			const uint32_t noteDuration =
+                std::max(
+                    (uint32_t)(stoi(noteDurationString)*pow(2.0,deltaExpansion)),
+                    (uint32_t)durationExpansion);
+
+			const uint32_t pitch = stoi(pitchString)- shift;
+
+            Note * const currentNote = new Note(pitch,noteDuration,currentTrackNumber);
+
+            Chunk* const currentChunk = (scoreTree.size() > 0 ) ? scoreTree.back() : nullptr;
+
+			//cout << "DP: " << delta << " " << pitch <<  endl;
+			//This note must be added to the current chunk in the current bar
+			if((delta == 0) && (currentChunk != nullptr))
+			{
+				currentChunk->PushElement(currentNote);
+			}
+
+			//A new chunk in the current bar is needed
+			else
+			{
+				//Chunk* const nextChunk = new Chunk(delta,measureIndex);
+				Chunk* const nextChunk = new Chunk(delta,measureIndex);
+
+				chunkIndex++;
+
+				nextChunk->PushElement(currentNote);
+				scoreTree.push_back(nextChunk);
+
+				if(currentChunk != nullptr)
+				{
+					//Initialize the current optimal note positions to their default
+					//placements
+					vector<NotePositionEntry> currentNotePositionEntires =
+					  currentChunk->GetCurrentNotePositionEntries();
+
+					currentChunk->SetOptimalNotePositions(currentNotePositionEntires);
+
+					currentChunk->SetNextChunk(nextChunk);
+					nextChunk->SetPreviousChunk(currentChunk);
+
+					if(currentMeasureIsFull)
+					{
+						currentChunk->SetIsMeasureEnd(true);
+					}
+				}
+
+				//The bar is full, create a new measure with an empty initial chunk
+				if(currentMeasureIsFull)
+				{
+					//Find the delta remainder and carry it over to the next bar.
+					//Omit rests across all voices that last more than one bar.
+					measureIndex++;
+					ticksAccumulatedForCurrentMeasure %= ticksPerMeasure;
+				}
+				ticksAccumulatedForCurrentMeasure += abs((double)delta);			
+			}	
+		}
+	}
+
+    scoreTree.back()->SetIsMeasureEnd(true);
+
 	return scoreTree;
 }

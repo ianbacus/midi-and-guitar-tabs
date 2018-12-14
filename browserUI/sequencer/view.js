@@ -5,15 +5,15 @@ class View
     constructor()
     {
         v_this = this;
-		
+
 		this.Maingrid = null;
         this.GridboxContainer = null;//"#gridboxContainer";
         this.GridArray = "#GridboxArray";
-		
+
         this.previewObjs = ['cell', 'wire'];
         this.console = null;
 
-        this.MaximumPitch = 77;
+        this.MaximumPitch = 83;
 
         this.selectP = { x: 0, y: 0};
 
@@ -47,11 +47,11 @@ class View
         onButtonPress,
         radioButtonHandler)
     {
-		
+
         this.Maingrid = $("#gridbox");
         this.GridboxContainer = $("#gridboxContainer");
         this.GridArray_ = $("#GridboxArray");
-		
+
     	this.Maingrid
             .mousemove(this.OnMouseMove)
             .mousedown(onMouseClickDown)
@@ -142,7 +142,7 @@ class View
 	ScrollVertical(yOffset)
 	{
         var mainDiv = this.GridboxContainer;
-		
+
 		var currentScroll = mainDiv.scrollTop();
         var newOffset = currentScroll+yOffset;
 		var gridSnap = v_this.gridSnap;
@@ -161,7 +161,7 @@ class View
     ScrollHorizontal(xOffset)
     {
         var mainDiv = this.GridboxContainer;
-		
+
 		var currentScroll = mainDiv.scrollLeft();
         var newOffset = currentScroll+xOffset;
 		var gridSnap = v_this.gridSnap;
@@ -184,9 +184,23 @@ class View
     CancelScroll()
     {
         this.GridboxContainer.stop();
+        this.TickCount = 0;
     }
 
-    SmoothScroll(xCoordinate, yCoordinate, milliseconds)
+    ScrollDelegate()
+    {
+        if(this.TickCount > 0)
+        {
+            var x = this.GridboxContainer.scrollLeft();
+            var y = this.GridboxContainer.scrollTop();
+            this.GridboxContainer.scrollLeft(x+10,y); // horizontal and vertical scroll increments
+            this.TickCount--;
+            this.PendingTimeout = setTimeout(
+                $.proxy(this.ScrollDelegate, this), this.MillisecondsPerTick);
+        }
+    }
+
+    SmoothScroll(startx, xCoordinate, yCoordinate, millisecondsPerTick)
     {
         var mainDiv = this.GridboxContainer;
         var gridWidth = mainDiv.width();
@@ -194,13 +208,17 @@ class View
         var halfGridWidth = gridWidth/2;
 
         var xAdjustedCoordinate = xCoordinate - halfGridWidth;
+        var currentScrollLeft = mainDiv.scrollLeft();
+
+        clearTimeout(this.PendingTimeout);
 		if(yCoordinate === undefined)
 		{
-			mainDiv.animate({scrollLeft:xAdjustedCoordinate},milliseconds);
-			// function pageScroll() {
-					// window.scrollBy(0,50); // horizontal and vertical scroll increments
-					// scrolldelay = setTimeout('pageScroll()',100); // scrolls every 100 milliseconds
-			// }
+			//mainDiv.animate({scrollLeft:xAdjustedCoordinate},milliseconds);
+
+            v_this.MillisecondsPerTick = millisecondsPerTick/2;
+            v_this.TickCount = (xAdjustedCoordinate - startx)/10;
+            v_this.ScrollDelegate();
+
 		}
 		else
 		{
@@ -208,7 +226,7 @@ class View
 			var halfGridheight = gridHeight/2;
 			var yAdjustedCoordinate = yCoordinate - halfGridheight;
 
-			mainDiv.animate({scrollTop:yAdjustedCoordinate, scrollLeft:xAdjustedCoordinate},milliseconds);
+			mainDiv.animate({scrollTop:yAdjustedCoordinate, scrollLeft:xAdjustedCoordinate},500);
 		}
     }
 
@@ -229,7 +247,7 @@ class View
         var domGridArray = $(v_this.GridArray);
         domGridArray.empty();
         var nodeIndex = 0;
-        
+
         while(nodeIndex < numberOfEntries)
         {
             var image = gridImages[nodeIndex];
@@ -291,12 +309,12 @@ class View
         $(node).css({
 			'top':top,
 			'left':left,
-			'border':'solid black 1px', 
+			'border':'solid black 1px',
 			'position':'absolute',
 			'width':rect_width,
 			'height':rect_height
 		});
-		
+
 		v_this.DeleteSelectRectangle();
         v_this.Maingrid.append(node);
     }
@@ -318,18 +336,18 @@ class View
             $(node).addClass(keyNoteClass);
             $(node).css({
 				'background':colorIndex,
-				'top':offsetY, 
+				'top':offsetY,
 				'left':0,
-				"opacity":noteOpacity, 
+				"opacity":noteOpacity,
 				"height":v_this.gridSnap,
 				"width":mainGridWidth,
 				"position":"absolute"});
-			
+
             if(isTonicNote)
             {
                 $(node).css({"border-bottom":'solid black 2px'});
             }
-			
+
             v_this.Maingrid.append(node);
         }
 
@@ -345,17 +363,14 @@ class View
             var lowerOffset = keyOffsetY-incrementOffset;
             var upperOffset = keyOffsetY+incrementOffset;
 
-                console.log("k",keyOffsetY)
             functionRenderKeyRow(keyOffsetY, colorIndex, noteOpacity, isTonicNote);
             while(lowerOffset >= 0)
             {
-                console.log("l",lowerOffset)
                 functionRenderKeyRow(lowerOffset, colorIndex, noteOpacity, isTonicNote);
                 lowerOffset -= incrementOffset;
             }
             while (upperOffset <= mainGridHeight)
             {
-                console.log("h",upperOffset)
                 functionRenderKeyRow(upperOffset, colorIndex, noteOpacity, isTonicNote);
                 upperOffset += incrementOffset;
             }
@@ -368,7 +383,7 @@ class View
     {
         var gridNoteClass = "gridNote";
         var mainGrid = v_this.Maingrid;
-		
+
         var borderCssString = 'solid '+color+' 1px'
 		var initialNoteStartTimeTicks = 0;
 
@@ -380,36 +395,36 @@ class View
 			var noteWidth = note.Duration*v_this.gridSnap;
 			var pitch = note.Pitch;
 			var noteOpacity = 1.0;
-			
+
 			var noteGridStartTimeTicks = note.StartTimeTicks - initialNoteStartTimeTicks;
 			var offsetY = v_this.ConvertPitchToYIndex(pitch);
 			var offsetX = v_this.ConvertTicksToXIndex(noteGridStartTimeTicks);
 			var colorIndex = v_this.GetColorKey(pitch);
-			
+
 			var node = document.createElement('div');
-			
+
 			if(note.IsHighlighted)
 			{
 				colorIndex = 'white';
 			}
-			
+
 			if(note.IsSelected)
 			{
 				noteOpacity = 0.5;
 			}
-			
+
 			$(node).addClass(gridNoteClass);
 			$(node).css({
-				'background':colorIndex, 
+				'background':colorIndex,
 				'border': 'solid gray 1px',
-				'top':offsetY, 
+				'top':offsetY,
 				'left':offsetX,
-				'opacity':noteOpacity, 
+				'opacity':noteOpacity,
 				'height':v_this.gridSnap,
 				'width':noteWidth,
 				'position':'absolute'
 			});
-			
+
 			mainGrid.append(node);
 
 		});

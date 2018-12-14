@@ -10,7 +10,12 @@ let ScoreController = new Controller(ScoreView,ScoreModel);
 
 ScoreView.console = new disabledConsole();
 ScoreModel.console = new disabledConsole();
-ScoreController.console = console;
+ScoreController.console = new disabledConsole();
+
+
+// ScoreView.console = console;
+// ScoreModel.console = console;
+// ScoreController.console = console;
 
 
 $( function()

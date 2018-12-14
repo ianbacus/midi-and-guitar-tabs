@@ -54,8 +54,6 @@ class Controller
         var currentTone = tonic;
         var intervals = Modes[modeIndex]
 
-        console.log(Modes, modeIndex)
-
 		intervals.some(function(interval)
 		{
             var noteOpacity = 0.050;
@@ -109,6 +107,7 @@ class Controller
         var i = 0;
         var score = c_this.Model.Score;
         var sequenceNumber = 0;
+
         if(pushAction)
         {
             sequenceNumber = c_this.GetNextSequenceNumber();
@@ -125,15 +124,34 @@ class Controller
         }
     }
 
-    ModifySelectedNotes(transform)
+    ModifySelectedNotes(transform, forwardIterate=true)
     {
-        c_this.Model.Score.some( function(note)
+        c_this.Model.SelectedNotes.some(function(note)
         {
-            if(note.IsSelected)
-            {
-                transform(note);
-            }
+            transform(note);
         });
+    }
+
+    ModifyNoteArray(noteArray, modifyFunction, forwardIterate=true)
+    {
+        if(forwardIterate)
+        {
+            var modifyIndex = -1;
+            while(modifyIndex++ < noteArray.length-1)
+            {
+    			var note = noteArray[modifyIndex];
+                modifyFunction(note);
+            }
+        }
+        else
+        {
+            var modifyIndex = noteArray.length;
+            while(modifyIndex --> 0)
+            {
+    			var note = noteArray[modifyIndex];
+                modifyFunction(note);
+            }
+        }
     }
 
     DoActionOnAllNotes(transform)
@@ -146,11 +164,8 @@ class Controller
 
     CountSelectedNotes()
     {
-        var selectCount = 0;
-        c_this.ModifySelectedNotes(function(note)
-        {
-            selectCount++;}
-        );
+        var selectCount = c_this.Model.SelectedNotes.length;
+        c_this.console.log("Select count: " + selectCount + " notes.");
 
         return selectCount;
     }
@@ -357,7 +372,7 @@ class Controller
             }
             if(event.ctrlKey)
             {
-                c_this.DoActionOnAllNotes(function(note)
+                c_this.ModifyNoteArray(c_this.Model.Score, function(note)
                 {
                     note.IsSelected = true;
                 });
@@ -412,7 +427,7 @@ class Controller
         c_this.console.log("Transport begin");
 
         //Capture any selected notes and delete them before changing grids
-        c_this.ModifySelectedNotes(function(note)
+        c_this.ModifyNoteArray(c_this.Model.SelectedNotes, function(note)
         {
 			var copiedNote = note;
             c_this.console.log("Packing note: ", note);
@@ -488,6 +503,8 @@ class Controller
         var currentNote = noteArray[noteIndex];
         var chordNotes = [currentNote];
         var returnIndex = noteArray.length;
+        var currentNoteStartTicks = currentNote.StartTimeTicks;
+        var wholeNoteDurationTicks = 8;
 
         function includeNote(targetNote,searchNote,includeSuspensions)
         {
@@ -507,13 +524,25 @@ class Controller
         while(leftSearchIndex >= 0)
         {
             var leftSearchNote = noteArray[leftSearchIndex];
-            var noteInChord = includeNote(currentNote,leftSearchNote, includeSuspensions);
-            if(noteInChord)
-            {
-                chordNotes.push(leftSearchNote);
-            }
+            var searchNoteTickDifference = currentNoteStartTicks - leftSearchNote.StartTimeTicks;
 
-            leftSearchIndex--;
+            //Search until the start ticks are out of range (a whole note)
+            //Search until the start ticks are no longer equivalent
+            if((includeSuspensions && (searchNoteTickDifference > wholeNoteDurationTicks)) ||
+                (!includeSuspensions && (searchNoteTickDifference != 0)))
+            {
+                break;
+            }
+            else
+            {
+                var noteInChord = includeNote(currentNote,leftSearchNote, includeSuspensions);
+                if(noteInChord)
+                {
+                    chordNotes.push(leftSearchNote);
+                }
+
+                leftSearchIndex--;
+            }
         }
 
         //search right
@@ -572,6 +601,7 @@ class Controller
         var delta = 0;
         var xOffset = c_this.View.ConvertTicksToXIndex(currentNote.StartTimeTicks);
 
+
         if(nextNoteIndex < playbackNoteArray.length)
         {
             var nextNote = playbackNoteArray[nextNoteIndex];
@@ -579,6 +609,19 @@ class Controller
             delta = relativeDelta*c_this.MillisecondsPerTick;
 
             c_this.NoteIndex = nextNoteIndex;
+
+            //Time correction code
+            if(c_this.ExpectedTime == undefined)
+            {
+                c_this.ExpectedTime = Date.now() + delta;
+            }
+            else
+            {
+                var elapsedTime = Date.now() - c_this.ExpectedTime;
+                c_this.ExpectedTime += delta;
+                delta = Math.max(0, delta - elapsedTime);
+            }
+
             c_this.PendingTimeout = setTimeout(c_this.OnPlayAllNotes, delta);
         }
         else
@@ -616,8 +659,8 @@ class Controller
 
 				var averagePitch = averagePitchSum / chord.length;
 				var ycoord = c_this.View.ConvertPitchToYIndex(averagePitch);
-				c_this.View.SmoothScroll(startX,ycoord, 500);
-				c_this.View.SmoothScroll(endX, undefined, playbackDurationMilliseconds);
+				c_this.View.SmoothScroll(startX, startX,ycoord, 500);
+				c_this.View.SmoothScroll(startX, endX, undefined, c_this.MillisecondsPerTick);
 			}
 
         }
@@ -626,6 +669,7 @@ class Controller
     StopPlayingNotes()
     {
         c_this.Playing = false;
+        c_this.ExpectedTime = undefined;
         c_this.View.CancelScroll();
         clearTimeout(c_this.PendingTimeout);
         c_this.RefreshEditBoxNotes();
@@ -675,41 +719,30 @@ class Controller
 
     HandleSelectionReset()
     {
-		var score = c_this.Model.Score;
-
-		var resetIndex = score.length;
-		while(resetIndex --> 0)
+        c_this.ModifyNoteArray(c_this.Model.SelectedNotes, function(note)
         {
-			var note = c_this.Model.Score[resetIndex];
-			var deletion = true;
-
-			if(note.IsSelected)
+            //Unselect and reset the position of notes that existed before selection
+			if(note.StateWhenSelected != null)
 			{
-				//Unselect and reset the position of notes that existed before selection
-				if(note.StateWhenSelected != null)
-				{
-					note.IsSelected = false;
-					deletion = note.ResetPosition();
-				}
-
-				//Delete preview notes that were not initially selected
-				else
-				{
-					c_this.Model.DeleteNote(note, 0, c_this.Model.Score, false);
-				}
+				note.IsSelected = false;
+				note.ResetPosition();
 			}
 
-        }
+			//Delete preview notes that were not initially selected
+			else
+			{
+				c_this.Model.DeleteNote(note, 0, c_this.Model.Score, false);
+			}
+        }, false);
     }
 
     ///Update the cursor position, move all selected notes
     OnMouseMove(cursorPosition)
     {
-		//Only process mouse move events if the position changes		
+		//Only process mouse move events if the position changes
         if(c_this.LastCursorPosition != c_this.CursorPosition)
         {
             c_this.LastCursorPosition = c_this.CursorPosition;
-
 			c_this.CursorPosition = cursorPosition;
 
 			//If there are selected notes, move them
@@ -727,7 +760,7 @@ class Controller
 					y2: Math.max(c_this.SelectorPosition.y, c_this.CursorPosition.y)
 				};
 
-				c_this.DoActionOnAllNotes(function(note)
+				c_this.ModifyNoteArray(c_this.Model.Score, function(note)
 				{
 					var noteRectangle = c_this.GetNoteRectangle(note);
 					var noteIsCaptured = c_this.DoesRectangle1CoverRectangle2(selectRectangle, noteRectangle);
@@ -752,7 +785,7 @@ class Controller
 				var x_offset = c_this.View.ConvertXIndexToTicks(c_this.CursorPosition.x) - c_this.View.ConvertXIndexToTicks(c_this.LastCursorPosition.x);
 				var y_offset = c_this.View.ConvertYIndexToPitch(c_this.CursorPosition.y) - c_this.View.ConvertYIndexToPitch(c_this.LastCursorPosition.y);
 
-				c_this.ModifySelectedNotes(function(note){
+				c_this.ModifyNoteArray(c_this.Model.SelectedNotes, function(note){
 					note.Move(x_offset, y_offset);
 				});
 				c_this.Model.SortScoreByTicks();
@@ -831,6 +864,7 @@ class Controller
     ///Unselect all selected notes to anchor them and play them
     OnMouseClickUp(event)
     {
+        event.preventDefault();
         c_this.StopPlayingNotes();
         if(c_this.SelectingGroup === true)
         {
@@ -848,19 +882,19 @@ class Controller
 			//Play notes and handle move completion
             if(playbackMode == 0)
             {
-                c_this.ModifySelectedNotes(function(note)
+                c_this.ModifyNoteArray(c_this.Model.SelectedNotes, function(note)
                 {
                     playbackBuffer.push(note);
                     note.IsSelected = false;
                     note.OnMoveComplete(sequenceNumber);
-                });
+                }, false);
             }
 
 			//Play all intersecting chords and handle move completion
             else if(selectCount > 0)
             {
                 //Push all selected notes to the playback buffer
-                c_this.ModifySelectedNotes(function(note)
+                c_this.ModifyNoteArray(c_this.Model.SelectedNotes, function(note)
                 {
                     playbackBuffer.push(note);
                 });
@@ -873,7 +907,7 @@ class Controller
                     playbackBuffer[playbackBufferEndIndex].Duration;
 
                 //Find all notes in the score that intersect with the selected notes
-                c_this.DoActionOnAllNotes(function(note)
+                c_this.ModifyNoteArray(c_this.Model.Score, function(note)
                 {
                     var intersectsSelectedNote =
                         (startTickBoundary <= note.StartTimeTicks) &&
@@ -886,11 +920,13 @@ class Controller
                 });
 
                 //Place all selected notes
-                c_this.ModifySelectedNotes(function(note)
-                {
-                    note.IsSelected = false;
-                    note.OnMoveComplete(sequenceNumber);
-                });
+                c_this.ModifyNoteArray(
+                    c_this.Model.SelectedNotes,
+                    function(note)
+                    {
+                        note.IsSelected = false;
+                        note.OnMoveComplete(sequenceNumber);
+                    }, false);
 
                 //Sort the playback buffer
                 playbackBuffer.sort(m_this.CompareNotes);
@@ -920,6 +956,12 @@ class Controller
     {
         var shouldScroll = true;
         var selectCount = c_this.CountSelectedNotes();
+        var noteArray = c_this.Model.Score;
+
+        if(selectCount != 0)
+        {
+            noteArray = c_this.Model.SelectedNotes;
+        }
 
         //Only allow all selected notes or all unselected notes, depending on the select count.
         //case 1: select count of 0 -> resize all notes
@@ -935,7 +977,7 @@ class Controller
 
         var firstNotePosition = undefined;
         //Determine if the resize request is valid
-        c_this.DoActionOnAllNotes(function(note)
+        c_this.ModifyNoteArray(noteArray, function(note)
         {
             var shouldResizeNote = evaluateNoteScrollBehavior(note,selectCount);
 
@@ -946,7 +988,7 @@ class Controller
                     firstNotePosition = note.StartTimeTicks;
                 }
 
-                var noteOffset =  (note.StartTimeTicks - firstNotePosition);
+                var noteOffset = (note.StartTimeTicks - firstNotePosition);
 
                 if(scrollUp)
                 {
@@ -970,7 +1012,7 @@ class Controller
             var sequenceNumber = c_this.GetNextSequenceNumber();
 
             //Resize all notes as requested. If only one note is selected, treat it like a preview note and change the default preview note size
-            c_this.DoActionOnAllNotes(function(note)
+            c_this.ModifyNoteArray(noteArray, function(note)
             {
                 var newDuration;
                 var newPosition;
@@ -1033,6 +1075,7 @@ class Controller
         else if(shift)
         {
             event.preventDefault();
+            var xOffset = c_this.DefaultNoteDuration*c_this.View.gridSnap;
 
 			var cursorPosition =
 			{
@@ -1040,7 +1083,6 @@ class Controller
 				y:c_this.CursorPosition.y
 			}
 
-            var xOffset = 100;
             if(scrollUp)
             {
                 xOffset *= -1;
@@ -1049,12 +1091,12 @@ class Controller
             var actualXOffset = c_this.View.ScrollHorizontal(xOffset);
 			cursorPosition.x = c_this.CursorPosition.x + actualXOffset
 			c_this.OnMouseMove(cursorPosition);
-            c_this.RefreshEditBoxNotes();
         }
 
         else
         {
             event.preventDefault();
+            var yOffset = c_this.View.gridSnap;
 
 			var cursorPosition =
 			{
@@ -1062,7 +1104,6 @@ class Controller
 				y:null
 			}
 
-            var yOffset = 100;
             if(scrollUp)
             {
                 yOffset *= -1;
@@ -1071,20 +1112,12 @@ class Controller
             var actualYOffset = c_this.View.ScrollVertical(yOffset);
 			cursorPosition.y = c_this.CursorPosition.y + actualYOffset
 			c_this.OnMouseMove(cursorPosition);
-            c_this.RefreshEditBoxNotes();
         }
     }
 
     OnRadioButtonPress(eventData)
     {
         c_this.console.log(eventData);
-        /*
-        var html2obj = html2canvas($('body')[0]);
-        var queue  = html2obj.parse();
-        var canvas = html2obj.render(queue);
-        var img = canvas.toDataURL();
-
-        window.open(img);*/
 
     }
 
@@ -1119,7 +1152,7 @@ class Controller
         }
 
         var noteIndex = 0;
-        c_this.DoActionOnAllNotes( function(note)
+        c_this.ModifyNoteArray(c_this.Model.Score, function(note)
         {
             var noteRectangle = c_this.GetNoteRectangle(note);
             var noteWasClicked = c_this.DoesRectangle1CoverRectangle2(noteRectangle, cursorRectangle);

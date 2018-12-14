@@ -121,14 +121,15 @@ vector<string> TablatureOutputFormatter::GenerateTablatureColumn(Chunk *chunk)
     const uint32_t numberOfTablatureRows = InstrumentStringNames.size();
 
     const uint32_t offset = numberOfTablaturePrintRows-1;
-    
+	
 	vector<string> columnOfStringData(numberOfTablaturePrintRows);
-        
+	
     vector<uint32_t> unmodifiedStringIndices;
     const int32_t chunkDelta = chunk->GetDelta();
+	
     const string quaverString = TranslateDeltaAndAppendQuaverCodes(chunkDelta);
     
-    
+	
     //Insert padding rows
     if(NumberOfPaddingRows > 1)
     {
@@ -153,14 +154,14 @@ vector<string> TablatureOutputFormatter::GenerateTablatureColumn(Chunk *chunk)
     {
         columnOfStringData[0] = quaverString;
     }
-    
+	
     for(uint32_t instrumentCourseIndex = 0;
             instrumentCourseIndex<numberOfTablatureRows;
             instrumentCourseIndex++)
     {
         unmodifiedStringIndices.push_back(instrumentCourseIndex);
     }
-    
+	
     for (Note *note : chunk->GetElements())
     {
         string chunkDeltaScaledPadding(chunkDelta,TablatureSustainPadding);
@@ -182,7 +183,7 @@ vector<string> TablatureOutputFormatter::GenerateTablatureColumn(Chunk *chunk)
         columnOfStringData[columnAdjustedOffset] = rowData + chunkDeltaScaledPadding;
     }
 
-    
+	
     UpdateStringIndexedRemainingDeltaTicks(chunk);
     PreviousChunk = chunk;
     
@@ -320,7 +321,6 @@ void TablatureOutputFormatter::VisitChunk(Chunk* chunk)
 
     tablatureColumns.push_back(chunkColumn);  
     
-    
     if(measureEnd)
     {
         const uint32_t numberOfTablatureRows = InstrumentStringNames.size();
@@ -339,6 +339,7 @@ void TablatureOutputFormatter::VisitChunk(Chunk* chunk)
             indexRowStringStream << measureIndex;
             
             vector<string> startColumn = GenerateTablatureStartColumn();
+			
             tablatureColumns.insert(std::begin(tablatureColumns), startColumn);
 
             vector <string> newTablatureRows =  
@@ -346,7 +347,6 @@ void TablatureOutputFormatter::VisitChunk(Chunk* chunk)
             
             ///newTablatureRows.insert(std::begin(newTablatureRows), indexRowStringStream.str());
             //newTablatureRows.push_back(indexRowStringStream.str());
-
 
             TablatureBuffer.push_back(newTablatureRows);
             CurrentLineWidth = measureLength;
@@ -445,7 +445,7 @@ string TablatureOutputFormatter::TranslateDeltaAndAppendQuaverCodes(int delta)
 		int extra_delta=0;
         int resultingDelta = 0;
 
-		while(quaver_map.find(delta) == quaver_map.end())
+		while((quaver_map.find(delta) == quaver_map.end()) && (delta > 0))
 		{
 			delta--;
 			extra_delta++;
@@ -480,5 +480,27 @@ void TablatureOutputFormatter::WriteTablatureToOutputFile(string fileName)
 	outputFileStream.open(fileName);
 	outputFileStream << tablatureStringStream.rdbuf();
 	outputFileStream.close();
+    
+} //end WriteTablatureToOutputFile
+
+/*
+ *	Print the contents of the string buffer to a string
+ */	
+void TablatureOutputFormatter::WriteTablatureToOutputString(
+	string& outputString)
+{
+	stringstream tablatureStringStream;
+    
+    for(vector<string> tablatureRow: TablatureBuffer)
+    {
+        for(string tablatureRowData : tablatureRow)
+        {
+            tablatureStringStream <<  tablatureRowData << "\r\n";
+        }
+        
+        tablatureStringStream << "\r\n";
+    }
+    
+	outputString = tablatureStringStream.str();
     
 } //end WriteTablatureToOutputFile

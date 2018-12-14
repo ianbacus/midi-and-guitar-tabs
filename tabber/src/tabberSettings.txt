@@ -17,14 +17,17 @@
         ##################################
         #6 string guitar standard tuning
         Tuning:e1,a1,d2,g2,b2,e3
+        Frets:16
 
         ##################################
         #Ukulele
         #Tuning:d3,g2,b2,e3
+        #Frets:17
 
         ##################################
         #7 string guitar with low B string
         Tuning:b0,e1,a1,d2,g2,b2,e3
+        #Frets:13
 
         #Non-standard
         ##################################
@@ -46,7 +49,7 @@
         # The maximum number of frets your instrument has (or that you feel
         #comfortable playing).
         ##################################################################
-        Frets:10
+        Frets:13
 
         ###Capo placement
         ##################################################################
@@ -65,7 +68,7 @@
         #Increases as the difference between the highest and lowest frets
         #increases
         ##################################################################
-        ArpeggiationDeduction:10
+        ArpeggiationDeduction:200
 
         ###Span cost
         ##################################################################
@@ -78,13 +81,13 @@
         ##################################################################
         #Increases as a chord or note moves up the neck
         ##################################################################
-        NeckPositionCost:250
+        NeckPositionCost:750
 
         ###Inter-Chord Neck Distance cost
         ##################################################################
         #Increases as the distance between adjacent chords or notes increases
         ##################################################################
-        NeckDiffCost:800
+        NeckDiffCost:1000
 
         ###Inter-Chord String Overlap cost
         ##################################################################
@@ -92,7 +95,7 @@
         #of the same strings being held down. Increasing this cost will
         #allow more sustain between notes.
         ##################################################################
-        SuppressedSustainCost:10
+        SuppressedSustainCost:400
 
 
 
@@ -108,4 +111,4 @@
         #so if a measure does not fit on the current set of lines then a
         #new tablature row will be created for it.
         ##################################################################
-        NumberOfLinesPerTabRow:280
+        NumberOfLinesPerTabRow:300

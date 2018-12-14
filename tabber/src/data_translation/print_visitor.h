@@ -65,6 +65,8 @@ class TablatureOutputFormatter : public Visitor
         virtual void VisitBar(Bar*) override;
         virtual void VisitChunk(Chunk*) override;
         void WriteTablatureToOutputFile(string fileName);
+        
+        void WriteTablatureToOutputString(string& outputString);
 };
 
 #endif
