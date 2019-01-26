@@ -18,6 +18,6 @@ install:
 	sh ./src/scripts/install.sh
 $(EXE): $(SOURCES)
 	g++ $(CFLAGS) -std=c++11 $(INC_PATH) $(SOURCES) $(LIB_PATH) -o $(EXE)
-	
+
 clean:
 	rm $(EXE)
