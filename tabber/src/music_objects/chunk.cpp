@@ -21,33 +21,6 @@ string Chunk::PrintNoteIndices(vector<NotePositionEntry > noteConfiguration)
 }
 
 
-
-
-string Chunk::PrintChunk(Chunk* chunk)
-{
-    std::stringstream sstream;
-    
-    if(chunk != nullptr)
-    {
-        vector<NotePositionEntry > noteConfiguration = chunk->GetCurrentNotePositionEntries();
-
-        //Print the fret and string of each note in the current chunk configuration	
-        for(NotePositionEntry notePositionEntry: noteConfiguration)
-        {
-            sstream << Note::PrintNote(notePositionEntry)<<" ";
-        }
-        
-        sstream << ", index: " << chunk->GetMeasureIndex();
-    }
-    
-    else
-    {
-        sstream << "|null|";
-    }
-    
-    return sstream.str();
-}
-
 Chunk::Chunk(int d,uint32_t measureIndex) 
     : 
         Delta(d),
@@ -96,7 +69,7 @@ vector<NotePositionEntry > Chunk::GetCurrentNotePositionEntries(void) const
         assert(note != nullptr);
         
         if(note != nullptr)
-        {       
+        {
             NotePositionEntry noteData;
             noteData.PitchMidiValue = note->GetPitch();
             noteData.RepositioningIndex = note->GetCurrentPitchmapIndex();
@@ -537,4 +510,30 @@ void Chunk::ResetAllNotesRepositions(void)
             note->ResetAttemptedRepositions();
         }
     }
+}
+
+std::string Chunk::PrintChunk(Chunk* chunk)
+{
+    std::stringstream sstream;
+    
+    if(chunk != nullptr)
+    {
+        vector<NotePositionEntry > noteConfiguration = chunk->GetCurrentNotePositionEntries();
+
+        //Print the fret and string of each note in the current chunk configuration	
+        for(NotePositionEntry notePositionEntry: noteConfiguration)
+        {
+            sstream << Note::PrintNote(notePositionEntry)<<" ";
+        }
+        
+        sstream << ", index: " << chunk->GetMeasureIndex();
+    }
+    
+    else
+    {
+        sstream << "|null|";
+    }
+    
+    return sstream.str();
+//	
 }

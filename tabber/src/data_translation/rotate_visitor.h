@@ -3,16 +3,22 @@
 
 #include "visitor.h"
 #include "base.h"
+#include "print_visitor.h"
 #include <math.h>
 #include <mutex>
+#include <string>
+#include <sstream>
+
 
 struct ChunkFeatures
 {
     uint32_t maximumFretInCandidateChunk;
-    uint32_t internalFretDistance;
+    uint32_t minimumFretInCandidateChunk;
+    uint32_t internalFretHorizontalDistance;
+    uint32_t internalFretVerticalDistance;
     uint32_t fretCenterInCandidateChunk;
-    uint32_t fretDistanceFromSustainedNotes;
     
+    uint32_t fretDistanceFromSustainedNotes;
     uint32_t sustainInterruptions;
     uint32_t fretDistanceFromAdjacentChunks;
     uint32_t numberOfDuplicateStrings;
@@ -34,7 +40,7 @@ class TablatureOptimizer : public Visitor
         const uint32_t ArpeggiationDeductionScalar; //difference between adjacent strings
         
         const uint32_t NumberOfStrings;
-        
+        const uint32_t NumberOfFrets;
         
          vector<uint32_t> GetStringPositionsOfIndices(
             vector<NotePositionEntry > chunkIndices);
@@ -65,9 +71,11 @@ class TablatureOptimizer : public Visitor
         
          void GetChunkInternalFeatures(
             Chunk* chunk,
+            uint32_t& minimumFretInCandidateChunk,
             uint32_t& maximumFretInCandidateChunk,
             uint32_t& fretCenterInCandidateChunk,
-            uint32_t& internalFretDistance,
+            uint32_t& internalFretHorizontalDistance,
+            uint32_t& internalFretVerticalDistance,
             bool& goodInternalFingerSpread);
         
         static uint32_t GetChunkFretCenter(
@@ -113,6 +121,7 @@ class TablatureOptimizer : public Visitor
     public:
         TablatureOptimizer(
             uint32_t numberOfStrings,
+            uint32_t numberOfFrets,
             uint32_t maximumFretScalar,
             uint32_t fretSpanScalar,
             uint32_t interChunkSpacingScalar,
@@ -127,6 +136,51 @@ class TablatureOptimizer : public Visitor
         virtual void VisitBar(Bar* bar);
         virtual void VisitChunk(Chunk* chunk) {}
         virtual uint32_t OptimizeChunk(Chunk*);
+        
+        
+        TablatureOutputFormatter* Printer;
+        void SetPrinter(TablatureOutputFormatter& printer)
+        {
+            Printer = &printer;
+        }
+        
+        string PrintChunk(Chunk* chunk)
+        {
+            vector<Chunk*> chunks;
+            chunks.push_back(chunk);
+            return PrintChunks(chunks);
+        }
+        
+        string PrintChunks(vector<Chunk*> chunks)
+        {
+            stringstream tablatureStringStream;
+            vector<vector<string>> tablatureGroupBuffer;
+            
+            for(auto chunk : chunks)
+            {
+                if(chunk != nullptr)
+                {
+                    vector<string> chunkTablatureBuffer = 
+                        Printer->GenerateDebugLogTablatureColumn(chunk);
+
+                    tablatureGroupBuffer.push_back(chunkTablatureBuffer);
+                }
+            }
+            
+            vector<string> tablatureBuffer = 
+                Printer->ConcatenateColumnsIntoMeasureStrings(tablatureGroupBuffer);
+            
+            for(string tablatureRowData : tablatureBuffer)
+            {
+                tablatureStringStream <<  tablatureRowData << "\r\n";
+            }
+
+            tablatureStringStream << "\r\n"; 
+            
+            string outputString = tablatureStringStream.str();
+            return outputString;
+            
+        }
 };
 
 #endif

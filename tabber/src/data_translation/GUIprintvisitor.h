@@ -22,20 +22,22 @@ class GUIPrintVisitor : public Visitor
     int bar_ticks;
     bool tripled;
     bool strings_closed;
-    std::string outfile;
-    
+
   public:
-  	
-  	PrintVisitor(string);
-  	virtual ~PrintVisitor(void) {}
-    virtual void visitNote(Note*);
-    virtual void visitBar(Bar*);
-    virtual void visitChunk(Chunk*);
+
+    GUIPrintVisitor(void);
+    virtual ~GUIPrintVisitor(void) {}
     void bar_ticks_reset();
     void bar_ticks_increment(int d);
     void newlines(void) ;
-    void print_out(void);
+
+
+    virtual void VisitNote(Note*) override;
+    virtual void VisitBar(Bar*) override;
+    virtual void VisitChunk(Chunk*) override;
+    void WriteTablatureToOutputFile(string fileName);
+
+    void WriteTablatureToOutputString(string& outputString);
 };
 
 #endif
-

@@ -6,7 +6,6 @@
 #ifndef __PRINTVISITOR__
 #define __PRINTVISITOR__
 
-
 #include "visitor.h"
 #include "base.h"
 #include <string>
@@ -40,12 +39,10 @@ class TablatureOutputFormatter : public Visitor
         Chunk* PreviousChunk;
 
 
-        uint32_t GetNumberOfTablaturePrintRows(void);
-        vector<string> ConcatenateColumnsIntoMeasureStrings(vector<vector<string> >);
+        uint32_t GetNumberOfTablaturePrintRows(void) const;
 
-        string TranslateDeltaAndAppendQuaverCodes(int delta);
-        string TempVisitNote(Note *note);
-        vector<string> GenerateTablatureColumn(Chunk *chunk);
+        string TranslateDeltaAndAppendQuaverCodes(int delta) const;
+        string TempVisitNote(Note *note) const;
         vector<string> GenerateTablatureStartColumn();
         vector<string> ConcatenateRowGroups(
                 const vector<string> rows0,
@@ -53,6 +50,7 @@ class TablatureOutputFormatter : public Visitor
 
 
         void UpdateStringIndexedRemainingDeltaTicks(Chunk* candidateChunk);
+        vector<string> GenerateTablatureColumn(Chunk *chunk);
 
     public:
 
@@ -67,6 +65,8 @@ class TablatureOutputFormatter : public Visitor
         void WriteTablatureToOutputFile(string fileName);
         
         void WriteTablatureToOutputString(string& outputString);
+        vector<string> GenerateDebugLogTablatureColumn(Chunk *chunk) const;
+        vector<string> ConcatenateColumnsIntoMeasureStrings(vector<vector<string> >) const;
 };
 
 #endif

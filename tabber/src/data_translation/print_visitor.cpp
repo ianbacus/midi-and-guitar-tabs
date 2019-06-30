@@ -39,7 +39,7 @@ TablatureOutputFormatter::~TablatureOutputFormatter(void)
 }
 
 
-string TablatureOutputFormatter::TempVisitNote(Note *note)
+string TablatureOutputFormatter::TempVisitNote(Note *note) const
 {
     string result;
     std::stringstream sstream;
@@ -77,7 +77,7 @@ string TablatureOutputFormatter::TempVisitNote(Note *note)
     return result;
 }
 
-uint32_t TablatureOutputFormatter::GetNumberOfTablaturePrintRows(void)
+uint32_t TablatureOutputFormatter::GetNumberOfTablaturePrintRows(void) const
 {
     
     const uint32_t numberOfTablatureRows = InstrumentStringNames.size();
@@ -182,7 +182,6 @@ vector<string> TablatureOutputFormatter::GenerateTablatureColumn(Chunk *chunk)
         
         columnOfStringData[columnAdjustedOffset] = rowData + chunkDeltaScaledPadding;
     }
-
 	
     UpdateStringIndexedRemainingDeltaTicks(chunk);
     PreviousChunk = chunk;
@@ -209,13 +208,70 @@ vector<string> TablatureOutputFormatter::GenerateTablatureColumn(Chunk *chunk)
         columnOfStringData[columnAdjustedOffset] += fillterPattern;
     }
     
-    
     return columnOfStringData;
     
 } //end GenerateTablatureColumn
 
+vector<string> TablatureOutputFormatter::GenerateDebugLogTablatureColumn(Chunk *chunk) const
+{
+	//TODO: this is just a hacky way of allowing GenerateTablatureColumn to be used
+	//externally for debug logging. The Tick map and PreviousChunk get reset so that 
+	//their states are not left dirty when the print visitor runs. 
+	const uint32_t numberOfTablaturePrintRows = GetNumberOfTablaturePrintRows();
+    const uint32_t numberOfTablatureRows = InstrumentStringNames.size();
+
+    const uint32_t offset = numberOfTablaturePrintRows-1;
+	
+	vector<string> columnOfStringData(numberOfTablaturePrintRows);
+	
+    vector<uint32_t> unmodifiedStringIndices;
+    const int32_t chunkDelta = chunk->GetDelta();
+	
+    const string quaverString = TranslateDeltaAndAppendQuaverCodes(chunkDelta);
+	
+    for(uint32_t instrumentCourseIndex = 0;
+            instrumentCourseIndex<numberOfTablatureRows;
+            instrumentCourseIndex++)
+    {
+        unmodifiedStringIndices.push_back(instrumentCourseIndex);
+    }
+	
+	for (Note *note : chunk->GetElements())
+    {
+        string chunkDeltaScaledPadding(chunkDelta,TablatureSustainPadding);
+        const uint32_t noteDuration = note->GetNoteDurationBeats();
+        const uint32_t courseIndex = note->GetStringIndexForCurrentNotePosition();
+        const string rowData = TempVisitNote(note);
+        
+        if(chunkDelta >= noteDuration)
+        {
+            chunkDeltaScaledPadding = string(chunkDelta,TablatureUnfrettedPadding);
+        }
+        
+        //The strings are stored in reverse order, and offset by the padding row(s)
+        const uint32_t columnAdjustedOffset = offset-courseIndex;
+        
+        unmodifiedStringIndices.erase(std::remove(unmodifiedStringIndices.begin(), 
+            unmodifiedStringIndices.end(), courseIndex), unmodifiedStringIndices.end()); 
+        
+        columnOfStringData[columnAdjustedOffset] = rowData + chunkDeltaScaledPadding;
+    }
+	
+	for (uint32_t courseIndex : unmodifiedStringIndices)
+    {
+        const uint32_t columnAdjustedOffset = offset-courseIndex;
+        
+        string fillterPattern;
+        
+        fillterPattern = string(NoteTokenWidth+chunkDelta,TablatureUnfrettedPadding);
+        columnOfStringData[columnAdjustedOffset] += fillterPattern;
+    }
+	
+	return columnOfStringData;
+}
+
 //Concatenate a range of row groupings
-vector<string> TablatureOutputFormatter::ConcatenateColumnsIntoMeasureStrings(vector<vector<string> > columns)
+vector<string> TablatureOutputFormatter::ConcatenateColumnsIntoMeasureStrings(vector<vector<string> > columns) const
 {
     const uint32_t rowGroupNumberOfRows = columns.back().size();
     
@@ -405,8 +461,7 @@ void TablatureOutputFormatter::UpdateStringIndexedRemainingDeltaTicks(
         }
     }
     
-    //get the delta diffs on intersecting notes!!
-    
+    //get the delta diffs on intersecting notes    
     for(Note* note : chunkNotes)
     {
         uint32_t stringIndex = note->GetStringIndexForCurrentNotePosition();
@@ -422,7 +477,7 @@ void TablatureOutputFormatter::UpdateStringIndexedRemainingDeltaTicks(
 /*
  *	Add padding to the string buffers based on the given delta
  */
-string TablatureOutputFormatter::TranslateDeltaAndAppendQuaverCodes(int delta)
+string TablatureOutputFormatter::TranslateDeltaAndAppendQuaverCodes(int delta) const
 {
     string quaverCodeString;
     

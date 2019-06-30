@@ -1,6 +1,7 @@
 #include "midi2melody.h"
 #include "visitor.h"
 #include "print_visitor.h"
+#include "GUIprintvisitor.h"
 #include "rotate_visitor.h"
 
 #include <ctype.h>
@@ -213,7 +214,7 @@ uint32_t ProcessScoreToString(
     for (Chunk* currentChunk : sortedScore)
     {
         tablatureRearranger.OptimizeChunk(currentChunk);
-        
+
     }
 
     tablatureRearranger.EmitDebugString("First pass complete");
@@ -228,9 +229,9 @@ uint32_t ProcessScoreToString(
 		totalCost += tablatureRearranger.OptimizeChunk(currentChunk);
 		tablaturePrinter.VisitChunk(currentChunk);
     }
-	
+
     tablaturePrinter.WriteTablatureToOutputString(outputString);
-	
+
 	return totalCost;
 }
 
@@ -273,6 +274,7 @@ int ParseFileIntoTab(
 
     TablatureOptimizer tablatureRearranger(
         tabSettings.InstrumentInfo.StringIndexedNoteNames.size(),
+        parsedConstants["Frets"],
         parsedConstants["NeckPositionCost"],
         parsedConstants["SpanCost"],
         parsedConstants["NeckDiffCost"],
@@ -282,7 +284,10 @@ int ParseFileIntoTab(
     TablatureOutputFormatter tablaturePrinter(
         parsedConstants["NumberOfLinesPerTabRow"],
         tabSettings.InstrumentInfo.StringIndexedNoteNames);
-
+	
+	//std::cout << ""
+	tablatureRearranger.SetPrinter(tablaturePrinter);
+	
     //Sort score by number of chunk permutations
 	score = ParseIntermediateFile(
         inputFile,
@@ -317,7 +322,7 @@ extern "C" {
  //uint64_t javascriptWrapperFunction(
 	char* fileData,
 	char* tuningString,
-	uint8_t* tuningData,	 
+	uint8_t* tuningData,
 	int32_t noteOffset,
 	uint32_t frets,
 	uint32_t neckCost,
@@ -359,22 +364,23 @@ extern "C" {
 
      TablatureOptimizer tablatureRearranger(
          tabSettings.InstrumentInfo.StringIndexedNoteNames.size(),
+         parsedConstants["Frets"],
          parsedConstants["NeckPositionCost"],
          parsedConstants["SpanCost"],
          parsedConstants["NeckDiffCost"],
          parsedConstants["SuppressedSustainCost"],
          parsedConstants["ArpeggiationDeduction"]);
 
-     TablatureOutputFormatter tablaturePrinter(
-         parsedConstants["NumberOfLinesPerTabRow"],
-         tabSettings.InstrumentInfo.StringIndexedNoteNames);
+      TablatureOutputFormatter tablaturePrinter(
+          parsedConstants["NumberOfLinesPerTabRow"],
+          tabSettings.InstrumentInfo.StringIndexedNoteNames);
 
 	 uint32_t lowerBound = 0;
-	 uint32_t upperBound = score.size(); 
+	 uint32_t upperBound = score.size();
 	 uint32_t deltaExpansion = 0;
-	 
+
 	 string fileDataString = fileData;
-	 
+
 	 cout << "parsing intermediate data" << endl;
  	score = ParseIntermediateDataString(
          fileDataString,
@@ -385,7 +391,7 @@ extern "C" {
     std::cout << "Optimizing and printing measures, transposed "
 			<< noteOffset << " semi-tones: m"
 			<< ", DE = " << deltaExpansion << endl;
-	
+
 	 string outputString;
      totalCost = ProcessScoreToString(
 		 outputString,
@@ -396,7 +402,7 @@ extern "C" {
 
 	 const char* resultString = outputString.c_str();
 	 cout << "done" << endl;
-	 
+
 	 return resultString;
  }
 }
@@ -415,7 +421,7 @@ int main(int argc, char* argv[])
             "data/tabs/outTab.txt", -12, 0, -1, -1);
     }
 
-    if(argc != correctNumberOfArguments)
+    else if(argc != correctNumberOfArguments)
     {
         cout << "Invalid entry. use the following format:\n";
         cout << ">> ./gen <inputFile> <outputFile> <pitchShift#>,";

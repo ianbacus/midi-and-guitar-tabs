@@ -14,10 +14,10 @@ ostream NullStream(nullptr);
 ostream& TerminalStream = cout;
 
 
-#define FEATURE_STREAM NullStream << "\tFeatures: "
-#define COST_STREAM NullStream << "\tCosts: "
-#define ERROR_STREAM NullStream<< "\tError: "
-#define RESULT_STREAM NullStream<< "Results: "
+#define FEATURE_STREAM FileStream << "\tFeatures: "
+#define COST_STREAM FileStream << "\tCosts: "
+#define ERROR_STREAM NullStream << "\tError: "
+#define RESULT_STREAM FileStream<< "Results: "
 
 
 void TablatureOptimizer::EmitDebugString(std::string debugString)
@@ -27,6 +27,7 @@ void TablatureOptimizer::EmitDebugString(std::string debugString)
 
 TablatureOptimizer::TablatureOptimizer(
         uint32_t numberOfStrings,
+		uint32_t numberOfFrets,
         uint32_t maximumFretScalar,
         uint32_t fretSpanScalar,
         uint32_t interChunkSpacingScalar,
@@ -37,6 +38,8 @@ TablatureOptimizer::TablatureOptimizer(
         StringIndexedRemainingDeltaTicks(numberOfStrings),
         
         NumberOfStrings(numberOfStrings),
+		NumberOfFrets(numberOfFrets),
+		
         
         MaximumFretScalar(maximumFretScalar),
         FretSpanScalar(fretSpanScalar),
@@ -438,9 +441,9 @@ bool TablatureOptimizer::ValidateStringOverlapsForNotePositions(vector<NotePosit
         stringsOverlap = stringToOverlapCountMap[stringIndex] > 1;
     }
     
-    for (auto kv : stringToOverlapCountMap)
-    {
-    }
+    //for (auto kv : stringToOverlapCountMap)
+    //{
+    //}
     
     return stringsOverlap;
 }
@@ -454,12 +457,11 @@ uint32_t TablatureOptimizer::CalculateConfigurationCost(
     
     ChunkFeatures candidateChunkFeatures;
     
-    FEATURE_STREAM << Chunk::PrintChunk(chunk) << endl;
+    //FEATURE_STREAM << PrintChunk(chunk) << endl;
     GetChunkFeatures(chunk, candidateChunkFeatures);
 
-    COST_STREAM << Chunk::PrintChunk(chunk) << endl;
+    //COST_STREAM << PrintChunk(chunk) << endl;
     chunkCost =  EvaluateConfigurationFeatures(candidateChunkFeatures);
-    
     
     return chunkCost;
     
@@ -536,27 +538,33 @@ void TablatureOptimizer::GetChunkFeatures(
         Chunk* chunk,
         ChunkFeatures& chunkFeatures)
 {
-    
     chunkFeatures.fretDistanceFromSustainedNotes = 0;
     chunkFeatures.maximumFretInCandidateChunk = 0;
-	chunkFeatures.internalFretDistance = 0;
+    chunkFeatures.minimumFretInCandidateChunk = 0;
+    chunkFeatures.minimumFretInCandidateChunk = 0;
+	chunkFeatures.internalFretHorizontalDistance = 0;
+	chunkFeatures.internalFretVerticalDistance = 0;
     chunkFeatures.fretCenterInCandidateChunk = 0;
     
-    GetChunkInternalFeatures(chunk,
-            chunkFeatures.maximumFretInCandidateChunk,
-            chunkFeatures.fretCenterInCandidateChunk,
-            chunkFeatures.internalFretDistance,
-            chunkFeatures.goodInternalFingerSpread);
+    GetChunkInternalFeatures(
+		chunk,
+		chunkFeatures.minimumFretInCandidateChunk,
+		chunkFeatures.maximumFretInCandidateChunk,
+		chunkFeatures.fretCenterInCandidateChunk,
+		chunkFeatures.internalFretHorizontalDistance,
+		chunkFeatures.internalFretVerticalDistance,
+		chunkFeatures.goodInternalFingerSpread);
     
-    GetSustainedChunkRelativeFeatures(chunk,
-            chunkFeatures.sustainInterruptions,
-            chunkFeatures.fretDistanceFromSustainedNotes,
-            chunkFeatures.goodRelativeFingerSpread);
+    GetSustainedChunkRelativeFeatures(
+		chunk,
+		chunkFeatures.sustainInterruptions,
+		chunkFeatures.fretDistanceFromSustainedNotes,
+		chunkFeatures.goodRelativeFingerSpread);
 
-    GetAdjacentChunkRelativeFeatures(chunk,
+    GetAdjacentChunkRelativeFeatures(
+		chunk,
         chunkFeatures.fretDistanceFromAdjacentChunks,
         chunkFeatures.numberOfDuplicateStrings);
-    
     
     //Trace
     {
@@ -570,11 +578,11 @@ void TablatureOptimizer::GetChunkFeatures(
         }
 
         stringIndices<< "|";
-
         
         FEATURE_STREAM << "Inherent" << 
             "\r\n\t\tMax Fret:" << chunkFeatures.maximumFretInCandidateChunk << " " 
-            "\r\n\t\tSpan:" << chunkFeatures.internalFretDistance << " " <<
+            "\r\n\t\tH. Span:" << chunkFeatures.internalFretHorizontalDistance << " " <<
+            "\r\n\t\tV. Span:" << chunkFeatures.internalFretVerticalDistance << " " <<
             "\r\n\t\tFret Center:" << chunkFeatures.fretCenterInCandidateChunk << 
             "\r\n\t\tDistance from sustained notes:" << chunkFeatures.fretDistanceFromSustainedNotes << 
             "\r\n\t\tSustain interruptions:" << chunkFeatures.sustainInterruptions <<
@@ -586,55 +594,162 @@ void TablatureOptimizer::GetChunkFeatures(
 
 
 uint32_t TablatureOptimizer::EvaluateConfigurationFeatures(
-        ChunkFeatures chunkFeatures)
+    ChunkFeatures chunkFeatures)
+//
+// chunkFeatures:
+// maximumFretInCandidateChunk;
+// internalFretHorizontalDistance;
+// fretCenterInCandidateChunk;
+// fretDistanceFromSustainedNotes;
+// sustainInterruptions;
+// fretDistanceFromAdjacentChunks;
+// numberOfDuplicateStrings;
+//
 {
-    uint32_t maximumPlayableSpan = 6;
+	//Inter-chunk costs
+	//const float fretSpanScaleFactor = minimumFretInCandidateChunk;
+	
+	const float distanceMin = 
+		NumberOfFrets - 
+		(NumberOfFrets / 
+		pow(2,(chunkFeatures.minimumFretInCandidateChunk / 12.0f)));
+	
+	const float distanceMax = 
+		NumberOfFrets - 
+		(NumberOfFrets / 
+		pow(2,(chunkFeatures.maximumFretInCandidateChunk / 12.0f)));
+	
+	const float correctedFretSpan = distanceMax - distanceMin;
+	//cout << distanceMin << " " << distanceMax << " " << correctedFretSpan << " " << chunkFeatures.internalFretHorizontalDistance << endl;
+	chunkFeatures.internalFretHorizontalDistance *= correctedFretSpan;
+	
+	
+    const float maximumFretCost = 
+		chunkFeatures.maximumFretInCandidateChunk * MaximumFretScalar;
+	
+	//Raise by power of 2: the span cost should grow exponentially as the spans 
+	//start to become impossible
+    const float fretSpanCost = 
+		pow(chunkFeatures.internalFretHorizontalDistance, 2.0f) * FretSpanScalar;
+	
+	//Divide by 3: each vertical span should only count a third as much as 
+	//each horizontal span
+    const float stringSpanCost = 
+		chunkFeatures.internalFretVerticalDistance * FretSpanScalar / 3.0f;
+	
+	const float fretCenterCost = 
+		chunkFeatures.fretCenterInCandidateChunk * MaximumFretScalar;
+	
+	//Intra-chunk costs
+	const float arpeggiationCost = 
+		chunkFeatures.numberOfDuplicateStrings * ArpeggiationDeductionScalar;
     
+    const float sustainBreakCost = 
+        chunkFeatures.sustainInterruptions * StringOverlapScalar;
+	
+	const float interChunkSpacingCost =
+        pow(chunkFeatures.fretDistanceFromAdjacentChunks, 2.0f) * InterChunkSpacingScalar;
     
-    if(!chunkFeatures.goodInternalFingerSpread)
-    {
-        chunkFeatures.internalFretDistance *= 1.5f;
-        maximumPlayableSpan = 4;
-    }
-    
-    if(chunkFeatures.internalFretDistance >= maximumPlayableSpan)
-    {
-        chunkFeatures.internalFretDistance *= 2.0f;
-    }    
-    
-    const float trackStringDivergenceCost = 
-        pow(chunkFeatures.numberOfDuplicateStrings, 1.5f)*ArpeggiationDeductionScalar;
-    
-    const float stringOverlapCost = 
-        pow(chunkFeatures.sustainInterruptions, 1.5f)* StringOverlapScalar;
-    
-    //Count sustained notes in the interchunk spacing by taking the average of 
-    //the inter chunk cost and the string overlap cost for a part of the total
-    //spacing cost
-    const float interChunkSpacingCost =
-        (pow(chunkFeatures.fretDistanceFromAdjacentChunks,1.5f)*
-            InterChunkSpacingScalar +
-    
-        pow(chunkFeatures.fretDistanceFromSustainedNotes,1.5f)*
-            (InterChunkSpacingScalar+StringOverlapScalar)/2.0f)/2.0f;
-    
-    const float maximumFretCost = (chunkFeatures.maximumFretInCandidateChunk)*MaximumFretScalar;
-    const float fretSpanCost = pow(chunkFeatures.internalFretDistance,2.0f)*FretSpanScalar;
-    
-    const uint32_t candidateCost = stringOverlapCost + trackStringDivergenceCost +
-                        maximumFretCost + fretSpanCost + interChunkSpacingCost; 
-        
-    
-    COST_STREAM << "$" << candidateCost << 
-        "\r\n\t\tMax Fret:" << maximumFretCost << 
-        "\r\n\t\tFret Span:" << fretSpanCost << 
-        "\r\n\t\tAdjacency:" << interChunkSpacingCost << 
-        "\r\n\t\tSustain:" << stringOverlapCost <<
-        "\r\n\t\tArpeggiation:" << trackStringDivergenceCost << endl;
+	const float sustainSpacingCost = 
+        pow(chunkFeatures.fretDistanceFromSustainedNotes, 2.0f) * 
+		(InterChunkSpacingScalar+StringOverlapScalar)/2.0f;
+	
+	const uint32_t interChunkCost = 
+		maximumFretCost + 
+		fretSpanCost + 
+		stringSpanCost +
+		fretCenterCost;
+	
+	const uint32_t intraChunkCost =	
+		arpeggiationCost + 
+		sustainBreakCost +
+		interChunkSpacingCost +
+		sustainSpacingCost;
+	
+	const uint32_t candidateCost = interChunkCost + intraChunkCost;
+
+    COST_STREAM << 
+		"$" << candidateCost << 
+        "\r\n\t\tInter-cost: $" << interChunkCost << 
+        "\r\n\t\tIntra-cost: $" << intraChunkCost << 
+		endl;
+	
+	COST_STREAM << 
+		"Inter-chunk cost:" <<
+        "\r\n\t\tMax Fret: $" << maximumFretCost << 
+        "\r\n\t\tFret Span: $" << fretSpanCost << 
+        "\r\n\t\tString Span: $" << stringSpanCost << 
+		endl;
+	
+	COST_STREAM << 
+		"Intra-chunk cost:" <<
+        "\r\n\t\tArpeggiation: $" << arpeggiationCost << 
+        "\r\n\t\tSustain: $" << sustainBreakCost <<
+        "\r\n\t\tAdjacency: $" << interChunkSpacingCost << 
+        "\r\n\t\tSustain breaking: $" << sustainSpacingCost << 
+		endl;		
+			
     
     return candidateCost;
-    
-} //end EvaluateConfigurationFeatures
+	
+}
+
+
+//{
+//    uint32_t maximumPlayableSpan = 6;
+//    
+//    //Adjust the internal fret distance 
+//    if(!chunkFeatures.goodInternalFingerSpread)
+//    {
+//        chunkFeatures.internalFretHorizontalDistance *= 1.5f;
+//        maximumPlayableSpan = 4;
+//    }
+//    
+//    if(chunkFeatures.internalFretHorizontalDistance >= maximumPlayableSpan)
+//    {
+//        chunkFeatures.internalFretHorizontalDistance *= 2.0f;
+//    }
+//	
+//	//For higher frets, reduce the cost of fret internal and relative distance 
+//	
+////	const uint32_t fretCenter = 1+chunkFeatures.fretCenterInCandidateChunk;
+////	chunkFeatures.fretDistanceFromAdjacentChunks *= (float)(12 / fretCenter);
+////	chunkFeatures.fretDistanceFromSustainedNotes *= (float)(12 / fretCenter);
+////	chunkFeatures.internalFretHorizontalDistance *= (float)(12 / fretCenter);
+//	
+//    const float trackStringDivergenceCost = 
+//        pow(chunkFeatures.numberOfDuplicateStrings, 1.25f) * ArpeggiationDeductionScalar;
+//    
+//    const float stringOverlapCost = 
+//        pow(chunkFeatures.sustainInterruptions, 1.25f) * StringOverlapScalar;
+//    
+//    //Count sustained notes in the interchunk spacing by taking the average of 
+//    //the inter chunk cost and the string overlap cost for a part of the total
+//    //spacing cost
+//    const float interChunkSpacingCost =
+//        (pow(chunkFeatures.fretDistanceFromAdjacentChunks,1.5f)*
+//            InterChunkSpacingScalar +
+//    
+//        pow(chunkFeatures.fretDistanceFromSustainedNotes,1.5f)*
+//            (InterChunkSpacingScalar+StringOverlapScalar)/2.0f)/2.0f;
+//    
+//    const float maximumFretCost = (chunkFeatures.maximumFretInCandidateChunk)*MaximumFretScalar;
+//    const float fretSpanCost = pow(chunkFeatures.internalFretHorizontalDistance,2.0f)*FretSpanScalar;
+//    
+//    const uint32_t candidateCost = stringOverlapCost + trackStringDivergenceCost +
+//                        maximumFretCost + fretSpanCost + interChunkSpacingCost; 
+//        
+//    
+//    COST_STREAM << "$" << candidateCost << 
+//        "\r\n\t\tMax Fret:" << maximumFretCost << 
+//        "\r\n\t\tFret Span:" << fretSpanCost << 
+//        "\r\n\t\tAdjacency:" << interChunkSpacingCost << 
+//        "\r\n\t\tSustain:" << stringOverlapCost <<
+//        "\r\n\t\tArpeggiation:" << trackStringDivergenceCost << endl;
+//    
+//    return candidateCost;
+//    
+//} //end EvaluateConfigurationFeatures
 
 
 vector<uint32_t> TablatureOptimizer::GetStringPositionsOfIndices(
@@ -843,20 +958,24 @@ void TablatureOptimizer::GetSustainedChunkRelativeFeatures(
 
 void TablatureOptimizer::GetChunkInternalFeatures(
     Chunk* chunk,
+	uint32_t& minimumFretInCandidateChunk,
     uint32_t& maximumFretInCandidateChunk,
     uint32_t& fretCenterInCandidateChunk,
-    uint32_t& internalFretDistance,
+    uint32_t& internalFretHorizontalDistance,
+    uint32_t& internalFretVerticalDistance,
     bool& goodInternalFingerSpread)
 
 {
-        
-    vector<NotePositionEntry > chunkIndices = chunk->GetCurrentNotePositionEntries();
+    vector<NotePositionEntry > chunkIndices = 
+		chunk->GetCurrentNotePositionEntries();
 
     //Variables for finding the note center
     uint32_t numberOfZeroFrets = 0;
     uint32_t numberOfFrettedNotes = 0;
     uint32_t fretSumForAverage = 0;
-    uint32_t minimumFretInChunkConfiguration = UINT32_MAX;
+    minimumFretInCandidateChunk = UINT32_MAX;
+	uint32_t minimumStringIndex = UINT32_MAX;
+	uint32_t maximumStringIndex = 0;
 
     FretboardPosition maxFretPosition(0,0);
     FretboardPosition minFretPosition(0,0);
@@ -881,9 +1000,9 @@ void TablatureOptimizer::GetChunkInternalFeatures(
                 maxFretPosition = fretPosition;
             }
 
-            if(currentFret < minimumFretInChunkConfiguration)
+            if(currentFret < minimumFretInCandidateChunk)
             {
-                minimumFretInChunkConfiguration = currentFret;
+                minimumFretInCandidateChunk = currentFret;
             
                 minFretPosition = fretPosition;
             }
@@ -894,6 +1013,10 @@ void TablatureOptimizer::GetChunkInternalFeatures(
         {
             numberOfZeroFrets++;
         }
+		
+		minimumStringIndex = std::min(currentString, minimumStringIndex);
+		maximumStringIndex = std::max(currentString, maximumStringIndex);
+		
 
     } //end loop
 
@@ -903,12 +1026,17 @@ void TablatureOptimizer::GetChunkInternalFeatures(
     }
 
     //Spacing cannot go below 0
-    if(minimumFretInChunkConfiguration <= maximumFretInCandidateChunk)
+    if(minimumFretInCandidateChunk <= maximumFretInCandidateChunk)
     {
-        internalFretDistance = 
-                maximumFretInCandidateChunk - 
-                minimumFretInChunkConfiguration;
+        internalFretHorizontalDistance = 
+            1 + (maximumFretInCandidateChunk - minimumFretInCandidateChunk);
     }
+	
+    if(minimumStringIndex <= maximumStringIndex)
+    {
+        internalFretVerticalDistance = 
+			1 + (maximumStringIndex - minimumStringIndex);
+    }	
 
     //Prefer higher frets on higher strings than lower strings
     if((minFretPosition.FretNumber != 0) && (maxFretPosition.FretNumber != 0))
@@ -917,7 +1045,7 @@ void TablatureOptimizer::GetChunkInternalFeatures(
     }
     
     maximumFretInCandidateChunk -= min(maximumFretInCandidateChunk, numberOfZeroFrets);
-}
+} // GetChunkInternalFeatures
 
 
 void TablatureOptimizer::GetAdjacentChunkRelativeFeatures(Chunk* chunk,
@@ -930,7 +1058,6 @@ void TablatureOptimizer::GetAdjacentChunkRelativeFeatures(Chunk* chunk,
     
     Chunk * const nextFrettedChunk = SearchForClosestOptimizedChunk(chunk, true, true);
     Chunk * const nextChunk = SearchForClosestOptimizedChunk(chunk, true, false);
-    
         
     uint32_t fretCenterInCandidateChunk = GetChunkFretCenter(chunk);
     uint32_t previousFrettedChunkFretCenter = GetChunkFretCenter(previousFrettedChunk);
@@ -986,29 +1113,41 @@ void TablatureOptimizer::GetAdjacentChunkRelativeFeatures(Chunk* chunk,
         //intersectionsWithNearestChunks = stringIntersectionsWithNext;
     }
     
+	vector<Chunk*> chunks;
+	chunks.push_back(previousFrettedChunk);
+	if(previousFrettedChunk != previousChunk)
+	{
+		chunks.push_back(previousChunk);
+	}
+	chunks.push_back(chunk);
+	
+	chunks.push_back(nextChunk);
+	if(nextFrettedChunk != nextChunk)
+	{
+		chunks.push_back(nextFrettedChunk);
+	}
+	
+	const string chunksString = PrintChunks(chunks);
+	
     FEATURE_STREAM << "Relative" <<
+			chunksString << 
             "\r\n\t\tPrevious fretted chunk:" 
-                << Chunk::PrintChunk(previousFrettedChunk) 
                 << ", center = " << previousFrettedChunkFretCenter
                 << ", distance = " << distanceFromPreviousFrettedChunk <<
             
             "\r\n\t\tPrevious chunk:" 
-                << Chunk::PrintChunk(previousChunk)
                 << ", intersections = " << stringIntersectionsWithPrevious <<
             
             "\r\n\t\tNext fretted chunk:" 
-                << Chunk::PrintChunk(nextFrettedChunk) 
                 << ", center = " << nextFrettedChunkFretCenter
                 << ", distance = " << distanceFromNextFrettedChunk <<
             
             "\r\n\t\tNext chunk:" 
-                << Chunk::PrintChunk(nextChunk) 
                 << ", intersections = " << stringIntersectionsWithNext <<  
             
             "\r\n\t\tResulting features:" 
                 << ", avg distance = " << distanceFromNearestFrettedChunks  
                 << ", avg intersections = " << intersectionsWithNearestChunks <<  
-            
             
             endl;
 } 

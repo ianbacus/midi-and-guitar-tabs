@@ -12,6 +12,8 @@
 using std::vector;
 using std::string;
 
+class TablatureOutputFormatter;
+
 class Chunk : public Base 
 {
     private:
@@ -31,7 +33,7 @@ class Chunk : public Base
     public:
 
         static std::string PrintNoteIndices(vector<NotePositionEntry > currentNoteConfigurations);
-        static std::string PrintChunk(Chunk* chunk);
+        //static std::string PrintChunk(Chunk* chunk);
         
         //Temporary note storage
         void PushElement(Note* note);
@@ -78,6 +80,10 @@ class Chunk : public Base
         virtual ~Chunk(void);
         
         void CleanChunk(void);
+        
+//        
+        
+        static std::string PrintChunk(Chunk* chunk);
         
 };
 

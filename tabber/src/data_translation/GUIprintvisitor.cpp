@@ -1,21 +1,21 @@
 #include "GUIprintvisitor.h"
 
-
 /*
- *	
- */	
-GUIPrintVisitor::GUIPrintVisitor(std::string ofile) : string_print_index(0), strings_closed(false), tripled(false), outfile(ofile)
+ *
+ */
+GUIPrintVisitor::GUIPrintVisitor(void) : 
+string_print_index(0), strings_closed(false), tripled(false)
 {
 	string_buffer.push_back(vector<string>(SIZEOF_TUNING+2));
 }
-  	
+
 /*
- *	
- */	
-void GUIPrintVisitor::visitBar(Bar* b)
+ *
+ */
+void GUIPrintVisitor::VisitBar(Bar* b)
 {
 
-	string_buffer.back()[0] += "[[";    		
+	string_buffer.back()[0] += "[[";
 	for(int j=0; j<b->GetNumberOfElements(); j++)
 	{
 		b->GetElementWithIndex(j)->DispatchVisitor(this);
@@ -25,38 +25,38 @@ void GUIPrintVisitor::visitBar(Bar* b)
 }
 
 /*
- *	
- */	
-void GUIPrintVisitor::bar_ticks_reset(void) 
+ *
+ */
+void GUIPrintVisitor::bar_ticks_reset(void)
 {
 	bar_ticks = 0;
 }
 
 /*
- *	
- */	
-void GUIPrintVisitor::bar_ticks_increment(int d) 
+ *
+ */
+void GUIPrintVisitor::bar_ticks_increment(int d)
 {
 	bar_ticks+=d;
 }
 
 /*
- *	
- */	 
-void GUIPrintVisitor::newlines(void) 
-{ 
+ *
+ */
+void GUIPrintVisitor::newlines(void)
+{
 }
 
 /*
- *	
- */	
-void GUIPrintVisitor::visitChunk(Chunk* c)
+ *
+ */
+void GUIPrintVisitor::VisitChunk(Chunk* c)
 {
 /*
 	Visit a chunk and iterate through all of its notes. Only visit notes which are on the currently set
-	string index, which each enclosing bar decrements through. Decrementing is chosen arbitrarily (?)	
+	string index, which each enclosing bar decrements through. Decrementing is chosen arbitrarily (?)
 
-*/	
+*/
 	int delta = 0;
 	Note* current_note;
 	int numChilds = c->GetNumberOfElements();
@@ -70,13 +70,13 @@ void GUIPrintVisitor::visitChunk(Chunk* c)
 	for(int i=0;i<=delta;i++)
 		string_buffer.back()[0] += "p," ;
 
-	if(numChilds > 1) 
+	if(numChilds > 1)
 		string_buffer.back()[0] += std::string("[");
 
 	for(int j=0; j<c->GetNumberOfElements(); j++)
 	{
 		current_note = c->GetElementWithIndex(j);
-		current_note->DispatchVisitor(this);	
+		current_note->DispatchVisitor(this);
 	}
 	if(numChilds > 1)
 	{
@@ -86,18 +86,18 @@ void GUIPrintVisitor::visitChunk(Chunk* c)
 }
 
 /*
- *	
- */	
-void GUIPrintVisitor::visitNote(Note* n)
+ *
+ */
+void GUIPrintVisitor::VisitNote(Note* n)
 {
 	int delta = 0;
-	std::string result = "TabNote(" + std::to_string(n->GetStringIndexForCurrentNotePosition()) + "," + std::to_string(n->GetFretForCurrentNotePosition()) + "),";	
+	std::string result = "TabNote(" + std::to_string(n->GetStringIndexForCurrentNotePosition()) + "," + std::to_string(n->GetFretForCurrentNotePosition()) + "),";
 	//This is where the padding takes place for notes based on their note duration
 	if(delta >= 0)
 	{
 		string_buffer.back()[0] += result;
 	}
-	else 
+	else
 	{
 		//triplets case
 		tripled = true;
@@ -106,15 +106,19 @@ void GUIPrintVisitor::visitNote(Note* n)
 
 }
 
+void WriteTablatureToOutputString(string& x)
+{
+	
+}
 /*
- *	
- */	
-void GUIPrintVisitor::print_out(void)
+ *
+ */
+void GUIPrintVisitor::WriteTablatureToOutputFile(string outfile)
 {
 	ofstream ofile;
 	ofile.open(outfile);
 	stringstream ss;
-	for(std::vector< vector<string> >::iterator it = string_buffer.begin() ; it != string_buffer.end(); ++it) 
+	for(std::vector< vector<string> >::iterator it = string_buffer.begin() ; it != string_buffer.end(); ++it)
 	{
 		for(int i=SIZEOF_TUNING; i>=0; i--)
 		{
