@@ -189,7 +189,7 @@ bool ChunkIsValid(Chunk* chunk)
     return chunkValid;
 }
 
-uint32_t Chunk::GetAveragePitch(void)
+uint32_t Chunk::GetAveragePitch(void) const
 {
     vector<Note*> chunkNotes = GetElements();
     uint32_t chunkSize = chunkNotes.size();
@@ -432,28 +432,28 @@ void Chunk::SetLockedStringIndices(vector<FretboardPosition> sustainedStrings)
     }
 }
 
-Chunk* Chunk::GetPreviousChunk(void)
+Chunk* Chunk::GetPreviousChunk(void) const
 {
     return PreviousChunk;    
 }
 
-Chunk* Chunk::GetNextChunk(void)
+Chunk* Chunk::GetNextChunk(void) const
 {
     return NextChunk;
 }
 
-bool Chunk::GetIsOptimized(void)
+bool Chunk::GetIsOptimized(void) const
 {
     return IsOptimized;
 }
         
-uint32_t Chunk::GetMeasureIndex(void)
+uint32_t Chunk::GetMeasureIndex(void) const
 {
     return MeasureIndex;
 }
 
 
-vector<FretboardPosition> Chunk::GetSustainedFretboardPositions(void)
+vector<FretboardPosition> Chunk::GetSustainedFretboardPositions(void) const
 {
     return SustainedFretboardPositions;
 }

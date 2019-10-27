@@ -64,12 +64,12 @@ class Chunk : public Base
         void SetIsMeasureEnd(bool);
         void SetLockedStringIndices(vector<FretboardPosition> lockedStrings);
         
-        Chunk* GetPreviousChunk(void);
-        Chunk* GetNextChunk(void);
-        bool GetIsOptimized(void);
-        uint32_t GetMeasureIndex(void);
-        uint32_t GetAveragePitch(void);
-        vector<FretboardPosition> GetSustainedFretboardPositions(void);
+        Chunk* GetPreviousChunk(void) const;
+        Chunk* GetNextChunk(void) const;
+        bool GetIsOptimized(void) const;
+        uint32_t GetMeasureIndex(void) const;
+        uint32_t GetAveragePitch(void) const;
+        vector<FretboardPosition> GetSustainedFretboardPositions(void) const;
         
 
         virtual uint32_t GetNumberOfElements() const ;

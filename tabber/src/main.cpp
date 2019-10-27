@@ -257,6 +257,7 @@ int ParseFileIntoTab(
 	parsedConstants["SuppressedSustainCost"] = 1000;
 	parsedConstants["ArpeggiationDeduction"] = 1000;
 	parsedConstants["NumberOfLinesPerTabRow"] = 300;
+	parsedConstants["ChunkComparisonSearchLength"] = 4;
 
     vector<Chunk*> score;
 
@@ -279,7 +280,8 @@ int ParseFileIntoTab(
         parsedConstants["SpanCost"],
         parsedConstants["NeckDiffCost"],
         parsedConstants["SuppressedSustainCost"],
-        parsedConstants["ArpeggiationDeduction"]);
+        parsedConstants["ArpeggiationDeduction"],
+		parsedConstants["ChunkComparisonSearchLength"]);
 
     TablatureOutputFormatter tablaturePrinter(
         parsedConstants["NumberOfLinesPerTabRow"],
@@ -319,7 +321,6 @@ int ParseFileIntoTab(
 }
 extern "C" {
  const char* javascriptWrapperFunction(
- //uint64_t javascriptWrapperFunction(
 	char* fileData,
 	char* tuningString,
 	uint8_t* tuningData,
@@ -343,6 +344,7 @@ extern "C" {
  	parsedConstants["SuppressedSustainCost"] = sustainCost;
  	parsedConstants["ArpeggiationDeduction"] = arpeggioCost;
  	parsedConstants["NumberOfLinesPerTabRow"] = columnFormat;
+	parsedConstants["ChunkComparisonSearchLength"] = 4;
 
      vector<Chunk*> score;
 
@@ -369,7 +371,8 @@ extern "C" {
          parsedConstants["SpanCost"],
          parsedConstants["NeckDiffCost"],
          parsedConstants["SuppressedSustainCost"],
-         parsedConstants["ArpeggiationDeduction"]);
+         parsedConstants["ArpeggiationDeduction"],
+		parsedConstants["ChunkComparisonSearchLength"]);
 
       TablatureOutputFormatter tablaturePrinter(
           parsedConstants["NumberOfLinesPerTabRow"],
@@ -392,17 +395,25 @@ extern "C" {
 			<< noteOffset << " semi-tones: m"
 			<< ", DE = " << deltaExpansion << endl;
 
-	 string outputString;
+	 string scoreString;
      totalCost = ProcessScoreToString(
-		 outputString,
+		 scoreString,
          lowerBound, upperBound, score,
          tablatureRearranger, tablaturePrinter);
 
      score.clear();
 
-	 const char* resultString = outputString.c_str();
-	 cout << "done" << endl;
-
+	 //Stack string
+	 string* outputString = new string(scoreString);
+	 const char* resultString = nullptr;
+	 
+	 if(outputString != nullptr)
+	 {
+		resultString = outputString->c_str();
+		cout << "done" << endl;
+	 }
+	 
+	 //Let javascript application delete memory
 	 return resultString;
  }
 }

@@ -40,7 +40,7 @@ Note::Note(int pitch, int duration, int trackNumber) :
 void Note::InitializePitchToFretMap(
         vector<string> stringIndexedNoteNames,
         vector<uint16_t> instrumentCoursePitchValues, 
-        const uint32_t numberOfFrets,
+        uint32_t numberOfFrets,
         const uint32_t capoFret)
 {
     PitchMap initMap;
@@ -86,7 +86,12 @@ void Note::InitializePitchToFretMap(
                 { 
                     return left.FretNumber < right.FretNumber; 
                 }), map_point); 
+				
         }
+		//subtract 1 fret for every other string going down so that at high frets 
+		//longer stretches are preferred over tall chords
+		if(stringIndex%2 == 0) numberOfFrets -= 1;
+		
     }
         
     PitchToFretMap = initMap;

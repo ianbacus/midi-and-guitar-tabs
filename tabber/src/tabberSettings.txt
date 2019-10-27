@@ -49,7 +49,7 @@
         # The maximum number of frets your instrument has (or that you feel
         #comfortable playing).
         ##################################################################
-        Frets:15
+        Frets:19
 
         ###Capo placement
         ##################################################################
@@ -68,26 +68,26 @@
         #Increases as the difference between the highest and lowest frets
         #increases
         ##################################################################
-        ArpeggiationDeduction:1000
+        ArpeggiationDeduction:100
 
         ###Span cost
         ##################################################################
         #Increases as the difference between the highest and lowest frets
         #increases
         ##################################################################
-        SpanCost:1000
+        SpanCost:900
 
         ###Neck Position cost
         ##################################################################
         #Increases as a chord or note moves up the neck
         ##################################################################
-        NeckPositionCost:2000
+        NeckPositionCost:5100
 
         ###Inter-Chord Neck Distance cost
         ##################################################################
         #Increases as the distance between adjacent chords or notes increases
         ##################################################################
-        NeckDiffCost:1000
+        NeckDiffCost:800
 
         ###Inter-Chord String Overlap cost
         ##################################################################
@@ -95,7 +95,15 @@
         #of the same strings being held down. Increasing this cost will
         #allow more sustain between notes.
         ##################################################################
-        SuppressedSustainCost:1000
+        SuppressedSustainCost:20
+
+        ###Inter-Chord String Overlap cost
+        ##################################################################
+        #Increases as the number of strings in two adjacent chords have more
+        #of the same strings being held down. Increasing this cost will
+        #allow more sustain between notes.
+        ##################################################################
+        ChunkComparisonSearchLength:4
 
 
 

@@ -41,6 +41,7 @@ class TablatureOptimizer : public Visitor
         
         const uint32_t NumberOfStrings;
         const uint32_t NumberOfFrets;
+        const uint16_t AdjacentChunkSearchLength;
         
          vector<uint32_t> GetStringPositionsOfIndices(
             vector<NotePositionEntry > chunkIndices);
@@ -62,7 +63,11 @@ class TablatureOptimizer : public Visitor
             uint32_t& candidateSpacingFromLastChunk,
             uint32_t& intersectionsWithPreviousChunk);
 
-        
+        uint32_t GetDistanceFromAdjacentNChunks(
+            const Chunk* const chunk, 
+            bool searchForward,
+            uint16_t searchLength);
+
          void GetSustainedChunkRelativeFeatures(
             Chunk* chunk,
             uint32_t& stringIntersections,
@@ -79,13 +84,15 @@ class TablatureOptimizer : public Visitor
             bool& goodInternalFingerSpread);
         
         static uint32_t GetChunkFretCenter(
-            Chunk* candidateChunk);
+            const Chunk* candidateChunk);
 
         static uint32_t GetChunkStringCenter(
             Chunk* candidateChunk);
         
-        static Chunk* SearchForClosestOptimizedChunk(Chunk* currentChunk,
-                bool searchForward, bool searchFrettedChunksOnly);
+        Chunk* SearchForClosestOptimizedChunk(
+            const Chunk* currentChunk,
+            bool searchForward,
+            bool searchFrettedChunksOnly);
         
         void LockStringsInTheNextFewChunksForThisConfiguration(Chunk *chunk);
         void UpdateStringIndexedRemainingDeltaTicks(Chunk* candidateChunk);
@@ -94,9 +101,6 @@ class TablatureOptimizer : public Visitor
         
         uint32_t CalculateConfigurationCost(Chunk* chunk);
         
-        
-        Chunk* PreviousFrettedChunky;
-        Chunk* PreviousChunky;
         vector< vector<NotePositionEntry > > ProcessedChunkConfigurations;
         
         vector<uint32_t> StringIndexedRemainingDeltaTicks;
@@ -126,7 +130,8 @@ class TablatureOptimizer : public Visitor
             uint32_t fretSpanScalar,
             uint32_t interChunkSpacingScalar,
             uint32_t stringOverlapScalar,
-            uint32_t arpeggiationDeductionScalar);
+            uint32_t arpeggiationDeductionScalar,
+            uint32_t adjacentChunkSearchLength);
         
         virtual ~TablatureOptimizer();
 
