@@ -3,7 +3,7 @@ Take an input midi file and translate it into an intermediate file containing on
 '''
 
 import midi, collections, sys, os
-import pyjs
+#import pyjs
 
 note_offsets = (00,00,00,00,00,00,00,00,00,00,00,00)
 

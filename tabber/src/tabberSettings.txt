@@ -26,7 +26,7 @@
 
         ##################################
         #7 string guitar with low B string
-        Tuning:b0,e1,a1,d2,g2,b2,e3
+        #Tuning:b0,e1,a1,d2,g2,b2,e3
         #Frets:13
 
         #Non-standard
@@ -68,26 +68,26 @@
         #Increases as the difference between the highest and lowest frets
         #increases
         ##################################################################
-        ArpeggiationDeduction:200
+        ArpeggiationDeduction:100
 
         ###Span cost
         ##################################################################
         #Increases as the difference between the highest and lowest frets
         #increases
         ##################################################################
-        SpanCost:408
+        SpanCost:208
 
         ###Neck Position cost
         ##################################################################
         #Increases as a chord or note moves up the neck
         ##################################################################
-        NeckPositionCost:750
+        NeckPositionCost:1920
 
         ###Inter-Chord Neck Distance cost
         ##################################################################
         #Increases as the distance between adjacent chords or notes increases
         ##################################################################
-        NeckDiffCost:1000
+        NeckDiffCost:1700
 
         ###Inter-Chord String Overlap cost
         ##################################################################
@@ -95,7 +95,7 @@
         #of the same strings being held down. Increasing this cost will
         #allow more sustain between notes.
         ##################################################################
-        SuppressedSustainCost:400
+        SuppressedSustainCost:200
 
 
 
